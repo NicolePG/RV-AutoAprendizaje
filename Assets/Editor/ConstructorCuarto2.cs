@@ -149,11 +149,15 @@ public static class ConstructorCuarto2
         Cubo("Techo", p, new Vector3(ANCHO / 2f, ALTO + MURO / 2f, FONDO / 2f),
              new Vector3(ANCHO + MURO * 2f, MURO, FONDO + MURO * 2f), mPared, true);
 
-        // Plafón del techo: de acá sale la luz de sala cuando vuelve la energía
-        var plafon = Grupo("Plafon", p);
-        plafon.transform.localPosition = new Vector3(ANCHO / 2f, ALTO - 0.06f, FONDO / 2f);
-        Cilindro("Aro", plafon.transform, Vector3.zero, new Vector3(0.5f, 0.03f, 0.5f), mMetal);
-        Cilindro("Vidrio", plafon.transform, new Vector3(0f, -0.04f, 0f), new Vector3(0.42f, 0.02f, 0.42f), mEsfera);
+        // Plafón del techo: de acá sale la luz de sala cuando vuelve la energía.
+        // Si está el modelo de Poly Haven se usa ese en lugar de los cilindros.
+        if (Modelo("mounted_fluorescent_lights", p, new Vector3(ANCHO / 2f, ALTO - 0.05f, FONDO / 2f), 0f, 1f) == null)
+        {
+            var plafon = Grupo("Plafon", p);
+            plafon.transform.localPosition = new Vector3(ANCHO / 2f, ALTO - 0.06f, FONDO / 2f);
+            Cilindro("Aro", plafon.transform, Vector3.zero, new Vector3(0.5f, 0.03f, 0.5f), mMetal);
+            Cilindro("Vidrio", plafon.transform, new Vector3(0f, -0.04f, 0f), new Vector3(0.42f, 0.02f, 0.42f), mEsfera);
+        }
 
         // Friso de madera en la mitad baja de la pared (con su riel arriba)
         var friso = Grupo("Friso", p);
@@ -408,6 +412,7 @@ public static class ConstructorCuarto2
         EditorUtility.SetDirty(pick);
 
         Cilindro("Portalapices", g.transform, new Vector3(-0.72f, 0.83f, -0.25f), new Vector3(0.08f, 0.05f, 0.08f), mMetal);
+        Modelo("desk_lamp_arm_01", g.transform, new Vector3(0.65f, 0.78f, 0.25f), 200f, 1f);
 
         // Hoja de pistas: se toca y aparece el cartel con todo lo que hay que hacer
         var hoja = Grupo("Hoja_Pistas", g.transform);
@@ -577,7 +582,10 @@ public static class ConstructorCuarto2
         if (Modelo("metal_trash_can", g.transform, new Vector3(2.55f, 0f, 3.1f), 0f, 1f) == null)
             Cilindro("Papelera", g.transform, new Vector3(2.55f, 0.16f, 3.1f), new Vector3(0.26f, 0.16f, 0.26f), mMetal, true);
 
-        Modelo("potted_plant_01", g.transform, new Vector3(5.3f, 0f, 0.5f), 0f, 1f);
+        // Estos son decorativos: si el modelo de Poly Haven está, aparece; si no, no pasa nada
+        Modelo("potted_plant_01", g.transform, new Vector3(5.4f, 0f, 0.6f), 0f, 1f);
+        Modelo("cardboard_box_01", g.transform, new Vector3(0.7f, 0f, 6.4f), 25f, 1f);
+        Modelo("vintage_cabinet_01", g.transform, new Vector3(3.2f, 0f, 6.7f), 180f, 1f);
 
         // Ventana tapiada en la pared Este
         var v = Grupo("Ventana_Tapiada", g.transform);
@@ -604,11 +612,16 @@ public static class ConstructorCuarto2
         var caras = new List<GameObject>();
         // A=7, B=1, C=3 se leen tocándolos. D es el señuelo (marca la hora del apagón).
         // E está parado en las 12: hay que girarle la manecilla hasta las 9.
-        caras.Add(Reloj(p, "Reloj_A", 2.4f, "A", 7f, 0f, 7, false, false));
-        caras.Add(Reloj(p, "Reloj_B", 3.0f, "B", 1f, 0f, 1, false, false));
+        //
+        // Las X van de mayor a menor a propósito: los relojes están en la pared Norte
+        // y el jugador los mira desde adentro del cuarto, o sea mirando hacia -Z.
+        // Desde ahí su derecha es -X, así que el reloj con la X más grande es el que
+        // se ve más a la izquierda. Puestos así, se leen A B C D E de izquierda a derecha.
+        caras.Add(Reloj(p, "Reloj_A", 4.8f, "A", 7f, 0f, 7, false, false));
+        caras.Add(Reloj(p, "Reloj_B", 4.2f, "B", 1f, 0f, 1, false, false));
         caras.Add(Reloj(p, "Reloj_C", 3.6f, "C", 3f, 0f, 3, false, false));
-        caras.Add(Reloj(p, "Reloj_D", 4.2f, "D", 4.67f, 40f, 0, true, false));
-        caras.Add(Reloj(p, "Reloj_E", 4.8f, "E", 12f, 0f, HORA_RELOJ_E, false, true));
+        caras.Add(Reloj(p, "Reloj_D", 3.0f, "D", 4.67f, 40f, 0, true, false));
+        caras.Add(Reloj(p, "Reloj_E", 2.4f, "E", 12f, 0f, HORA_RELOJ_E, false, true));
         return caras;
     }
 
@@ -765,8 +778,10 @@ public static class ConstructorCuarto2
         keypad.datos = BuscarAsset<PuzzleData>("PuzzleData_Cuarto2");
         keypad.pantalla = pantalla;
 
-        // Teclas 1-9 en tres columnas y el 0 abajo
-        float[] columnas = { -0.085f, 0f, 0.085f };
+        // Teclas 1-9 en tres columnas y el 0 abajo.
+        // Las columnas van de positivo a negativo porque el teclado está rotado 180
+        // (mira hacia adentro del cuarto): sin esto las teclas se leerían 3 2 1.
+        float[] columnas = { 0.085f, 0f, -0.085f };
         for (int i = 0; i < 10; i++)
         {
             int digito = i < 9 ? i + 1 : 0;
@@ -828,7 +843,8 @@ public static class ConstructorCuarto2
 
         var bisagra = Grupo("Bisagra", g.transform);
         var puerta = bisagra.AddComponent<Door>();
-        puerta.anguloApertura = 95f;
+        // Ángulo negativo: la hoja gira hacia +Z, o sea hacia afuera del cuarto
+        puerta.anguloApertura = -95f;
         puerta.duracion = 1.4f;
 
         Cubo("Hoja", bisagra.transform, new Vector3(ancho / 2f, ALTO_PUERTA / 2f, 0f),
