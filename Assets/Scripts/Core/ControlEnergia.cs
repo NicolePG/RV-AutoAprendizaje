@@ -25,6 +25,15 @@ public class ControlEnergia : MonoBehaviour
     [Header("Lo que despierta cuando vuelve la energía")]
     public GameObject[] objetosConEnergia;
 
+    [Header("Efectos de terror, solo mientras no hay energía")]
+    public Behaviour[] efectosSinEnergia;
+
+    [Header("Niebla")]
+    public Color nieblaSinEnergia = new Color(0.06f, 0.03f, 0.1f);
+    public Color nieblaConEnergia = new Color(0.25f, 0.24f, 0.24f);
+    public float densidadSinEnergia = 0.055f;
+    public float densidadConEnergia = 0.012f;
+
     [Header("Luz ambiental")]
     public Color ambienteSinEnergia = new Color(0.035f, 0.025f, 0.06f);
     public Color ambienteConEnergia = new Color(0.30f, 0.29f, 0.27f);
@@ -49,6 +58,15 @@ public class ControlEnergia : MonoBehaviour
 
         RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
         RenderSettings.ambientLight = energia ? ambienteConEnergia : ambienteSinEnergia;
+
+        // La niebla cierra la visibilidad mientras está oscuro y se abre con la luz
+        RenderSettings.fog = true;
+        RenderSettings.fogMode = FogMode.Exponential;
+        RenderSettings.fogColor = energia ? nieblaConEnergia : nieblaSinEnergia;
+        RenderSettings.fogDensity = energia ? densidadConEnergia : densidadSinEnergia;
+
+        foreach (var efecto in efectosSinEnergia)
+            if (efecto != null) efecto.enabled = !energia;
 
         foreach (var luz in lucesDelCuarto)
             if (luz != null) luz.enabled = energia;

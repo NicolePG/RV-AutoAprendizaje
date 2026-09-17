@@ -35,7 +35,6 @@ public static class ConstructorCuarto2
     const float ALTO_PUERTA = 2.1f;
 
     const float ALTURA_RELOJ = 1.55f;
-    const int HORA_RELOJ_E = 9;  // la hora que hay que marcarle al reloj parado
 
     static Material mMadera, mMaderaOsc, mPared, mZocalo, mPiso, mBaldosaA, mBaldosaB, mMetal,
                     mBronce, mEsfera, mNegro, mVerde, mRojo, mPantalla, mResaltado,
@@ -101,8 +100,9 @@ public static class ConstructorCuarto2
         EditorSceneManager.MarkSceneDirty(raiz.scene);
         Selection.activeGameObject = raiz;
 
-        Debug.Log("Cuarto 2 construido. Primero hay que subir la llave del tablero electrico. " +
-                  "Clave del teclado: 3719 (reloj C=3, A=7, B=1, y E=9 despues de ponerlo en hora).");
+        Debug.Log("Cuarto 2 construido. Primero se sube la llave del tablero, despues se ponen " +
+                  "en hora los relojes A=7, B=1, C=3 y E=9 (el D es el senuelo). " +
+                  "Leidos en el orden de la bitacora (C-A-B-E) dan la clave 3719.");
     }
 
     // ------------------------------------------------------------------ estructura
@@ -262,6 +262,9 @@ public static class ConstructorCuarto2
         if (tecladoActivo != null) despiertan.Add(tecladoActivo);
         control.objetosConEnergia = despiertan.ToArray();
 
+        // Los parpadeos solo corren mientras el cuarto está sin energía
+        control.efectosSinEnergia = raiz.GetComponentsInChildren<Parpadeo>();
+
         EditorUtility.SetDirty(control);
         return control;
     }
@@ -301,9 +304,9 @@ public static class ConstructorCuarto2
         panelObjetivo.pasos = new[]
         {
             "SIN ENERGIA\n\nEl cuarto esta sin luz.\nBusca el tablero electrico\njunto a la puerta y sube la llave.",
-            "VOLVIO LA LUZ\n\nLos relojes despertaron.\nTocalos para ver su numero.\nRevisa el estante y el cajon del escritorio.",
-            "ORDEN: C - A - B - E\n\nUn reloj quedo parado y no tiene numero.\nMira la placa del cuadro para saber\na que hora hay que ponerlo.",
-            "YA TENES LOS 4 NUMEROS\n\nMarcalos en el teclado de la puerta,\nen el orden de la bitacora.",
+            "VOLVIO LA LUZ\n\nLos cinco relojes quedaron parados\na las 4:40, la hora del apagon.\nLee la bitacora del estante.",
+            "HAY QUE PONERLOS EN HORA\n\nLa bitacora dice a que hora suena\ncada campana. El cuadro dice que reloj\nes cada una. Gira las manecillas.",
+            "BIEN\n\nCada reloj en hora muestra su numero.\nSegui con los demas y marca el codigo\nen el orden que dice la bitacora.",
             "PUERTA ABIERTA\n\nLlevate el medallon del cajon\ny segui al proximo cuarto."
         };
         EditorUtility.SetDirty(panelObjetivo);
@@ -430,11 +433,14 @@ public static class ConstructorCuarto2
                                 new Vector3(0f, 180f, 0f),
                                 "QUE HAY QUE HACER\n\n" +
                                 "1 - Subir la llave del tablero, junto a la puerta\n" +
-                                "2 - Tocar los relojes: cada uno muestra su numero\n" +
-                                "3 - Leer la bitacora del estante: da el orden\n" +
-                                "4 - El reloj parado se gira con la mano hasta la\n" +
-                                "     hora que dice la placa del cuadro\n" +
-                                "5 - Marcar los 4 numeros en el teclado\n" +
+                                "2 - Leer la bitacora del estante: dice a que hora\n" +
+                                "     suena cada campana y en que orden van\n" +
+                                "3 - Leer la placa del cuadro: dice que reloj es\n" +
+                                "     cada campana. Uno no figura: no lo toques\n" +
+                                "4 - Girar la manecilla de cada reloj hasta su hora.\n" +
+                                "     Al quedar en hora muestra su numero\n" +
+                                "5 - Marcar los numeros en el teclado, en el orden\n" +
+                                "     de la bitacora\n" +
                                 "6 - Llevarse el medallon del cajon",
                                 0.115f, new Color(0.75f, 0.95f, 1f), 0.92f, 0.68f);
         textoPistas.lineSpacing = -14f;
@@ -506,9 +512,14 @@ public static class ConstructorCuarto2
         Cubo("Hojas", bitacora.transform, new Vector3(0f, 0.02f, 0f), new Vector3(0.36f, 0.02f, 0.28f), mPapel);
         var txt = Texto("Texto_Bitacora", bitacora.transform, new Vector3(0f, 0.035f, 0f),
                         new Vector3(-90f, 0f, 0f),
-                        "BITACORA\n\nCampanas:\nC - A - B - E\n\nEl reloj E se paro",
-                        0.22f, new Color(0.15f, 0.12f, 0.1f), 0.35f, 0.27f);
-        txt.lineSpacing = -10f;
+                        "HORARIO DE CAMPANAS\n\n" +
+                        "Entrada . . . 7:00\n" +
+                        "Recreo  . . . 1:00\n" +
+                        "Salida  . . . 3:00\n" +
+                        "Cierre  . . . 9:00\n\n" +
+                        "Orden: C - A - B - E",
+                        0.155f, new Color(0.15f, 0.12f, 0.1f), 0.35f, 0.28f);
+        txt.lineSpacing = -12f;
 
         // Tocar la bitácora cuenta como haberla leído: el cartel pasa al paso siguiente
         var interBitacora = bitacora.AddComponent<XRSimpleInteractable>();
@@ -529,9 +540,13 @@ public static class ConstructorCuarto2
         Cubo("Lienzo", g.transform, new Vector3(0f, 0f, 0.035f), new Vector3(0.7f, 0.9f, 0.01f), mMaderaOsc);
         Cubo("Retrato", g.transform, new Vector3(0f, 0.08f, 0.042f), new Vector3(0.45f, 0.55f, 0.01f), mPapel);
 
-        Cubo("Placa", g.transform, new Vector3(0f, -0.36f, 0.045f), new Vector3(0.6f, 0.16f, 0.01f), mBronce);
-        Texto("Texto_Placa", g.transform, new Vector3(0f, -0.36f, 0.055f), Vector3.zero,
-              "DIRECCION\nEl colegio cerro a las 9:00", 0.15f, new Color(0.16f, 0.12f, 0.05f), 0.58f, 0.15f);
+        Cubo("Placa", g.transform, new Vector3(0f, -0.33f, 0.045f), new Vector3(0.66f, 0.3f, 0.01f), mBronce);
+        var placa = Texto("Texto_Placa", g.transform, new Vector3(0f, -0.33f, 0.055f), Vector3.zero,
+                          "RELOJES DEL PASILLO\n\n" +
+                          "A - Entrada      B - Recreo\n" +
+                          "C - Salida        E - Cierre",
+                          0.13f, new Color(0.16f, 0.12f, 0.05f), 0.64f, 0.28f);
+        placa.lineSpacing = -14f;
     }
 
     // ------------------------------------------------------------------ lámpara
@@ -610,30 +625,38 @@ public static class ConstructorCuarto2
     static List<GameObject> ArmarRelojes(Transform p)
     {
         var caras = new List<GameObject>();
-        // A=7, B=1, C=3 se leen tocándolos. D es el señuelo (marca la hora del apagón).
-        // E está parado en las 12: hay que girarle la manecilla hasta las 9.
+        // Los cinco arrancan parados a las 4:40, la hora del apagón, y hay que ponerlos
+        // en hora girándoles la manecilla. La bitácora dice a qué hora suena cada
+        // campana y el cuadro dice qué reloj es cada campana:
+        // A=Entrada 7, B=Recreo 1, C=Salida 3, E=Cierre 9. El D no figura en ninguna
+        // de las dos listas: es el señuelo y tocarlo dispara el susto.
         //
         // Las X van de mayor a menor a propósito: los relojes están en la pared Norte
         // y el jugador los mira desde adentro del cuarto, o sea mirando hacia -Z.
         // Desde ahí su derecha es -X, así que el reloj con la X más grande es el que
         // se ve más a la izquierda. Puestos así, se leen A B C D E de izquierda a derecha.
-        caras.Add(Reloj(p, "Reloj_A", 4.8f, "A", 7f, 0f, 7, false, false));
-        caras.Add(Reloj(p, "Reloj_B", 4.2f, "B", 1f, 0f, 1, false, false));
-        caras.Add(Reloj(p, "Reloj_C", 3.6f, "C", 3f, 0f, 3, false, false));
-        caras.Add(Reloj(p, "Reloj_D", 3.0f, "D", 4.67f, 40f, 0, true, false));
-        caras.Add(Reloj(p, "Reloj_E", 2.4f, "E", 12f, 0f, HORA_RELOJ_E, false, true));
+        caras.Add(Reloj(p, "Reloj_A", 4.8f, "A", 7, false));
+        caras.Add(Reloj(p, "Reloj_B", 4.2f, "B", 1, false));
+        caras.Add(Reloj(p, "Reloj_C", 3.6f, "C", 3, false));
+        caras.Add(Reloj(p, "Reloj_D", 3.0f, "D", 0, true));
+        caras.Add(Reloj(p, "Reloj_E", 2.4f, "E", 9, false));
         return caras;
     }
 
+    // horaObjetivo es la hora a la que hay que dejarlo (y también el dígito que entrega).
+    // En el señuelo va 0: ese no se resuelve, solo dispara el susto.
     static GameObject Reloj(Transform p, string nombre, float x, string letra,
-                            float hora, float minutos, int digito, bool senuelo, bool ajustable)
+                            int horaObjetivo, bool senuelo)
     {
+        const float HORA_APAGON = 4.67f;   // todos arrancan parados a las 4:40
+        const float MINUTOS_APAGON = 40f;
+
         var g = Grupo(nombre, p);
         g.transform.localPosition = new Vector3(x, ALTURA_RELOJ, 0.05f);
 
         // La caja y la esfera muerta se ven siempre, aunque no haya energía
-        var caja = Cilindro("Caja", g.transform, Vector3.zero, new Vector3(0.34f, 0.035f, 0.34f), mMetal);
-        caja.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+        Cilindro("Caja", g.transform, Vector3.zero, new Vector3(0.34f, 0.035f, 0.34f), mMetal)
+            .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
 
         var apagada = Cilindro("Esfera_Apagada", g.transform, new Vector3(0f, 0f, 0.034f),
                                new Vector3(0.3f, 0.004f, 0.3f), mNegro);
@@ -659,84 +682,60 @@ public static class ConstructorCuarto2
             m.transform.localEulerAngles = new Vector3(0f, 0f, -h * 30f);
         }
 
-        // Manecilla de los minutos
+        // Manecilla de los minutos: queda clavada en el minuto del apagón
         var pivMin = Grupo("Manecilla_Minuto", cara.transform);
         pivMin.transform.localPosition = new Vector3(0f, 0f, 0.046f);
-        pivMin.transform.localEulerAngles = new Vector3(0f, 0f, -minutos * 6f);
+        pivMin.transform.localEulerAngles = new Vector3(0f, 0f, -MINUTOS_APAGON * 6f);
         Cubo("Aguja", pivMin.transform, new Vector3(0f, 0.06f, 0f), new Vector3(0.009f, 0.13f, 0.005f), mNegro);
 
-        // Manecilla de la hora (es la que se agarra si el reloj es ajustable)
+        // Manecilla de la hora: esta es la que el jugador agarra y gira
         var pivHora = Grupo("Manecilla_Hora", cara.transform);
         pivHora.transform.localPosition = new Vector3(0f, 0f, 0.052f);
-        pivHora.transform.localEulerAngles = new Vector3(0f, 0f, -hora * 30f);
+        pivHora.transform.localEulerAngles = new Vector3(0f, 0f, -HORA_APAGON * 30f);
         var aguja = Cubo("Aguja", pivHora.transform, new Vector3(0f, 0.042f, 0f),
-                         new Vector3(0.018f, 0.095f, 0.006f), mNegro, ajustable);
+                         new Vector3(0.022f, 0.1f, 0.012f), mNegro, true);
 
         Esfera("Pin", cara.transform, new Vector3(0f, 0f, 0.056f), new Vector3(0.022f, 0.022f, 0.022f), mBronce);
 
         Texto("Letra", cara.transform, new Vector3(0f, -0.085f, 0.042f), Vector3.zero,
               letra, 0.55f, new Color(0.18f, 0.15f, 0.12f), 0.2f, 0.12f);
 
-        // Chapita con el dígito, oculta hasta que el jugador se lo gana
-        GameObject chapa = null;
-        if (digito > 0)
+        // Todos los relojes se giran igual: el jugador agarra la manecilla de la hora
+        var inter = pivHora.AddComponent<XRSimpleInteractable>();
+        var manecilla = pivHora.AddComponent<RelojManecilla>();
+        manecilla.horaObjetivo = horaObjetivo;
+        Resaltar(pivHora, aguja.GetComponent<Renderer>());
+        EditorUtility.SetDirty(inter);
+        EditorUtility.SetDirty(manecilla);
+
+        if (senuelo)
         {
-            chapa = Grupo("Digito", cara.transform);
+            // El reloj que no figura en ninguna lista: al agarrarlo salta el susto
+            var luz = LuzApagada("Luz_Susto", cara.transform, new Vector3(0f, 0f, 0.25f),
+                                 new Color(1f, 0.25f, 0.2f), 9f, 2.5f, false);
+            var decoy = pivHora.AddComponent<RelojDecoy>();
+            decoy.vidrio = esfera.GetComponent<Renderer>();
+            decoy.materialResquebrajado = mGrieta;
+            decoy.luzSusto = luz.GetComponent<Light>();
+            decoy.duracionDestello = 0.8f;
+            EditorUtility.SetDirty(decoy);
+        }
+        else
+        {
+            // Al quedar en hora se enciende y muestra su dígito
+            var chapa = Grupo("Digito", cara.transform);
             chapa.transform.localPosition = new Vector3(0f, -0.26f, 0.02f);
             Cubo("Chapa", chapa.transform, Vector3.zero, new Vector3(0.16f, 0.16f, 0.02f), mDigito);
             Texto("Numero", chapa.transform, new Vector3(0f, 0f, 0.02f), Vector3.zero,
-                  digito.ToString(), 0.9f, new Color(0.03f, 0.08f, 0.1f), 0.16f, 0.16f);
+                  horaObjetivo.ToString(), 0.9f, new Color(0.03f, 0.08f, 0.1f), 0.16f, 0.16f);
             chapa.SetActive(false);
-        }
-
-        if (ajustable)
-        {
-            // El reloj parado: se le gira la manecilla hasta la hora que dice el cuadro
-            var inter = pivHora.AddComponent<XRSimpleInteractable>();
-            var manecilla = pivHora.AddComponent<RelojManecilla>();
-            manecilla.horaObjetivo = HORA_RELOJ_E;
-            Resaltar(pivHora, aguja.GetComponent<Renderer>());
 
             var luzOk = LuzApagada("Luz_EnHora", cara.transform, new Vector3(0f, 0f, 0.22f),
                                    new Color(0.4f, 1f, 0.5f), 2.5f, 0.9f);
 
             UnityEventTools.AddBoolPersistentListener(manecilla.alPonerEnHora, new UnityAction<bool>(luzOk.SetActive), true);
-            if (chapa != null)
-                UnityEventTools.AddBoolPersistentListener(manecilla.alPonerEnHora, new UnityAction<bool>(chapa.SetActive), true);
+            UnityEventTools.AddBoolPersistentListener(manecilla.alPonerEnHora, new UnityAction<bool>(chapa.SetActive), true);
             AvisarPanel(manecilla.alPonerEnHora, 3);
-
-            EditorUtility.SetDirty(inter);
-            EditorUtility.SetDirty(manecilla);
-        }
-        else
-        {
-            // Zona invisible para poder tocar el reloj sin que moleste la caja
-            var zona = Cubo("Zona_Tactil", cara.transform, new Vector3(0f, 0f, 0.03f),
-                            new Vector3(0.3f, 0.3f, 0.06f), null, true);
-            Object.DestroyImmediate(zona.GetComponent<MeshRenderer>());
-
-            var inter = cara.AddComponent<XRSimpleInteractable>();
-            // En el señuelo se resalta la caja y no la esfera: la esfera se la queda
-            // el RelojDecoy para mostrar el vidrio resquebrajado del susto
-            Resaltar(cara, senuelo ? caja.GetComponent<Renderer>() : esfera.GetComponent<Renderer>());
-            EditorUtility.SetDirty(inter);
-
-            if (senuelo)
-            {
-                var luz = LuzApagada("Luz_Susto", cara.transform, new Vector3(0f, 0f, 0.25f),
-                                     new Color(1f, 0.25f, 0.2f), 9f, 2.5f, false);
-                var decoy = cara.AddComponent<RelojDecoy>();
-                decoy.vidrio = esfera.GetComponent<Renderer>();
-                decoy.materialResquebrajado = mGrieta;
-                decoy.luzSusto = luz.GetComponent<Light>();
-                decoy.duracionDestello = 0.8f;
-                EditorUtility.SetDirty(decoy);
-            }
-            else if (chapa != null)
-            {
-                // Tocar un reloj de la lista muestra su dígito
-                UnityEventTools.AddBoolPersistentListener(inter.selectEntered, new UnityAction<bool>(chapa.SetActive), true);
-            }
         }
 
         cara.SetActive(false);
@@ -876,6 +875,11 @@ public static class ConstructorCuarto2
         le.color = new Color(0.4f, 1f, 0.55f);
         le.intensity = 1.6f;
         le.range = 3.5f;
+
+        // Mientras no hay energía parpadea, como un tubo a punto de quemarse
+        var parpadeo = emer.AddComponent<Parpadeo>();
+        parpadeo.intensidadMinima = 0.1f;
+        parpadeo.intensidadMaxima = 1.8f;
 
         var sala = new GameObject("Luz_Sala");
         sala.transform.SetParent(p, false);
