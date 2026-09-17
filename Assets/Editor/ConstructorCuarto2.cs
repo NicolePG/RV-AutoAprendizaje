@@ -39,7 +39,8 @@ public static class ConstructorCuarto2
 
     static Material mMadera, mMaderaOsc, mPared, mZocalo, mPiso, mBaldosaA, mBaldosaB, mMetal,
                     mBronce, mEsfera, mNegro, mVerde, mRojo, mPantalla, mResaltado,
-                    mGrieta, mAlfombra, mPapel, mLibroA, mLibroB, mLibroC, mLampara;
+                    mGrieta, mAlfombra, mPapel, mLibroA, mLibroB, mLibroC, mLampara,
+                    mLedFuerte, mLedSuave, mDigito;
 
     // Si están las texturas de Poly Haven en Assets/Textures/Cuarto2, el piso usa
     // la textura ajedrezada; si no, se arma el ajedrez con baldosas de colores.
@@ -80,11 +81,13 @@ public static class ConstructorCuarto2
 
         List<GameObject> caras = ArmarRelojes(relojes.transform);
         GameObject luzSala = ArmarLuces(luces.transform);
+        GameObject leds = ArmarLedsTecho(luces.transform);
 
         Door puerta = ArmarPuertaSalida(raiz.transform);
         GameObject tecladoActivo = ArmarTeclado(raiz.transform, puerta);
 
-        ArmarTablero(raiz.transform, luzSala, luzLampara, caras, tecladoActivo);
+        var control = ArmarControlEnergia(raiz.transform, leds, luzSala, luzLampara, caras, tecladoActivo);
+        ArmarTablero(raiz.transform, control);
 
         OscurecerEscena();
         AsegurarInventario();
@@ -191,6 +194,74 @@ public static class ConstructorCuarto2
              new Vector3(ancho, alto, MURO), mPared, true);
     }
 
+    // ------------------------------------------------------------------ tiras LED
+
+    // Tiras moradas por todo el borde del techo y por las esquinas verticales.
+    // Son lo único que ilumina mientras el cuarto está sin energía.
+    static GameObject ArmarLedsTecho(Transform p)
+    {
+        var g = Grupo("Leds", p);
+        float y = ALTO - 0.17f;
+
+        Cubo("Tira_Norte", g.transform, new Vector3(ANCHO / 2f, y, 0.06f),
+             new Vector3(ANCHO, 0.05f, 0.05f), mLedFuerte);
+        Cubo("Tira_Sur", g.transform, new Vector3(ANCHO / 2f, y, FONDO - 0.06f),
+             new Vector3(ANCHO, 0.05f, 0.05f), mLedFuerte);
+        Cubo("Tira_Oeste", g.transform, new Vector3(0.06f, y, FONDO / 2f),
+             new Vector3(0.05f, 0.05f, FONDO), mLedFuerte);
+        Cubo("Tira_Este", g.transform, new Vector3(ANCHO - 0.06f, y, FONDO / 2f),
+             new Vector3(0.05f, 0.05f, FONDO), mLedFuerte);
+
+        // Esquinas verticales, de piso a techo
+        float[] esquinasX = { 0.06f, ANCHO - 0.06f };
+        float[] esquinasZ = { 0.06f, FONDO - 0.06f };
+        int n = 1;
+        foreach (float ex in esquinasX)
+            foreach (float ez in esquinasZ)
+                Cubo("Tira_Esquina_" + n++, g.transform, new Vector3(ex, ALTO / 2f, ez),
+                     new Vector3(0.05f, ALTO - 0.3f, 0.05f), mLedFuerte);
+
+        // Focos morados que tiñen el cuarto de verdad (las tiras solo brillan)
+        int f = 1;
+        foreach (float ex in new[] { 1.2f, ANCHO - 1.2f })
+            foreach (float ez in new[] { 1.4f, FONDO - 1.4f })
+            {
+                var luz = new GameObject("Luz_Led_" + f++);
+                luz.transform.SetParent(g.transform, false);
+                luz.transform.localPosition = new Vector3(ex, ALTO - 0.35f, ez);
+                var l = luz.AddComponent<Light>();
+                l.type = LightType.Point;
+                l.color = new Color(0.65f, 0.25f, 1f);
+                l.intensity = 5f;
+                l.range = 7f;
+            }
+
+        return g;
+    }
+
+    // ------------------------------------------------------------------ control de energía
+
+    static ControlEnergia ArmarControlEnergia(Transform raiz, GameObject leds, GameObject luzSala,
+                                              GameObject luzLampara, List<GameObject> caras,
+                                              GameObject tecladoActivo)
+    {
+        var g = Grupo("Energia", raiz);
+        var control = g.AddComponent<ControlEnergia>();
+
+        control.lucesDelCuarto = new[] { luzSala.GetComponent<Light>(), luzLampara.GetComponent<Light>() };
+        control.lucesLed = leds.GetComponentsInChildren<Light>();
+        control.tirasLed = leds.GetComponentsInChildren<Renderer>();
+        control.materialLedFuerte = mLedFuerte;
+        control.materialLedSuave = mLedSuave;
+
+        var despiertan = new List<GameObject>(caras);
+        if (tecladoActivo != null) despiertan.Add(tecladoActivo);
+        control.objetosConEnergia = despiertan.ToArray();
+
+        EditorUtility.SetDirty(control);
+        return control;
+    }
+
     // ------------------------------------------------------------------ panel de objetivos
 
     // Tablero de avisos colgado al lado de la entrada: dice qué hay que hacer ahora
@@ -244,8 +315,7 @@ public static class ConstructorCuarto2
     // ------------------------------------------------------------------ tablero eléctrico
 
     // El primer paso del cuarto: sin esta llave no hay luz, ni relojes, ni teclado.
-    static void ArmarTablero(Transform raiz, GameObject luzSala, GameObject luzLampara,
-                             List<GameObject> carasRelojes, GameObject tecladoActivo)
+    static void ArmarTablero(Transform raiz, ControlEnergia control)
     {
         var g = Grupo("Tablero_Electrico", raiz);
         g.transform.localPosition = new Vector3(0.42f, 1.35f, 0.07f);
@@ -272,18 +342,13 @@ public static class ConstructorCuarto2
         boton.recorrido = 0.03f;
         Resaltar(llave, llave.GetComponent<Renderer>());
 
-        // Al subir la llave vuelve la energía: luces, relojes y teclado
-        UnityEventTools.AddBoolPersistentListener(boton.alPresionar, new UnityAction<bool>(luzSala.SetActive), true);
-        UnityEventTools.AddBoolPersistentListener(boton.alPresionar, new UnityAction<bool>(luzLampara.SetActive), true);
+        // Al subir la llave vuelve la energía: de eso se encarga ControlEnergia,
+        // que prende las luces, sube la luz ambiental, baja los LED y despierta
+        // los relojes y el teclado de una sola vez
+        UnityEventTools.AddVoidPersistentListener(boton.alPresionar, new UnityAction(control.Encender));
         UnityEventTools.AddBoolPersistentListener(boton.alPresionar, new UnityAction<bool>(pilotoVerde.SetActive), true);
         UnityEventTools.AddBoolPersistentListener(boton.alPresionar, new UnityAction<bool>(pilotoRojo.SetActive), false);
         UnityEventTools.AddVoidPersistentListener(boton.alPresionar, new UnityAction(audio.Play));
-
-        foreach (var cara in carasRelojes)
-            UnityEventTools.AddBoolPersistentListener(boton.alPresionar, new UnityAction<bool>(cara.SetActive), true);
-
-        if (tecladoActivo != null)
-            UnityEventTools.AddBoolPersistentListener(boton.alPresionar, new UnityAction<bool>(tecladoActivo.SetActive), true);
 
         AvisarPanel(boton.alPresionar, 1);
         EditorUtility.SetDirty(boton);
@@ -342,9 +407,41 @@ public static class ConstructorCuarto2
         EditorUtility.SetDirty(grab);
         EditorUtility.SetDirty(pick);
 
-        // Papeles y un portalápices sobre el escritorio
-        Cubo("Papeles", g.transform, new Vector3(-0.45f, 0.79f, 0.05f), new Vector3(0.3f, 0.02f, 0.4f), mPapel);
         Cilindro("Portalapices", g.transform, new Vector3(-0.72f, 0.83f, -0.25f), new Vector3(0.08f, 0.05f, 0.08f), mMetal);
+
+        // Hoja de pistas: se toca y aparece el cartel con todo lo que hay que hacer
+        var hoja = Grupo("Hoja_Pistas", g.transform);
+        hoja.transform.localPosition = new Vector3(-0.45f, 0.79f, 0.02f);
+        hoja.transform.localEulerAngles = new Vector3(0f, 12f, 0f);
+        Cubo("Papel", hoja.transform, Vector3.zero, new Vector3(0.32f, 0.01f, 0.44f), mPapel, true);
+        Texto("Titulo_Hoja", hoja.transform, new Vector3(0f, 0.008f, 0f), new Vector3(-90f, 0f, 0f),
+              "NOTAS\n\n(tocar para leer)", 0.1f, new Color(0.2f, 0.17f, 0.15f), 0.3f, 0.4f);
+
+        var panelPistas = Grupo("Panel_Pistas", g.transform);
+        panelPistas.transform.localPosition = new Vector3(-0.45f, 1.45f, 0.1f);
+        Cubo("Fondo", panelPistas.transform, Vector3.zero, new Vector3(0.95f, 0.72f, 0.02f), mNegro);
+        Cubo("Borde", panelPistas.transform, new Vector3(0f, 0f, 0.012f), new Vector3(0.99f, 0.76f, 0.01f), mLedSuave);
+        var textoPistas = Texto("Texto_Pistas", panelPistas.transform, new Vector3(0f, 0f, -0.02f),
+                                new Vector3(0f, 180f, 0f),
+                                "QUE HAY QUE HACER\n\n" +
+                                "1 - Subir la llave del tablero, junto a la puerta\n" +
+                                "2 - Tocar los relojes: cada uno muestra su numero\n" +
+                                "3 - Leer la bitacora del estante: da el orden\n" +
+                                "4 - El reloj parado se gira con la mano hasta la\n" +
+                                "     hora que dice la placa del cuadro\n" +
+                                "5 - Marcar los 4 numeros en el teclado\n" +
+                                "6 - Llevarse el medallon del cajon",
+                                0.115f, new Color(0.75f, 0.95f, 1f), 0.92f, 0.68f);
+        textoPistas.lineSpacing = -14f;
+        panelPistas.SetActive(false);
+
+        var interHoja = hoja.AddComponent<XRSimpleInteractable>();
+        var pistas = hoja.AddComponent<MostrarPistas>();
+        pistas.panel = panelPistas;
+        Resaltar(hoja, hoja.transform.Find("Papel").GetComponent<Renderer>());
+        UnityEventTools.AddVoidPersistentListener(interHoja.selectEntered, new UnityAction(pistas.Alternar));
+        EditorUtility.SetDirty(interHoja);
+        EditorUtility.SetDirty(pistas);
 
         // Silla del director, detrás del escritorio.
         // Si está el modelo de Poly Haven se usa ese; si no, se arma con cubos.
@@ -444,9 +541,16 @@ public static class ConstructorCuarto2
         Cilindro("Tubo", g.transform, new Vector3(0f, 0.75f, 0f), new Vector3(0.05f, 0.72f, 0.05f), mMetal);
         Cilindro("Pantalla", g.transform, new Vector3(0f, 1.55f, 0f), new Vector3(0.36f, 0.16f, 0.36f), mLampara);
 
-        var luz = LuzApagada("Luz_Lampara", g.transform, new Vector3(0f, 1.42f, 0f),
-                             new Color(1f, 0.88f, 0.65f), 3.2f, 7f);
-        luz.GetComponent<Light>().shadows = LightShadows.Soft;
+        // Queda encendida acá: la apaga ControlEnergia mientras no hay energía
+        var luz = new GameObject("Luz_Lampara");
+        luz.transform.SetParent(g.transform, false);
+        luz.transform.localPosition = new Vector3(0f, 1.42f, 0f);
+        var l = luz.AddComponent<Light>();
+        l.type = LightType.Point;
+        l.color = new Color(1f, 0.88f, 0.65f);
+        l.intensity = 3.2f;
+        l.range = 7f;
+        l.shadows = LightShadows.Soft;
         return luz;
     }
 
@@ -566,9 +670,9 @@ public static class ConstructorCuarto2
         {
             chapa = Grupo("Digito", cara.transform);
             chapa.transform.localPosition = new Vector3(0f, -0.26f, 0.02f);
-            Cubo("Chapa", chapa.transform, Vector3.zero, new Vector3(0.15f, 0.15f, 0.02f), mBronce);
+            Cubo("Chapa", chapa.transform, Vector3.zero, new Vector3(0.16f, 0.16f, 0.02f), mDigito);
             Texto("Numero", chapa.transform, new Vector3(0f, 0f, 0.02f), Vector3.zero,
-                  digito.ToString(), 0.8f, new Color(0.15f, 0.12f, 0.05f), 0.16f, 0.16f);
+                  digito.ToString(), 0.9f, new Color(0.03f, 0.08f, 0.1f), 0.16f, 0.16f);
             chapa.SetActive(false);
         }
 
@@ -742,20 +846,12 @@ public static class ConstructorCuarto2
 
     // ------------------------------------------------------------------ luces
 
-    // Devuelve la luz de sala, que arranca apagada hasta que se sube la llave del tablero
+    // Devuelve la luz de sala. La apaga ControlEnergia al arrancar, no se apaga acá,
+    // porque el que decide si hay energía o no es ese script.
     static GameObject ArmarLuces(Transform p)
     {
-        // Luz mínima del cuarto sin energía: apenas se ve para poder buscar el tablero
-        var tenue = new GameObject("Luz_Sin_Energia");
-        tenue.transform.SetParent(p, false);
-        tenue.transform.localPosition = new Vector3(ANCHO / 2f, ALTO - 0.5f, FONDO / 2f);
-        var l = tenue.AddComponent<Light>();
-        l.type = LightType.Point;
-        l.color = new Color(0.4f, 0.5f, 0.7f);
-        l.intensity = 0.22f;
-        l.range = 14f;
-
-        // Luz verde de emergencia sobre la puerta de salida (la única que sobrevive al apagón)
+        // Luz verde de emergencia sobre la puerta de salida: es la única que
+        // sobrevive al apagón, así que queda encendida siempre
         var emer = new GameObject("Luz_Emergencia");
         emer.transform.SetParent(p, false);
         emer.transform.localPosition = new Vector3((SALIDA_X0 + SALIDA_X1) / 2f, ALTO_PUERTA + 0.3f, FONDO - 0.4f);
@@ -765,8 +861,16 @@ public static class ConstructorCuarto2
         le.intensity = 1.6f;
         le.range = 3.5f;
 
-        return LuzApagada("Luz_Sala", p, new Vector3(ANCHO / 2f, ALTO - 0.35f, FONDO / 2f),
-                          new Color(1f, 0.95f, 0.85f), 3.4f, 16f);
+        var sala = new GameObject("Luz_Sala");
+        sala.transform.SetParent(p, false);
+        sala.transform.localPosition = new Vector3(ANCHO / 2f, ALTO - 0.35f, FONDO / 2f);
+        var ls = sala.AddComponent<Light>();
+        ls.type = LightType.Point;
+        ls.color = new Color(1f, 0.96f, 0.88f);
+        ls.intensity = 4.5f;
+        ls.range = 18f;
+        ls.shadows = LightShadows.Soft;
+        return sala;
     }
 
     // ------------------------------------------------------------------ apoyo
@@ -945,6 +1049,14 @@ public static class ConstructorCuarto2
         mLibroB = Mat("C2_LibroB", new Color(0.14f, 0.25f, 0.33f), 0f, 0.15f);
         mLibroC = Mat("C2_LibroC", new Color(0.24f, 0.28f, 0.16f), 0f, 0.15f);
         mLampara = Mat("C2_PantallaLampara", new Color(0.16f, 0.42f, 0.24f), 0f, 0.3f);
+
+        // Tiras LED: fuerte mientras no hay energía, suave cuando vuelve la luz
+        mLedFuerte = Mat("C2_LedFuerte", new Color(0.45f, 0.15f, 0.85f), 0f, 0.8f,
+                         new Color(1.7f, 0.5f, 3f));
+        mLedSuave = Mat("C2_LedSuave", new Color(0.35f, 0.15f, 0.6f), 0f, 0.8f,
+                        new Color(0.35f, 0.1f, 0.6f));
+        mDigito = Mat("C2_Digito", new Color(0.1f, 0.1f, 0.12f), 0f, 0.7f,
+                      new Color(0.15f, 0.9f, 1.1f));
     }
 
     // "polyHaven" es el nombre del asset en Poly Haven (por ejemplo "dark_wooden_planks").
