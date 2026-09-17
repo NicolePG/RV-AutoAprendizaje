@@ -22,7 +22,7 @@ public class PressableButton : MonoBehaviour
     public AudioClip sonido;
 
     [Tooltip("Qué pasa al presionar el botón")]
-    public UnityEvent alPresionar;
+    public UnityEvent alPresionar = new UnityEvent();
 
     XRSimpleInteractable interactable;
     AudioSource audioSource;
