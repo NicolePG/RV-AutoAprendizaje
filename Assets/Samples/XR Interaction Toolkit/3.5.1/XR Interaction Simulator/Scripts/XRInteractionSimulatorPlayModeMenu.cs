@@ -418,51 +418,51 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.InteractionSimulator
             switch (inputMode)
             {
                 case ControllerInputMode.None:
-                    actionText.text = "None";
+                    actionText.text = "Ninguna";
                     bindingText.text = "?";
                     break;
                 case ControllerInputMode.Trigger:
-                    actionText.text = "Trigger";
+                    actionText.text = "Gatillo";
                     bindingText.text = GetBindingString(m_Simulator.triggerInput);
                     break;
                 case ControllerInputMode.Grip:
-                    actionText.text = "Grip";
+                    actionText.text = "Agarre";
                     bindingText.text = GetBindingString(m_Simulator.gripInput);
                     break;
                 case ControllerInputMode.PrimaryButton:
-                    actionText.text = "Primary";
+                    actionText.text = "Primario";
                     bindingText.text = GetBindingString(m_Simulator.primaryButtonInput);
                     break;
                 case ControllerInputMode.SecondaryButton:
-                    actionText.text = "Secondary";
+                    actionText.text = "Secundario";
                     bindingText.text = GetBindingString(m_Simulator.secondaryButtonInput);
                     break;
                 case ControllerInputMode.Menu:
-                    actionText.text = "Menu";
+                    actionText.text = "Menú";
                     bindingText.text = GetBindingString(m_Simulator.menuInput);
                     break;
                 case ControllerInputMode.Primary2DAxisClick:
-                    actionText.text = "Prim2DClick";
+                    actionText.text = "Clic 2D Prim";
                     bindingText.text = GetBindingString(m_Simulator.primary2DAxisClickInput);
                     break;
                 case ControllerInputMode.Secondary2DAxisClick:
-                    actionText.text = "Sec2DClick";
+                    actionText.text = "Clic 2D Sec";
                     bindingText.text = GetBindingString(m_Simulator.secondary2DAxisClickInput);
                     break;
                 case ControllerInputMode.Primary2DAxisTouch:
-                    actionText.text = "Prim2DTouch";
+                    actionText.text = "Toque 2D Prim";
                     bindingText.text = GetBindingString(m_Simulator.primary2DAxisTouchInput);
                     break;
                 case ControllerInputMode.Secondary2DAxisTouch:
-                    actionText.text = "Sec2DTouch";
+                    actionText.text = "Toque 2D Sec";
                     bindingText.text = GetBindingString(m_Simulator.secondary2DAxisTouchInput);
                     break;
                 case ControllerInputMode.PrimaryTouch:
-                    actionText.text = "PrimTouch";
+                    actionText.text = "Toque Prim";
                     bindingText.text = GetBindingString(m_Simulator.primaryTouchInput);
                     break;
                 case ControllerInputMode.SecondaryTouch:
-                    actionText.text = "SecTouch";
+                    actionText.text = "Toque Sec";
                     bindingText.text = GetBindingString(m_Simulator.secondaryTouchInput);
                     break;
                 default:

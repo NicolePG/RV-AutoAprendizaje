@@ -15,9 +15,13 @@ No es un juego grande. La consigna es explícita: **una mecánica principal bien
 hecha vale más que diez mecánicas a medias**. La nota se basa en idea, diseño,
 implementación, organización y pruebas, no en gráficos.
 
-**Concepto:** el jugador despierta encerrado en un laboratorio abandonado y sin
-energía. Debe resolver un acertijo en cada cuarto para abrir la siguiente puerta
-y escapar antes de que se acabe el tiempo.
+**Concepto (*Protocolo Apagón*):** un corte de energía deja al jugador atrapado
+dentro de un colegio cerrado hace tiempo. Debe resolver un acertijo en cada cuarto
+para abrir la siguiente puerta y escapar antes de que se acabe el tiempo.
+
+**Documento de diseño:** el GDD del equipo (*Protocolo Apagón — Documento de
+Diseño*) tiene el detalle de cada cuarto, sus coordenadas y los sustos. Si este
+archivo y el GDD dicen cosas distintas, **manda el GDD**.
 
 **Mecánica principal:** resolver acertijos manipulando objetos físicos con los
 controles del Quest.
@@ -81,12 +85,50 @@ llegue a cero muestra la pantalla de tiempo agotado, con opción de cargar la
 
 | # | Cuarto | Acertijo | Interacción XRI |
 |---|---|---|---|
-| 1 | Recepción | Llave escondida bajo el mostrador, va a la cerradura | Grab + Socket |
-| 2 | Oficina | Código de 4 dígitos repartido en reloj, libro y cuadro | Botones (Simple Interactable) |
-| 3 | Sala de máquinas | 3 fusibles en el panel eléctrico devuelven la energía | Grab + Socket |
-| 4 | Laboratorio | 3 palancas en el orden que indica una pista, más un objeto del cuarto 2 | Palancas + inventario |
+| 1 | Recepción (portería) | Llave en un cajón bajo el mostrador; la cerradura tiene una tapa atornillada | Grab + Socket, cajones, botones |
+| 2 | Dirección | Código de 4 dígitos: reloj real (1 de 5 idénticos), libro y cuadro | Teclado (Simple Interactable) |
+| 3 | Sala de computación | 3 de las 5 computadoras muestran un carácter; se marcan en la consola | Botones |
+| 4 | Laboratorio de ciencias | Fusibles → llaves de gas → 3 palancas en orden, más el objeto del cuarto 2 | Grab + Socket, perillas, palancas, inventario |
 
 El cuarto 1 funciona como tutorial: enseña a agarrar sin decirlo.
+
+**Cuarto 1 paso a paso** (cada paso enseña una mecánica):
+1. Empieza a oscuras (solo luz de emergencia). Subir la **palanca** del interruptor
+   general, debajo del tablero eléctrico → vuelve la energía: luz y computadora (`Lever`).
+2. **Presionar PLAY** en la computadora → mensaje con la pista (`PressableButton`).
+3. El póster muestra el escudo (rombo azul) → **abrir cajones** (`Drawer`): rombo =
+   llave, cuadrado = destornillador, círculo = señuelo.
+4. Con el destornillador **quitar los 2 tornillos**: apoyar la punta (el tornillo se
+   pone ámbar) y **girar** (muñeca en el Quest, mouse en círculos en el PC). Cada
+   tornillo sale con 2 vueltas y cae la tapa del panel (`Destornillador`, `Screw`, `ScrewedPanel`).
+5. Brilla un **aro ámbar** en la cerradura. **Soltar la llave cerca** → viaja sola a
+   su lugar, entra, gira, clic; panel verde "ABIERTO" y la puerta se abre sola con
+   pestillo y frenando al final; se enciende la luz del pasillo
+   (`KeyPuzzle` + `PuzzleData` + `Door`).
+
+**Objetos agarrables** (regla para todos los cuartos): agarre firme, como una mano
+que toma bien una herramienta. `XRGrabInteractable` con **punto de agarre fijo**
+(`PuntoDeAgarre` en el builder: mango, cabeza de la llave...), movimiento
+**Instantaneous** (sin retraso ni temblor) y **far attach = Near** (con el rayo, el
+objeto viene a la mano). Rigidbody con detección continua. `ObjetoAgarrable`: quieto
+dentro de cajones, al soltarlo sale de la mesa si quedó metido, y si se pierde aparece
+sobre el mostrador. `ResaltarAlApuntar`: tono ámbar al apuntarlo (también en cajones,
+botones y palancas). Los muebles huecos llevan **relleno invisible** (`Relleno`) para
+que nada se cuele adentro.
+
+`LimitesDelJugador` (en el XR Origin) evita que la cabeza atraviese paredes y
+mantiene la altura de los ojos entre 0.8 y 1.85 m. `ControlesDePC` agrega, solo
+para probar en el PC con el simulador: **CTRL o C** para agacharse/levantarse (un
+toque, no se mantiene) y **SHIFT** para correr. Las **herramientas** (llave y
+destornillador) llevan `HerramientaEnMano`: en el PC se agarran con **un clic** y
+otro clic las suelta, y quedan derechas mirando al frente. Todo lo demás (cajones,
+palanca, botones, notas) se agarra como siempre: mantener apretado y soltar.
+En el Quest nada de esto se activa: ahí el jugador se agacha de verdad, agarra
+manteniendo el grip y se mueve con teletransporte, como pide el GDD.
+
+Cada cuarto mide **4 × 4 m con techo a 2.6 m**. La pared de entrada es la norte y
+la salida está en el muro sur. Lo que se agarra o presiona va entre **0.9 y 1.3 m**
+de altura.
 
 ### Decisiones de diseño ya tomadas
 
@@ -96,8 +138,21 @@ El cuarto 1 funciona como tutorial: enseña a agarrar sin decirlo.
   en VR y se marea con facilidad.
 - **Gray box primero.** Se construye todo con cubos grises y recién al final se
   cambian por modelos.
+- **Arte de Poly Haven.** Texturas y modelos CC0 en resolución 1k (por el Quest),
+  guardados en `Assets/PolyHaven`. Los `.gltf` se importan con el paquete glTFast.
+  Los carga el builder del cuarto (`Assets/Editor/Cuarto1Builder.cs`): si un
+  modelo falta, el builder usa la versión gray box. Nunca colocar arte a mano en
+  un cuarto que tiene builder, porque se borra al reconstruirlo.
+- **Iluminación horneada.** El builder marca como estático lo que nunca se mueve
+  y hornea la luz al final (hay que esperar la barra antes de dar Play). Lo que
+  se mueve o cambia (cajones, agarrables, botones, tornillos, puerta) **no** debe
+  ser estático: se ilumina con las sondas de luz. Las luces que cambian durante
+  el juego (como la de la cerradura) van en tiempo real, no horneadas.
 - **Sin menús de ayuda.** Las pistas están en el propio cuarto.
-- **Nada de sustos fuertes.** El público es general.
+- **Tres sustos que suben de intensidad** (GDD, sección 6): reloj falso, silla y
+  mesa de disección. Van en **versión segura**: nunca se activan por chocar con
+  el cuerpo (en una feria el jugador podría tropezar de verdad). Se activan al
+  tocar con la mano o al teletransportarse cerca.
 - Partida de **10 a 15 minutos**, temporizador de 15 minutos.
 
 ---

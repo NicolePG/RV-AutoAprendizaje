@@ -419,7 +419,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Close/ Open
+  m_Text: Cerrar/ Abrir
 --- !u!1 &93451371686567606
 GameObject:
   m_ObjectHideFlags: 0
@@ -1055,7 +1055,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Hotkey
+  m_Text: Tecla
 --- !u!1 &188936453882889533
 GameObject:
   m_ObjectHideFlags: 0
@@ -1279,7 +1279,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Hotkey
+  m_Text: Tecla
 --- !u!1 &241597712665097241
 GameObject:
   m_ObjectHideFlags: 0
@@ -2144,7 +2144,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Hand Actions
+  m_Text: Acciones de mano
 --- !u!1 &448132350680990459
 GameObject:
   m_ObjectHideFlags: 0
@@ -2709,7 +2709,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Left
+  m_Text: Izquierda
 --- !u!1 &550129371695366427
 GameObject:
   m_ObjectHideFlags: 0
@@ -2788,7 +2788,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Space
+  m_Text: Espacio
 --- !u!1 &578461888155632805
 GameObject:
   m_ObjectHideFlags: 0
@@ -3325,7 +3325,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Grab
+  m_Text: Agarrar
 --- !u!1 &696266933508801646
 GameObject:
   m_ObjectHideFlags: 0
@@ -3404,9 +3404,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: 'Grab
-
-'
+  m_Text: "Agarrar\n"
 --- !u!1 &744623150426840450
 GameObject:
   m_ObjectHideFlags: 0
@@ -4162,7 +4160,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Press/ Release
+  m_Text: Presionar/ Soltar
 --- !u!1 &996006546304875212
 GameObject:
   m_ObjectHideFlags: 0
@@ -4320,7 +4318,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Cycle Actions
+  m_Text: Cambiar acciones
 --- !u!1 &1026406815108800070
 GameObject:
   m_ObjectHideFlags: 0
@@ -4902,7 +4900,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Close/ Open
+  m_Text: Cerrar/ Abrir
 --- !u!1 &1180035394418892983
 GameObject:
   m_ObjectHideFlags: 0
@@ -4981,7 +4979,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: (Start/End)
+  m_Text: (Inicio/Fin)
 --- !u!1 &1210099477354727383
 GameObject:
   m_ObjectHideFlags: 0
@@ -5218,7 +5216,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Prim2DTouch
+  m_Text: Toque 2D Prim
 --- !u!1 &1295105749064218421
 GameObject:
   m_ObjectHideFlags: 0
@@ -5684,7 +5682,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Close/ Open
+  m_Text: Cerrar/ Abrir
 --- !u!1 &1364008535971852161
 GameObject:
   m_ObjectHideFlags: 0
@@ -5763,7 +5761,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Poke
+  m_Text: Tocar
 --- !u!1 &1376207588571431505
 GameObject:
   m_ObjectHideFlags: 0
@@ -6150,7 +6148,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Sec2DTouch
+  m_Text: Toque 2D Sec
 --- !u!1 &1438627640334842309
 GameObject:
   m_ObjectHideFlags: 0
@@ -6343,7 +6341,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Rotate
+  m_Text: Girar
 --- !u!1 &1453345799491037743
 GameObject:
   m_ObjectHideFlags: 0
@@ -6888,7 +6886,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Poke
+  m_Text: Tocar
 --- !u!1 &1579409620691379189
 GameObject:
   m_ObjectHideFlags: 0
@@ -7557,7 +7555,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Start/ End
+  m_Text: Inicio/ Fin
 --- !u!1 &1692848478232564131
 GameObject:
   m_ObjectHideFlags: 0
@@ -7636,7 +7634,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Unable to detect Hand Visualizers. Hand poses not visible.
+  m_Text: No se detectan visualizadores de manos. Las poses de mano no se ven.
 --- !u!1 &1694008792132535129
 GameObject:
   m_ObjectHideFlags: 0
@@ -7794,7 +7792,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Trig
+  m_Text: Gatillo
 --- !u!1 &1788138351666028207
 GameObject:
   m_ObjectHideFlags: 0
@@ -8286,7 +8284,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Both
+  m_Text: Ambas
 --- !u!1 &1987387746847322643
 GameObject:
   m_ObjectHideFlags: 0
@@ -8365,7 +8363,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: (Start/End)
+  m_Text: (Inicio/Fin)
 --- !u!1 &1995247952258354469
 GameObject:
   m_ObjectHideFlags: 0
@@ -8519,7 +8517,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Translate
+  m_Text: Mover
 --- !u!1 &2027609555005383478
 GameObject:
   m_ObjectHideFlags: 0
@@ -8701,7 +8699,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Left Controller Actions
+  m_Text: Acciones control izquierdo
 --- !u!1 &2064504634485468899
 GameObject:
   m_ObjectHideFlags: 0
@@ -9167,7 +9165,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Close/ Open
+  m_Text: Cerrar/ Abrir
 --- !u!1 &2191721441082841400
 GameObject:
   m_ObjectHideFlags: 0
@@ -10128,7 +10126,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Add hands to the input modality manager to enable hand simulation.
+  m_Text: Agrega manos al Input Modality Manager para simularlas.
 --- !u!1 &2528612063971341128
 GameObject:
   m_ObjectHideFlags: 0
@@ -10715,7 +10713,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Prim2DTouch
+  m_Text: Toque 2D Prim
 --- !u!1 &2576878689481002531
 GameObject:
   m_ObjectHideFlags: 0
@@ -11326,7 +11324,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Hotkey
+  m_Text: Tecla
 --- !u!1 &2709189430749283322
 GameObject:
   m_ObjectHideFlags: 0
@@ -12073,7 +12071,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Pinch
+  m_Text: Pellizcar
 --- !u!1 &2903732054234829937
 GameObject:
   m_ObjectHideFlags: 0
@@ -12231,7 +12229,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: PrimTouch
+  m_Text: Toque Prim
 --- !u!1 &2950203337303658465
 GameObject:
   m_ObjectHideFlags: 0
@@ -12310,7 +12308,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Prim2DClick
+  m_Text: Clic 2D Prim
 --- !u!1 &2961637890377610379
 GameObject:
   m_ObjectHideFlags: 0
@@ -12389,7 +12387,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Input Selection
+  m_Text: Controles
 --- !u!1 &2970811688263072926
 GameObject:
   m_ObjectHideFlags: 0
@@ -13883,7 +13881,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Hotkey
+  m_Text: Tecla
 --- !u!1 &3177480734895132315
 GameObject:
   m_ObjectHideFlags: 0
@@ -14678,7 +14676,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Controller Actions
+  m_Text: Acciones del control
 --- !u!1 &3392586278457549667
 GameObject:
   m_ObjectHideFlags: 0
@@ -17274,7 +17272,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Selected Input
+  m_Text: Entrada elegida
 --- !u!1 &4024449410481113720
 GameObject:
   m_ObjectHideFlags: 0
@@ -17747,7 +17745,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Single
+  m_Text: Una
 --- !u!1 &4097802845532184356
 GameObject:
   m_ObjectHideFlags: 0
@@ -17901,7 +17899,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Reposition into view
+  m_Text: Volver a la vista
 --- !u!1 &4142607296923578154
 GameObject:
   m_ObjectHideFlags: 0
@@ -19661,7 +19659,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Pinch
+  m_Text: Pellizcar
 --- !u!1 &4751428748907251786
 GameObject:
   m_ObjectHideFlags: 0
@@ -20315,7 +20313,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Hand Actions
+  m_Text: Acciones de mano
 --- !u!1 &4951925752196195924
 GameObject:
   m_ObjectHideFlags: 0
@@ -20431,7 +20429,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Hand Modality
+  m_Text: Modo de manos
 --- !u!1 &5007562539519909241
 GameObject:
   m_ObjectHideFlags: 0
@@ -20667,7 +20665,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Input Selection
+  m_Text: Controles
 --- !u!1 &5037900736003274455
 GameObject:
   m_ObjectHideFlags: 0
@@ -20783,7 +20781,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Idle
+  m_Text: Reposo
 --- !u!1 &5126227408221587537
 GameObject:
   m_ObjectHideFlags: 0
@@ -21174,7 +21172,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Close/ Open
+  m_Text: Cerrar/ Abrir
 --- !u!1 &5207631386085566706
 GameObject:
   m_ObjectHideFlags: 0
@@ -21790,7 +21788,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: SecTouch
+  m_Text: Toque Sec
 --- !u!1 &5386712367087966310
 GameObject:
   m_ObjectHideFlags: 0
@@ -22574,7 +22572,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Grab
+  m_Text: Agarrar
 --- !u!1 &5624743732757696302
 GameObject:
   m_ObjectHideFlags: 0
@@ -22728,7 +22726,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Space
+  m_Text: Espacio
 --- !u!1 &5728475931408580218
 GameObject:
   m_ObjectHideFlags: 0
@@ -23197,7 +23195,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Single
+  m_Text: Una
 --- !u!1 &5843123144937692436
 GameObject:
   m_ObjectHideFlags: 0
@@ -23463,7 +23461,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Multi
+  m_Text: Varias
 --- !u!1 &5873537314939949276
 GameObject:
   m_ObjectHideFlags: 0
@@ -23989,7 +23987,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Input Movement
+  m_Text: Movimiento
 --- !u!1 &5998569200639317976
 GameObject:
   m_ObjectHideFlags: 0
@@ -24222,7 +24220,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Poke
+  m_Text: Tocar
 --- !u!1 &6040215637141417513
 GameObject:
   m_ObjectHideFlags: 0
@@ -24790,7 +24788,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Pinch
+  m_Text: Pellizcar
 --- !u!1 &6129732220930283249
 GameObject:
   m_ObjectHideFlags: 0
@@ -24869,7 +24867,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Grip
+  m_Text: Agarre
 --- !u!1 &6160542316042459921
 GameObject:
   m_ObjectHideFlags: 0
@@ -25436,7 +25434,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Menu
+  m_Text: "Men\xFA"
 --- !u!1 &6277037421443860079
 GameObject:
   m_ObjectHideFlags: 0
@@ -26408,7 +26406,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Multi
+  m_Text: Varias
 --- !u!1 &6522815099591240273
 GameObject:
   m_ObjectHideFlags: 0
@@ -26756,7 +26754,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: "Full \nBody"
+  m_Text: "Cuerpo \ncompleto"
 --- !u!1 &6600077032971744509
 GameObject:
   m_ObjectHideFlags: 0
@@ -27961,9 +27959,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: 'Grab
-
-'
+  m_Text: "Agarrar\n"
 --- !u!1 &6860482990203578860
 GameObject:
   m_ObjectHideFlags: 0
@@ -28354,7 +28350,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Pinch
+  m_Text: Pellizcar
 --- !u!1 &6948302168365031579
 GameObject:
   m_ObjectHideFlags: 0
@@ -28911,7 +28907,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Prim2DClick
+  m_Text: Clic 2D Prim
 --- !u!1 &7175798894597123964
 GameObject:
   m_ObjectHideFlags: 0
@@ -29423,7 +29419,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Reset Position
+  m_Text: "Reiniciar posici\xF3n"
 --- !u!1 &7258478859829211735
 GameObject:
   m_ObjectHideFlags: 0
@@ -29502,7 +29498,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Neutral pose
+  m_Text: Pose neutra
 --- !u!1 &7299766211826314147
 GameObject:
   m_ObjectHideFlags: 0
@@ -30200,7 +30196,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: PrimTouch
+  m_Text: Toque Prim
 --- !u!1 &7447157643505252433
 GameObject:
   m_ObjectHideFlags: 0
@@ -30893,7 +30889,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Grip
+  m_Text: Agarre
 --- !u!1 &7661342219706020510
 GameObject:
   m_ObjectHideFlags: 0
@@ -30972,7 +30968,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Download XR Hands Package to enable Hands.
+  m_Text: Descarga el paquete XR Hands para usar manos.
 --- !u!1 &7665844927021531121
 GameObject:
   m_ObjectHideFlags: 0
@@ -31126,7 +31122,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Poke
+  m_Text: Tocar
 --- !u!1 &7739844967758575871
 GameObject:
   m_ObjectHideFlags: 0
@@ -31596,7 +31592,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Hotkey
+  m_Text: Tecla
 --- !u!1 &7798246736588004461
 GameObject:
   m_ObjectHideFlags: 0
@@ -32749,7 +32745,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Close/ Open
+  m_Text: Cerrar/ Abrir
 --- !u!1 &8102786779209660300
 GameObject:
   m_ObjectHideFlags: 0
@@ -33438,7 +33434,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Right
+  m_Text: Derecha
 --- !u!1 &8295217241658335260
 GameObject:
   m_ObjectHideFlags: 0
@@ -33633,7 +33629,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Cycle Actions
+  m_Text: Cambiar acciones
 --- !u!1 &8344705831256558712
 GameObject:
   m_ObjectHideFlags: 0
@@ -33825,7 +33821,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Sec2DClick
+  m_Text: Clic 2D Sec
 --- !u!1 &8396889295277883614
 GameObject:
   m_ObjectHideFlags: 0
@@ -34138,7 +34134,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Sec2DClick
+  m_Text: Clic 2D Sec
 --- !u!1 &8522278435667068479
 GameObject:
   m_ObjectHideFlags: 0
@@ -34693,7 +34689,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Right Controller Actions
+  m_Text: Acciones control derecho
 --- !u!1 &8627200968908435487
 GameObject:
   m_ObjectHideFlags: 0
@@ -35715,7 +35711,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Trig
+  m_Text: Gatillo
 --- !u!1 &8692929584992769818
 GameObject:
   m_ObjectHideFlags: 0
@@ -35910,7 +35906,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: SecTouch
+  m_Text: Toque Sec
 --- !u!1 &8775096188501130788
 GameObject:
   m_ObjectHideFlags: 0
@@ -36738,7 +36734,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Controller Actions
+  m_Text: Acciones del control
 --- !u!1 &8939660567094862593
 GameObject:
   m_ObjectHideFlags: 0
@@ -37195,7 +37191,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Sec2DTouch
+  m_Text: Toque 2D Sec
 --- !u!1 &9023391777316888452
 GameObject:
   m_ObjectHideFlags: 0
@@ -37675,7 +37671,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Menu
+  m_Text: "Men\xFA"
 --- !u!1 &9205061911131900328
 GameObject:
   m_ObjectHideFlags: 0
