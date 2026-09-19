@@ -40,7 +40,7 @@ public static class ConstructorCuarto2
 
     const float ALTURA_RELOJ = 1.55f;
 
-    static Material mPared, mParedRelojes, mParedPuerta, mMaderaClara, mPantallaPC, mTecho, mPiso, mMadera, mNegro, mBlanco, mMetal, mBronce,
+    static Material mPared, mParedRelojes, mParedPuerta, mMaderaClara, mPantallaPC, mOro, mTecho, mPiso, mMadera, mNegro, mBlanco, mMetal, mBronce,
                     mEsfera, mVerde, mRojo, mPantalla, mResaltado, mGrieta, mAlfombra,
                     mPapel, mTela, mLuzTecho, mDigito, mLibroA, mLibroB, mLibroC;
 
@@ -84,6 +84,7 @@ public static class ConstructorCuarto2
         conEnergia.AddRange(ArmarRelojes(relojes.transform));
         List<GameObject> sinEnergia = ArmarTerror(luces.transform);
 
+        ArmarRejaEntrada(raiz.transform);
         CerraduraLlave cerradura = ArmarPuertaSalida(raiz.transform);
         conEnergia.Add(ArmarTeclado(raiz.transform, cerradura));
 
@@ -217,6 +218,30 @@ public static class ConstructorCuarto2
         };
         texto.text = panelObjetivo.pasos[0];   // así ya se ve en el editor, sin darle Play
         EditorUtility.SetDirty(panelObjetivo);
+    }
+
+    // Cartel flotante: aparece delante de la cara del jugador para leerlo cómodo.
+    // Se usa para las pistas de la computadora y para el acertijo del cuaderno.
+    static PanelEnLaCara CrearPanelFlotante(Transform raiz, string nombre, string texto,
+                                            float tamano, float alto, Color color)
+    {
+        var g = Grupo(nombre, raiz);
+        g.transform.localPosition = new Vector3(ANCHO / 2f, 1.5f, FONDO / 2f);
+
+        var contenido = Grupo("Contenido", g.transform);
+        Cubo("Borde", contenido.transform, new Vector3(0f, 0f, -0.006f),
+             new Vector3(0.98f, alto + 0.04f, 0.006f), mVerde);
+        Cubo("Fondo", contenido.transform, Vector3.zero, new Vector3(0.94f, alto, 0.01f), mNegro);
+        var t = Texto("Texto", contenido.transform, new Vector3(0f, 0f, 0.012f), Vector3.zero,
+                      texto, tamano, color, 0.9f, alto - 0.04f);
+        t.alignment = TextAlignmentOptions.TopLeft;
+        t.lineSpacing = -14f;
+
+        var panel = g.AddComponent<PanelEnLaCara>();
+        panel.contenido = contenido;
+        contenido.SetActive(false);
+        EditorUtility.SetDirty(panel);
+        return panel;
     }
 
     // Conecta un evento para que el cartel pase a mostrar un paso determinado
@@ -356,30 +381,29 @@ public static class ConstructorCuarto2
         Cubo("Pantalla", pc.transform, new Vector3(0f, 0.3f, -0.007f), new Vector3(0.54f, 0.32f, 0.004f), mPantallaPC);
 
         var espera = Texto("Texto_Espera", pc.transform, new Vector3(0f, 0.3f, -0.012f), new Vector3(0f, 180f, 0f),
-                           "DIRECCION\n\nPULSA EL BOTON VERDE\npara ver que hay que hacer",
-                           0.3f, new Color(0.55f, 0.95f, 1f), 0.52f, 0.3f);
+                           "DIRECCION\n\nPULSA EL BOTON VERDE\ndel teclado",
+                           0.32f, new Color(0.55f, 0.95f, 1f), 0.52f, 0.3f);
         espera.lineSpacing = -14f;
 
-        var instrucciones = Texto("Texto_Instrucciones", pc.transform, new Vector3(0f, 0.3f, -0.012f),
-                                  new Vector3(0f, 180f, 0f),
-                                  "LOS RELOJES DEL PASILLO\n\n" +
-                                  "Los cinco se pararon a las 4:40, cuando se\n" +
-                                  "corto la luz. Hay que volver a ponerlos en hora.\n\n" +
-                                  "- La bitacora, sobre el mueble largo, dice a que\n" +
-                                  "   hora suena cada campana del colegio.\n" +
-                                  "- La placa debajo del cuadro dice que reloj es\n" +
-                                  "   cada campana.\n" +
-                                  "- Agarra la aguja corta y girala hasta esa hora:\n" +
-                                  "   el reloj se enciende y muestra un numero.\n" +
-                                  "- Un reloj no figura en la placa. NO lo toques.\n\n" +
-                                  "Los numeros, en el orden de la bitacora, son el\n" +
-                                  "codigo del teclado de la salida.\n" +
-                                  "Despues hace falta la llave: el cuaderno del\n" +
-                                  "estante dice donde esta.",
-                                  0.165f, new Color(0.75f, 0.98f, 1f), 0.52f, 0.3f);
-        instrucciones.alignment = TextAlignmentOptions.TopLeft;
-        instrucciones.lineSpacing = -16f;
-        instrucciones.gameObject.SetActive(false);
+        // Las pistas no van en la pantalla (queda chica y lejos): aparecen en un cartel
+        // grande delante de la cara al pulsar el botón
+        var pistas = CrearPanelFlotante(escritorio.parent.parent, "Panel_Pistas_Relojes",
+                                        "LOS RELOJES DEL PASILLO\n\n" +
+                                        "Los cinco se pararon a las 4:40,\n" +
+                                        "cuando se corto la luz.\n" +
+                                        "Hay que ponerlos en hora.\n\n" +
+                                        "- La bitacora, sobre el mueble largo,\n" +
+                                        "   dice a que hora suena cada campana.\n" +
+                                        "- La placa debajo del cuadro dice que\n" +
+                                        "   reloj es cada campana.\n" +
+                                        "- Agarra la aguja corta y girala hasta\n" +
+                                        "   esa hora: el reloj se enciende y\n" +
+                                        "   muestra un numero.\n" +
+                                        "- Un reloj no figura en la placa:\n" +
+                                        "   NO lo toques.\n\n" +
+                                        "Los numeros, en el orden de la bitacora,\n" +
+                                        "son el codigo del teclado de la salida.",
+                                        0.26f, 0.7f, new Color(0.8f, 0.97f, 1f));
 
         // Teclado de la computadora, con sus teclas chiquitas
         var teclado = Grupo("Teclado_PC", escritorio);
@@ -403,11 +427,8 @@ public static class ConstructorCuarto2
         pulsador.recorrido = 0.008f;
         Resaltar(boton, boton.GetComponent<Renderer>());
 
-        var alternar = pc.AddComponent<AlternarObjetos>();
-        alternar.objetos = new[] { espera.gameObject, instrucciones.gameObject };
-        UnityEventTools.AddVoidPersistentListener(pulsador.alPresionar, new UnityAction(alternar.Alternar));
+        UnityEventTools.AddVoidPersistentListener(pulsador.alPresionar, new UnityAction(pistas.Alternar));
         EditorUtility.SetDirty(pulsador);
-        EditorUtility.SetDirty(alternar);
     }
 
     static void SillaSimple(Transform p, Vector3 pos)
@@ -543,19 +564,29 @@ public static class ConstructorCuarto2
 
         Cubo("Tapa", g.transform, Vector3.zero, new Vector3(0.24f, 0.025f, 0.32f), mLibroB, true);
         Cubo("Hojas", g.transform, new Vector3(0f, 0.016f, 0f), new Vector3(0.22f, 0.008f, 0.3f), mPapel);
-        var texto = Texto("Texto_Acertijo", g.transform, new Vector3(0f, 0.022f, 0f), new Vector3(-90f, 0f, 0f),
-                          "ACERTIJO\n\n" +
-                          "No tengo llave,\npero guardo una.\n\n" +
-                          "Nadie me mira,\ntodos me usan.\n\n" +
-                          "Blando por fuera,\nhueco por dentro:\n\n" +
-                          "levanta lo que cubre\nmi asiento.",
-                          0.1f, new Color(0.15f, 0.12f, 0.1f), 0.2f, 0.29f);
-        texto.lineSpacing = -16f;
+        Texto("Titulo", g.transform, new Vector3(0f, 0.022f, -0.1f), new Vector3(-90f, 0f, 0f),
+              "ACERTIJO", 0.14f, new Color(0.35f, 0.1f, 0.08f), 0.2f, 0.05f);
+
+        // El acertijo se lee en el cartel flotante, no en la tapa: agarrando el
+        // cuaderno aparece delante de la cara y al soltarlo se va
+        var acertijo = CrearPanelFlotante(p.parent, "Panel_Acertijo_Llave",
+                                          "CUADERNO DEL DIRECTOR\n\n" +
+                                          "No tengo llave,\n" +
+                                          "pero guardo una.\n\n" +
+                                          "Nadie me mira,\n" +
+                                          "todos me usan.\n\n" +
+                                          "Blando por fuera,\n" +
+                                          "hueco por dentro:\n\n" +
+                                          "levanta lo que cubre\n" +
+                                          "mi asiento.",
+                                          0.3f, 0.62f, new Color(1f, 0.93f, 0.75f));
 
         var grab = g.AddComponent<XRGrabInteractable>();
         var rb = g.GetComponent<Rigidbody>();
         if (rb != null) { rb.isKinematic = true; rb.useGravity = false; }
         Resaltar(g, g.transform.Find("Tapa").GetComponent<Renderer>());
+        UnityEventTools.AddVoidPersistentListener(grab.selectEntered, new UnityAction(acertijo.Mostrar));
+        UnityEventTools.AddVoidPersistentListener(grab.selectExited, new UnityAction(acertijo.Ocultar));
         EditorUtility.SetDirty(grab);
     }
 
@@ -586,17 +617,18 @@ public static class ConstructorCuarto2
                     Cubo("Pata", m.transform, new Vector3(x, 0.18f, z), new Vector3(0.03f, 0.36f, 0.03f), mNegro);
         }
 
-        Modelo("potted_plant_02", p, new Vector3(5.5f, 0f, 5.95f), 0f, 0.84f, false);
+        // Con collider, para que el jugador no la atraviese ni se teletransporte encima
+        Modelo("potted_plant_02", p, new Vector3(5.5f, 0f, 5.95f), 0f, 0.84f, true);
 
-        // La llave de la puerta, escondida debajo del almohadón del sofá
+        // La llave de la puerta, escondida debajo de uno de los almohadones del sofá
         var llave = Grupo("Llave_Salida", p);
-        llave.transform.localPosition = new Vector3(5.45f, 0.42f, 4.55f);
+        llave.transform.localPosition = new Vector3(5.45f, 0.44f, 4.95f);
         llave.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
-        Cilindro("Cabeza", llave.transform, new Vector3(0f, 0.055f, 0f), new Vector3(0.05f, 0.006f, 0.05f), mBronce, true)
+        Cilindro("Cabeza", llave.transform, new Vector3(0f, 0.055f, 0f), new Vector3(0.05f, 0.006f, 0.05f), mOro, true)
             .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
-        Cubo("Vastago", llave.transform, Vector3.zero, new Vector3(0.012f, 0.11f, 0.012f), mBronce);
-        Cubo("Diente_1", llave.transform, new Vector3(0.018f, -0.04f, 0f), new Vector3(0.024f, 0.012f, 0.01f), mBronce);
-        Cubo("Diente_2", llave.transform, new Vector3(0.016f, -0.062f, 0f), new Vector3(0.02f, 0.012f, 0.01f), mBronce);
+        Cubo("Vastago", llave.transform, Vector3.zero, new Vector3(0.012f, 0.11f, 0.012f), mOro);
+        Cubo("Diente_1", llave.transform, new Vector3(0.018f, -0.04f, 0f), new Vector3(0.024f, 0.012f, 0.01f), mOro);
+        Cubo("Diente_2", llave.transform, new Vector3(0.016f, -0.062f, 0f), new Vector3(0.02f, 0.012f, 0.01f), mOro);
 
         var grabLlave = llave.AddComponent<XRGrabInteractable>();
         var rbLlave = llave.GetComponent<Rigidbody>();
@@ -604,14 +636,21 @@ public static class ConstructorCuarto2
         Resaltar(llave, llave.transform.Find("Cabeza").GetComponent<Renderer>());
         EditorUtility.SetDirty(grabLlave);
 
-        // El almohadón que la tapa: hay que agarrarlo y correrlo
-        var almohadon = Cubo("Almohadon", p, new Vector3(5.45f, 0.48f, 4.55f),
-                             new Vector3(0.46f, 0.12f, 0.46f), mTela, true);
-        var grabCojin = almohadon.AddComponent<XRGrabInteractable>();
-        var rbCojin = almohadon.GetComponent<Rigidbody>();
-        if (rbCojin != null) { rbCojin.isKinematic = true; rbCojin.useGravity = false; }
-        Resaltar(almohadon, almohadon.GetComponent<Renderer>());
-        EditorUtility.SetDirty(grabCojin);
+        // Dos almohadones que se pueden levantar: debajo del segundo está la llave.
+        // Son esferas achatadas, que quedan con forma de almohadón y no de cubo.
+        float[] zAlmohadones = { 4.25f, 4.95f };
+        for (int i = 0; i < zAlmohadones.Length; i++)
+        {
+            var almohadon = Esfera("Almohadon_" + (i + 1), p, new Vector3(5.45f, 0.5f, zAlmohadones[i]),
+                                   new Vector3(0.46f, 0.16f, 0.44f), mTela, true);
+            almohadon.transform.localEulerAngles = new Vector3(0f, 0f, i == 0 ? 4f : -5f);
+
+            var grabCojin = almohadon.AddComponent<XRGrabInteractable>();
+            var rbCojin = almohadon.GetComponent<Rigidbody>();
+            if (rbCojin != null) { rbCojin.isKinematic = true; rbCojin.useGravity = false; }
+            Resaltar(almohadon, almohadon.GetComponent<Renderer>());
+            EditorUtility.SetDirty(grabCojin);
+        }
     }
 
     // ------------------------------------------------------------------ relojes
@@ -861,6 +900,18 @@ public static class ConstructorCuarto2
         Texto("Texto_Cartel", g.transform, new Vector3(ancho / 2f, ALTO_PUERTA + 0.26f, -0.12f),
               new Vector3(0f, 180f, 0f), "SALIDA", 0.14f, new Color(0.4f, 1f, 0.5f), 0.5f, 0.15f);
 
+        // Aviso al costado de la puerta: avisa que ademas del codigo hace falta la llave
+        var aviso = Grupo("Aviso_Llave", g.transform);
+        aviso.transform.localPosition = new Vector3(-1.05f, 1.55f, -0.08f);
+        aviso.transform.localEulerAngles = new Vector3(0f, 180f, 0f);
+        Cubo("Marco", aviso.transform, Vector3.zero, new Vector3(0.82f, 0.5f, 0.03f), mNegro, true);
+        Cubo("Papel", aviso.transform, new Vector3(0f, 0f, -0.018f), new Vector3(0.76f, 0.44f, 0.005f), mPapel);
+        var textoAviso = Texto("Texto_Aviso", aviso.transform, new Vector3(0f, 0f, -0.024f), Vector3.zero,
+                               "AVISO\n\nLa salida pide el codigo\nY la llave.\n\n" +
+                               "La llave no esta a la vista:\nbusca el cuaderno del estante.",
+                               0.17f, new Color(0.2f, 0.17f, 0.15f), 0.72f, 0.4f);
+        textoAviso.lineSpacing = -14f;
+
         var bisagra = Grupo("Bisagra", g.transform);
         var puerta = bisagra.AddComponent<Door>();
         // Ángulo negativo: la hoja gira hacia +Z, o sea hacia afuera del cuarto
@@ -922,6 +973,39 @@ public static class ConstructorCuarto2
         EditorUtility.SetDirty(botonGirar);
         EditorUtility.SetDirty(cerraduraLlave);
         return cerraduraLlave;
+    }
+
+    // Reja que cae sobre la entrada apenas el jugador pisa el cuarto: desde ahí no se
+    // puede volver al Cuarto 1, ni caminando ni teletransportándose (corta el rayo).
+    static void ArmarRejaEntrada(Transform raiz)
+    {
+        var reja = Grupo("Reja_Entrada", raiz);
+        reja.transform.localPosition = new Vector3((ENTRADA_X0 + ENTRADA_X1) / 2f, 0f, 0.02f);
+
+        float ancho = ENTRADA_X1 - ENTRADA_X0;
+        Cubo("Marco_Arriba", reja.transform, new Vector3(0f, ALTO_PUERTA - 0.04f, 0f),
+             new Vector3(ancho, 0.08f, 0.06f), mMetal, true);
+        Cubo("Marco_Abajo", reja.transform, new Vector3(0f, 0.04f, 0f),
+             new Vector3(ancho, 0.08f, 0.06f), mMetal, true);
+        for (int i = 0; i < 8; i++)
+            Cubo("Barrote", reja.transform,
+                 new Vector3(-ancho / 2f + 0.08f + i * (ancho - 0.16f) / 7f, ALTO_PUERTA / 2f, 0f),
+                 new Vector3(0.035f, ALTO_PUERTA, 0.035f), mMetal, true);
+
+        var audio = AudioEn("Audio_Reja", reja.transform);
+        reja.SetActive(false);
+
+        // Zona que cubre casi todo el cuarto: apenas el jugador está adentro, cae la reja
+        var zona = Grupo("Zona_Entrada", raiz);
+        zona.transform.localPosition = new Vector3(ANCHO / 2f, 1.2f, FONDO / 2f);
+        var colision = zona.AddComponent<BoxCollider>();
+        colision.isTrigger = true;
+        colision.size = new Vector3(ANCHO - 0.8f, 2.4f, FONDO - 0.8f);
+
+        var disparador = zona.AddComponent<DisparadorJugador>();
+        UnityEventTools.AddBoolPersistentListener(disparador.alEntrar, new UnityAction<bool>(reja.SetActive), true);
+        UnityEventTools.AddVoidPersistentListener(disparador.alEntrar, new UnityAction(audio.Play));
+        EditorUtility.SetDirty(disparador);
     }
 
     // ------------------------------------------------------------------ luces y terror
@@ -1402,6 +1486,8 @@ public static class ConstructorCuarto2
         mBlanco = Mat("C2_Blanco", new Color(0.93f, 0.93f, 0.92f), 0f, 0.3f);
         mMetal = Mat("C2_Metal", new Color(0.52f, 0.54f, 0.56f), 0.85f, 0.55f);
         mBronce = Mat("C2_Bronce", new Color(0.72f, 0.52f, 0.22f), 0.9f, 0.6f);
+        // Dorado bien visible, para que la llave se note apenas se levanta el almohadón
+        mOro = Mat("C2_Oro", new Color(1f, 0.78f, 0.15f), 0.9f, 0.75f, new Color(0.35f, 0.25f, 0.03f));
         mEsfera = Mat("C2_EsferaReloj", new Color(0.95f, 0.94f, 0.9f), 0f, 0.4f);
         mVerde = Mat("C2_Verde", new Color(0.2f, 0.7f, 0.3f), 0f, 0.4f, new Color(0.15f, 0.8f, 0.3f));
         mRojo = Mat("C2_Rojo", new Color(0.7f, 0.15f, 0.12f), 0f, 0.4f, new Color(0.9f, 0.1f, 0.08f));
