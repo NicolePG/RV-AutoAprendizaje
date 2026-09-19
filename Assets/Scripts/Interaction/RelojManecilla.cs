@@ -35,11 +35,13 @@ public class RelojManecilla : MonoBehaviour
     {
         if (EnHora || !interactable.isSelected) return;
 
-        // Dónde está la mano, medido sobre la cara del reloj
+        // Dónde está la mano, medido sobre la cara del reloj. El jugador mira la cara
+        // desde el +Z del reloj, así que su derecha (donde van las 3) es el -X del reloj;
+        // por eso se usa -x, y un giro positivo en Z avanza en el sentido de las agujas.
         Vector3 mano = interactable.interactorsSelecting[0].GetAttachTransform(interactable).position;
         Vector3 local = transform.parent.InverseTransformPoint(mano);
-        float grados = Mathf.Atan2(local.x, local.y) * Mathf.Rad2Deg;
-        transform.localRotation = Quaternion.Euler(0f, 0f, -grados);
+        float grados = Mathf.Atan2(-local.x, local.y) * Mathf.Rad2Deg;
+        transform.localRotation = Quaternion.Euler(0f, 0f, grados);
     }
 
     void AlSoltar(SelectExitEventArgs args)
@@ -47,11 +49,11 @@ public class RelojManecilla : MonoBehaviour
         if (EnHora) return;
 
         // Se acomoda a la hora más cercana
-        int hora = Mathf.RoundToInt(-transform.localEulerAngles.z / 30f);
+        int hora = Mathf.RoundToInt(transform.localEulerAngles.z / 30f);
         hora = ((hora % 12) + 12) % 12;
         if (hora == 0) hora = 12;
 
-        transform.localRotation = Quaternion.Euler(0f, 0f, -hora * 30f);
+        transform.localRotation = Quaternion.Euler(0f, 0f, hora * 30f);
         if (sonidoClic != null) AudioSource.PlayClipAtPoint(sonidoClic, transform.position);
 
         if (hora != horaObjetivo) return;

@@ -18,6 +18,9 @@ public class Door : MonoBehaviour
     [Tooltip("Sonido al abrirse (opcional)")]
     public AudioClip sonido;
 
+    [Tooltip("Segundos hasta que se cierra sola despues de abrirse. 0 = queda abierta")]
+    public float segundosParaCerrar;
+
     bool abierta;
 
     public void Abrir()
@@ -31,17 +34,26 @@ public class Door : MonoBehaviour
 
     IEnumerator GirarPuerta()
     {
-        Quaternion inicial = transform.localRotation;
-        Quaternion final = inicial * Quaternion.Euler(0f, anguloApertura, 0f);
-        float t = 0f;
+        Quaternion cerrada = transform.localRotation;
+        Quaternion final = cerrada * Quaternion.Euler(0f, anguloApertura, 0f);
+        yield return Girar(cerrada, final);
 
+        // Se cierra sola: da tiempo a salir y vuelve a su lugar
+        if (segundosParaCerrar <= 0f) yield break;
+        yield return new WaitForSeconds(segundosParaCerrar);
+        if (sonido != null) AudioSource.PlayClipAtPoint(sonido, transform.position);
+        yield return Girar(final, cerrada);
+    }
+
+    IEnumerator Girar(Quaternion desde, Quaternion hasta)
+    {
+        float t = 0f;
         while (t < duracion)
         {
             t += Time.deltaTime;
-            transform.localRotation = Quaternion.Slerp(inicial, final, t / duracion);
+            transform.localRotation = Quaternion.Slerp(desde, hasta, t / duracion);
             yield return null;
         }
-
-        transform.localRotation = final;
+        transform.localRotation = hasta;
     }
 }

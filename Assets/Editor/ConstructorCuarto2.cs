@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using TMPro;
 using UnityEditor;
 using UnityEditor.Events;
@@ -7,22 +8,25 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
 
-// Arma el Cuarto 2 (Dirección) completo adentro del objeto "Cuarto2_Oficina":
-// estructura, muebles, tablero eléctrico, los 5 relojes, el teclado y la puerta,
-// todo ya conectado entre sí. Se corre desde el menú: Escape Room > Construir Cuarto 2.
+// Arma el Cuarto 2 (Dirección) completo adentro del objeto "Cuarto2_Oficina",
+// con todo ya conectado. Se corre desde el menú: Escape Room > Construir Cuarto 2.
 // Borra el contenido anterior del cuarto y lo rehace, así siempre queda igual.
 //
-// El acertijo que arma tiene tres pasos:
-// 1) El cuarto entra sin energía: los relojes están muertos y el teclado apagado.
-//    Hay que encontrar el tablero eléctrico y subir la llave.
-// 2) Con luz, cada reloj que se toca muestra su dígito. La bitácora del estante dice
-//    en qué orden leerlos (C, A, B, E) y el reloj que NO está en esa lista (el D)
-//    es el que dispara el susto.
-// 3) El reloj E está parado: hay que girarle la manecilla con la mano hasta la hora
-//    que dice la placa del cuadro (las 9). Recién ahí muestra su dígito.
-//    Los cuatro dígitos en ese orden dan 3719, que es lo que abre la puerta.
+// Estilo: oficina moderna (paredes claras, piso de parquet, madera de nogal y acero
+// negro). Los muebles y texturas vienen de Poly Haven si están en el proyecto
+// (carpeta Assets/PolyHaven); si no están, cada mueble tiene una versión simple.
+//
+// El acertijo:
+// 1) El cuarto entra sin energía, a oscuras y con clima de terror. Hay que subir la
+//    llave del tablero eléctrico, junto a la entrada. Ahí se prende todo.
+// 2) Los cinco relojes están parados a las 4:40. La bitácora (sobre el aparador) da
+//    la hora de cada campana y el orden; la placa del cuadro dice qué reloj es cada
+//    campana. Se gira la manecilla de cada reloj hasta su hora y muestra su dígito.
+//    El reloj D no figura en ninguna lista: es el señuelo y dispara el susto.
+// 3) Los dígitos en el orden de la bitácora dan 3719, que abre la puerta.
 public static class ConstructorCuarto2
 {
     const float ANCHO = 6f;    // eje X: pared Oeste (0) a pared Este (6)
@@ -36,14 +40,9 @@ public static class ConstructorCuarto2
 
     const float ALTURA_RELOJ = 1.55f;
 
-    static Material mMadera, mMaderaOsc, mPared, mZocalo, mPiso, mBaldosaA, mBaldosaB, mMetal,
-                    mBronce, mEsfera, mNegro, mVerde, mRojo, mPantalla, mResaltado,
-                    mGrieta, mAlfombra, mPapel, mLibroA, mLibroB, mLibroC, mLampara,
-                    mLedFuerte, mLedSuave, mDigito;
-
-    // Si están las texturas de Poly Haven en Assets/Textures/Cuarto2, el piso usa
-    // la textura ajedrezada; si no, se arma el ajedrez con baldosas de colores.
-    static bool hayTexturaPiso;
+    static Material mPared, mParedRelojes, mParedPuerta, mMaderaClara, mPantallaPC, mTecho, mPiso, mMadera, mNegro, mBlanco, mMetal, mBronce,
+                    mEsfera, mVerde, mRojo, mPantalla, mResaltado, mGrieta, mAlfombra,
+                    mPapel, mTela, mLuzTecho, mDigito, mLibroA, mLibroB, mLibroC;
 
     // Cartel de objetivos: cada paso del acertijo le avisa para que cambie el texto
     static PanelObjetivo panelObjetivo;
@@ -64,31 +63,34 @@ public static class ConstructorCuarto2
             Undo.DestroyObjectImmediate(raiz.transform.GetChild(i).gameObject);
 
         CrearMateriales();
+        ConfigurarNormalesDeModelos();
 
         var estructura = Grupo("Estructura", raiz.transform);
         var mobiliario = Grupo("Mobiliario", raiz.transform);
         var relojes = Grupo("Relojes", raiz.transform);
         var luces = Grupo("Luces", raiz.transform);
 
-        ArmarEstructura(estructura.transform);
+        // Lo que ControlEnergia prende o apaga según haya energía o no
+        var lucesCuarto = new List<Light>();
+        var conEnergia = new List<GameObject>();
+
+        ArmarEstructura(estructura.transform, lucesCuarto, conEnergia);
         ArmarPanelObjetivo(raiz.transform);
-        ArmarEscritorio(mobiliario.transform);
+        ArmarEscritorio(mobiliario.transform, lucesCuarto);
+        ArmarAparador(mobiliario.transform);
         ArmarEstanteria(mobiliario.transform);
-        ArmarCuadro(mobiliario.transform);
-        GameObject luzLampara = ArmarLampara(mobiliario.transform);
-        ArmarDecoracion(mobiliario.transform);
+        ArmarSala(mobiliario.transform);
 
-        List<GameObject> caras = ArmarRelojes(relojes.transform);
-        GameObject luzSala = ArmarLuces(luces.transform);
-        GameObject leds = ArmarLedsTecho(luces.transform);
+        conEnergia.AddRange(ArmarRelojes(relojes.transform));
+        List<GameObject> sinEnergia = ArmarTerror(luces.transform);
 
-        Door puerta = ArmarPuertaSalida(raiz.transform);
-        GameObject tecladoActivo = ArmarTeclado(raiz.transform, puerta);
+        CerraduraLlave cerradura = ArmarPuertaSalida(raiz.transform);
+        conEnergia.Add(ArmarTeclado(raiz.transform, cerradura));
 
-        var control = ArmarControlEnergia(raiz.transform, leds, luzSala, luzLampara, caras, tecladoActivo);
+        var control = ArmarControlEnergia(raiz.transform, lucesCuarto, conEnergia, sinEnergia);
         ArmarTablero(raiz.transform, control);
 
-        OscurecerEscena();
+        AjustarAmbienteEditor();
         AsegurarInventario();
         ActualizarPuzzleData();
 
@@ -107,28 +109,15 @@ public static class ConstructorCuarto2
 
     // ------------------------------------------------------------------ estructura
 
-    static void ArmarEstructura(Transform p)
+    static void ArmarEstructura(Transform p, List<Light> lucesCuarto, List<GameObject> conEnergia)
     {
         // La losa del piso es la que hace de zona de teletransporte
         var losa = Cubo("Piso", p, new Vector3(ANCHO / 2f, -0.1f, FONDO / 2f),
-                        new Vector3(ANCHO, 0.2f, FONDO), hayTexturaPiso ? mPiso : mBaldosaB, true);
+                        new Vector3(ANCHO, 0.2f, FONDO), mPiso, true);
         var area = losa.AddComponent<TeleportationArea>();
         int capaTeleport = InteractionLayerMask.GetMask("Teleport");
         if (capaTeleport == 0) capaTeleport = 1 << 31;
         area.interactionLayers = capaTeleport;
-
-        // Sin la textura ajedrezada de Poly Haven, el ajedrez se arma con baldosas sueltas.
-        // Van sin collider para no tapar el teletransporte del piso.
-        if (!hayTexturaPiso)
-        {
-            var baldosas = Grupo("Baldosas", p);
-            for (int x = 0; x < (int)ANCHO; x++)
-                for (int z = 0; z < (int)FONDO; z++)
-                    Cubo($"Baldosa_{x}_{z}", baldosas.transform,
-                         new Vector3(x + 0.5f, 0.005f, z + 0.5f),
-                         new Vector3(0.96f, 0.02f, 0.96f),
-                         (x + z) % 2 == 0 ? mBaldosaA : mBaldosaB);
-        }
 
         var paredes = Grupo("Paredes", p);
         Cubo("Pared_Oeste", paredes.transform, new Vector3(-MURO / 2f, ALTO / 2f, FONDO / 2f),
@@ -136,179 +125,97 @@ public static class ConstructorCuarto2
         Cubo("Pared_Este", paredes.transform, new Vector3(ANCHO + MURO / 2f, ALTO / 2f, FONDO / 2f),
              new Vector3(MURO, ALTO, FONDO), mPared, true);
 
-        // Pared Norte partida por el vano de entrada
-        Muro(paredes.transform, "Pared_Norte_Izq", -MURO, ENTRADA_X0, -MURO / 2f, 0f, ALTO);
-        Muro(paredes.transform, "Pared_Norte_Der", ENTRADA_X1, ANCHO + MURO, -MURO / 2f, 0f, ALTO);
-        Muro(paredes.transform, "Dintel_Entrada", ENTRADA_X0, ENTRADA_X1, -MURO / 2f, ALTO_PUERTA, ALTO);
+        // Pared Norte (la de los relojes) partida por el vano de entrada, en verde petróleo
+        Muro(paredes.transform, "Pared_Norte_Izq", -MURO, ENTRADA_X0, -MURO / 2f, 0f, ALTO, mParedRelojes);
+        Muro(paredes.transform, "Pared_Norte_Der", ENTRADA_X1, ANCHO + MURO, -MURO / 2f, 0f, ALTO, mParedRelojes);
+        Muro(paredes.transform, "Dintel_Entrada", ENTRADA_X0, ENTRADA_X1, -MURO / 2f, ALTO_PUERTA, ALTO, mParedRelojes);
 
-        // Pared Sur partida por el vano de salida
-        Muro(paredes.transform, "Pared_Sur_Izq", -MURO, SALIDA_X0, FONDO + MURO / 2f, 0f, ALTO);
-        Muro(paredes.transform, "Pared_Sur_Der", SALIDA_X1, ANCHO + MURO, FONDO + MURO / 2f, 0f, ALTO);
-        Muro(paredes.transform, "Dintel_Salida", SALIDA_X0, SALIDA_X1, FONDO + MURO / 2f, ALTO_PUERTA, ALTO);
+        // Pared Sur (la de la puerta de salida) en terracota
+        Muro(paredes.transform, "Pared_Sur_Izq", -MURO, SALIDA_X0, FONDO + MURO / 2f, 0f, ALTO, mParedPuerta);
+        Muro(paredes.transform, "Pared_Sur_Der", SALIDA_X1, ANCHO + MURO, FONDO + MURO / 2f, 0f, ALTO, mParedPuerta);
+        Muro(paredes.transform, "Dintel_Salida", SALIDA_X0, SALIDA_X1, FONDO + MURO / 2f, ALTO_PUERTA, ALTO, mParedPuerta);
 
         Cubo("Techo", p, new Vector3(ANCHO / 2f, ALTO + MURO / 2f, FONDO / 2f),
-             new Vector3(ANCHO + MURO * 2f, MURO, FONDO + MURO * 2f), mPared, true);
+             new Vector3(ANCHO + MURO * 2f, MURO, FONDO + MURO * 2f), mTecho, true);
 
-        // Plafón del techo: de acá sale la luz de sala cuando vuelve la energía.
-        // Si está el modelo de Poly Haven se usa ese en lugar de los cilindros.
-        if (Modelo("mounted_fluorescent_lights", p, new Vector3(ANCHO / 2f, ALTO - 0.05f, FONDO / 2f), 0f, 1f) == null)
+        // Zócalo negro finito, como en las oficinas modernas
+        var zocalos = Grupo("Zocalos", p);
+        Zocalo(zocalos.transform, "Zocalo_Oeste", 0.008f, FONDO / 2f, 0.016f, FONDO);
+        Zocalo(zocalos.transform, "Zocalo_Este", ANCHO - 0.008f, FONDO / 2f, 0.016f, FONDO);
+        Zocalo(zocalos.transform, "Zocalo_Norte_Izq", ENTRADA_X0 / 2f, 0.008f, ENTRADA_X0, 0.016f);
+        Zocalo(zocalos.transform, "Zocalo_Norte_Der", (ENTRADA_X1 + ANCHO) / 2f, 0.008f, ANCHO - ENTRADA_X1, 0.016f);
+        Zocalo(zocalos.transform, "Zocalo_Sur_Izq", SALIDA_X0 / 2f, FONDO - 0.008f, SALIDA_X0, 0.016f);
+        Zocalo(zocalos.transform, "Zocalo_Sur_Der", (SALIDA_X1 + ANCHO) / 2f, FONDO - 0.008f, ANCHO - SALIDA_X1, 0.016f);
+
+        // Dos luminarias lineales en el techo: la carcasa se ve siempre, el difusor
+        // encendido y la luz solo cuando hay energía
+        int n = 1;
+        foreach (float z in new[] { 2.3f, 4.9f })
         {
-            var plafon = Grupo("Plafon", p);
-            plafon.transform.localPosition = new Vector3(ANCHO / 2f, ALTO - 0.06f, FONDO / 2f);
-            Cilindro("Aro", plafon.transform, Vector3.zero, new Vector3(0.5f, 0.03f, 0.5f), mMetal);
-            Cilindro("Vidrio", plafon.transform, new Vector3(0f, -0.04f, 0f), new Vector3(0.42f, 0.02f, 0.42f), mEsfera);
+            var lum = Grupo("Luminaria_" + n, p);
+            lum.transform.localPosition = new Vector3(ANCHO / 2f, ALTO - 0.03f, z);
+            Cubo("Carcasa", lum.transform, Vector3.zero, new Vector3(2.6f, 0.05f, 0.16f), mNegro);
+
+            var difusor = Cubo("Difusor", lum.transform, new Vector3(0f, -0.028f, 0f),
+                               new Vector3(2.5f, 0.01f, 0.1f), mLuzTecho);
+            difusor.SetActive(false);
+            conEnergia.Add(difusor);
+
+            lucesCuarto.Add(LuzPunto("Luz", lum.transform, new Vector3(0f, -0.3f, 0f),
+                                     new Color(1f, 0.96f, 0.9f), 3.2f, 10f));
+            n++;
         }
-
-        // Friso de madera en la mitad baja de la pared (con su riel arriba)
-        var friso = Grupo("Friso", p);
-        Friso(friso.transform, "Friso_Oeste", 0.03f, FONDO / 2f, 0.06f, FONDO);
-        Friso(friso.transform, "Friso_Este", ANCHO - 0.03f, FONDO / 2f, 0.06f, FONDO);
-        Friso(friso.transform, "Friso_Norte_Izq", ENTRADA_X0 / 2f, 0.03f, ENTRADA_X0, 0.06f);
-        Friso(friso.transform, "Friso_Norte_Der", (ENTRADA_X1 + ANCHO) / 2f, 0.03f, ANCHO - ENTRADA_X1, 0.06f);
-        Friso(friso.transform, "Friso_Sur_Izq", SALIDA_X0 / 2f, FONDO - 0.03f, SALIDA_X0, 0.06f);
-
-        // Moldura contra el techo, que cierra el ambiente
-        var moldura = Grupo("Moldura", p);
-        Cubo("Moldura_Oeste", moldura.transform, new Vector3(0.05f, ALTO - 0.07f, FONDO / 2f),
-             new Vector3(0.1f, 0.14f, FONDO), mZocalo);
-        Cubo("Moldura_Este", moldura.transform, new Vector3(ANCHO - 0.05f, ALTO - 0.07f, FONDO / 2f),
-             new Vector3(0.1f, 0.14f, FONDO), mZocalo);
-        Cubo("Moldura_Norte", moldura.transform, new Vector3(ANCHO / 2f, ALTO - 0.07f, 0.05f),
-             new Vector3(ANCHO, 0.14f, 0.1f), mZocalo);
-        Cubo("Moldura_Sur", moldura.transform, new Vector3(ANCHO / 2f, ALTO - 0.07f, FONDO - 0.05f),
-             new Vector3(ANCHO, 0.14f, 0.1f), mZocalo);
-    }
-
-    // Panel de madera contra la pared, con el riel que lo remata arriba
-    static void Friso(Transform p, string nombre, float x, float z, float largoX, float largoZ)
-    {
-        const float alto = 0.95f;
-        Cubo(nombre, p, new Vector3(x, alto / 2f, z), new Vector3(largoX, alto, largoZ), mMadera);
-        Cubo(nombre + "_Riel", p, new Vector3(x, alto + 0.03f, z),
-             new Vector3(largoX + 0.04f, 0.06f, largoZ + 0.04f), mZocalo);
     }
 
     // Tramo de pared entre dos X, a una altura determinada
-    static void Muro(Transform p, string nombre, float x0, float x1, float z, float yBase, float yTope)
+    static void Muro(Transform p, string nombre, float x0, float x1, float z, float yBase, float yTope,
+                     Material material = null)
     {
         float ancho = x1 - x0;
         float alto = yTope - yBase;
         if (ancho <= 0f || alto <= 0f) return;
         Cubo(nombre, p, new Vector3((x0 + x1) / 2f, yBase + alto / 2f, z),
-             new Vector3(ancho, alto, MURO), mPared, true);
+             new Vector3(ancho, alto, MURO), material != null ? material : mPared, true);
     }
 
-    // ------------------------------------------------------------------ tiras LED
-
-    // Tiras moradas por todo el borde del techo y por las esquinas verticales.
-    // Son lo único que ilumina mientras el cuarto está sin energía.
-    static GameObject ArmarLedsTecho(Transform p)
-    {
-        var g = Grupo("Leds", p);
-        float y = ALTO - 0.17f;
-
-        Cubo("Tira_Norte", g.transform, new Vector3(ANCHO / 2f, y, 0.06f),
-             new Vector3(ANCHO, 0.05f, 0.05f), mLedFuerte);
-        Cubo("Tira_Sur", g.transform, new Vector3(ANCHO / 2f, y, FONDO - 0.06f),
-             new Vector3(ANCHO, 0.05f, 0.05f), mLedFuerte);
-        Cubo("Tira_Oeste", g.transform, new Vector3(0.06f, y, FONDO / 2f),
-             new Vector3(0.05f, 0.05f, FONDO), mLedFuerte);
-        Cubo("Tira_Este", g.transform, new Vector3(ANCHO - 0.06f, y, FONDO / 2f),
-             new Vector3(0.05f, 0.05f, FONDO), mLedFuerte);
-
-        // Esquinas verticales, de piso a techo
-        float[] esquinasX = { 0.06f, ANCHO - 0.06f };
-        float[] esquinasZ = { 0.06f, FONDO - 0.06f };
-        int n = 1;
-        foreach (float ex in esquinasX)
-            foreach (float ez in esquinasZ)
-                Cubo("Tira_Esquina_" + n++, g.transform, new Vector3(ex, ALTO / 2f, ez),
-                     new Vector3(0.05f, ALTO - 0.3f, 0.05f), mLedFuerte);
-
-        // Focos morados que tiñen el cuarto de verdad (las tiras solo brillan)
-        int f = 1;
-        foreach (float ex in new[] { 1.2f, ANCHO - 1.2f })
-            foreach (float ez in new[] { 1.4f, FONDO - 1.4f })
-            {
-                var luz = new GameObject("Luz_Led_" + f++);
-                luz.transform.SetParent(g.transform, false);
-                luz.transform.localPosition = new Vector3(ex, ALTO - 0.35f, ez);
-                var l = luz.AddComponent<Light>();
-                l.type = LightType.Point;
-                l.color = new Color(0.65f, 0.25f, 1f);
-                l.intensity = 5f;
-                l.range = 7f;
-            }
-
-        return g;
-    }
-
-    // ------------------------------------------------------------------ control de energía
-
-    static ControlEnergia ArmarControlEnergia(Transform raiz, GameObject leds, GameObject luzSala,
-                                              GameObject luzLampara, List<GameObject> caras,
-                                              GameObject tecladoActivo)
-    {
-        var g = Grupo("Energia", raiz);
-        var control = g.AddComponent<ControlEnergia>();
-
-        control.lucesDelCuarto = new[] { luzSala.GetComponent<Light>(), luzLampara.GetComponent<Light>() };
-        control.lucesLed = leds.GetComponentsInChildren<Light>();
-        control.tirasLed = leds.GetComponentsInChildren<Renderer>();
-        control.materialLedFuerte = mLedFuerte;
-        control.materialLedSuave = mLedSuave;
-
-        var despiertan = new List<GameObject>(caras);
-        if (tecladoActivo != null) despiertan.Add(tecladoActivo);
-        control.objetosConEnergia = despiertan.ToArray();
-
-        // Los parpadeos solo corren mientras el cuarto está sin energía
-        control.efectosSinEnergia = raiz.GetComponentsInChildren<Parpadeo>();
-
-        EditorUtility.SetDirty(control);
-        return control;
-    }
+    static void Zocalo(Transform p, string nombre, float x, float z, float largoX, float largoZ)
+        => Cubo(nombre, p, new Vector3(x, 0.04f, z), new Vector3(largoX, 0.08f, largoZ), mNegro);
 
     // ------------------------------------------------------------------ panel de objetivos
 
-    // Tablero de avisos colgado al lado de la entrada: dice qué hay que hacer ahora
-    // y se va actualizando solo. Es lo primero que se ve al entrar al cuarto.
+    // Cartel colgado al lado de la entrada: dice qué hay que hacer ahora y se va
+    // actualizando solo. Es lo primero que se ve al entrar al cuarto.
     static void ArmarPanelObjetivo(Transform raiz)
     {
         var g = Grupo("Panel_Objetivo", raiz);
         g.transform.localPosition = new Vector3(0.1f, 1.55f, 1.15f);
         g.transform.localEulerAngles = new Vector3(0f, 90f, 0f);
 
-        Cubo("Marco", g.transform, Vector3.zero, new Vector3(1.1f, 0.7f, 0.05f), mMaderaOsc, true);
-        Cubo("Corcho", g.transform, new Vector3(0f, 0f, 0.032f), new Vector3(1f, 0.6f, 0.01f), mPapel);
-        Cubo("Chapa_Titulo", g.transform, new Vector3(0f, 0.26f, 0.04f), new Vector3(0.6f, 0.11f, 0.01f), mBronce);
-        Texto("Titulo", g.transform, new Vector3(0f, 0.26f, 0.05f), Vector3.zero,
-              "DIRECCION", 0.16f, new Color(0.15f, 0.12f, 0.05f), 0.6f, 0.12f);
+        Cubo("Marco", g.transform, Vector3.zero, new Vector3(1.1f, 0.7f, 0.04f), mNegro, true);
+        Cubo("Tablero", g.transform, new Vector3(0f, 0f, 0.022f), new Vector3(1.04f, 0.64f, 0.01f), mBlanco);
+        Texto("Titulo", g.transform, new Vector3(0f, 0.25f, 0.03f), Vector3.zero,
+              "DIRECCION", 0.26f, new Color(0.1f, 0.1f, 0.1f), 0.9f, 0.1f);
+        Cubo("Linea", g.transform, new Vector3(0f, 0.19f, 0.028f), new Vector3(0.9f, 0.004f, 0.002f), mNegro);
 
-        var texto = Texto("Texto_Objetivo", g.transform, new Vector3(0f, -0.06f, 0.045f), Vector3.zero,
-                          "", 0.2f, new Color(0.12f, 0.1f, 0.08f), 0.95f, 0.42f);
+        var texto = Texto("Texto_Objetivo", g.transform, new Vector3(0f, -0.06f, 0.03f), Vector3.zero,
+                          "", 0.27f, new Color(0.15f, 0.15f, 0.15f), 0.98f, 0.46f);
         texto.lineSpacing = -12f;
 
-        // Una luz chica para que el cartel se lea aunque el cuarto esté sin energía
-        var luz = new GameObject("Luz_Panel");
-        luz.transform.SetParent(g.transform, false);
-        luz.transform.localPosition = new Vector3(0f, 0.1f, 0.5f);
-        var l = luz.AddComponent<Light>();
-        l.type = LightType.Point;
-        l.color = new Color(1f, 0.95f, 0.8f);
-        l.intensity = 1.4f;
-        l.range = 1.6f;
+        // Una luz chica para que el cartel se lea aunque el cuarto esté a oscuras
+        LuzPunto("Luz_Panel", g.transform, new Vector3(0f, 0.1f, 0.5f), new Color(1f, 0.95f, 0.85f), 1.4f, 1.6f);
 
         panelObjetivo = g.AddComponent<PanelObjetivo>();
         panelObjetivo.texto = texto;
         panelObjetivo.pasos = new[]
         {
-            "SIN ENERGIA\n\nEl cuarto esta sin luz.\nBusca el tablero electrico\njunto a la puerta y sube la llave.",
-            "VOLVIO LA LUZ\n\nLos cinco relojes quedaron parados\na las 4:40, la hora del apagon.\nLee la bitacora del estante.",
-            "HAY QUE PONERLOS EN HORA\n\nLa bitacora dice a que hora suena\ncada campana. El cuadro dice que reloj\nes cada una. Gira las manecillas.",
+            "SIN ENERGIA\n\nSube la llave del tablero, junto a la puerta.\nEn el escritorio hay una computadora:\nel boton verde muestra que hay que hacer.",
+            "VOLVIO LA LUZ\n\nLos cinco relojes quedaron parados\na las 4:40, la hora del apagon.\nBusca la bitacora sobre el aparador.",
+            "HAY QUE PONERLOS EN HORA\n\nLa bitacora dice a que hora suena\ncada campana. La placa del cuadro dice\nque reloj es cada una. Gira las manecillas.",
             "BIEN\n\nCada reloj en hora muestra su numero.\nSegui con los demas y marca el codigo\nen el orden que dice la bitacora.",
-            "PUERTA ABIERTA\n\nLlevate el medallon del cajon\ny segui al proximo cuarto."
+            "CODIGO ACEPTADO\n\nAhora falta la llave.\nEl cuaderno del estante dice donde esta.\nDespues: encajala en la cerradura y gira la perilla.",
+            "PUERTA ABIERTA\n\nLlevate el medallon del cajon del escritorio\ny sali: la puerta se cierra sola."
         };
+        texto.text = panelObjetivo.pasos[0];   // así ya se ve en el editor, sin darle Play
         EditorUtility.SetDirty(panelObjetivo);
     }
 
@@ -327,7 +234,7 @@ public static class ConstructorCuarto2
         var g = Grupo("Tablero_Electrico", raiz);
         g.transform.localPosition = new Vector3(0.42f, 1.35f, 0.07f);
 
-        Cubo("Caja", g.transform, Vector3.zero, new Vector3(0.34f, 0.44f, 0.1f), mMetal, true);
+        Cubo("Caja", g.transform, Vector3.zero, new Vector3(0.34f, 0.44f, 0.1f), mBlanco, true);
         Cubo("Frente", g.transform, new Vector3(0f, 0f, 0.052f), new Vector3(0.29f, 0.39f, 0.01f), mNegro);
         Texto("Titulo", g.transform, new Vector3(0f, 0.15f, 0.06f), Vector3.zero,
               "TABLERO", 0.16f, new Color(0.85f, 0.85f, 0.8f), 0.28f, 0.08f);
@@ -342,58 +249,57 @@ public static class ConstructorCuarto2
         var audio = AudioEn("Audio_Llave", g.transform);
 
         var llave = Cubo("Llave_General", g.transform, new Vector3(0f, -0.1f, 0.075f),
-                         new Vector3(0.07f, 0.14f, 0.05f), mBronce, true);
+                         new Vector3(0.08f, 0.15f, 0.06f), mBronce, true);
         llave.AddComponent<XRSimpleInteractable>();
         var boton = llave.AddComponent<PressableButton>();
         boton.parteMovil = llave.transform;
         boton.recorrido = 0.03f;
         Resaltar(llave, llave.GetComponent<Renderer>());
 
-        // Al subir la llave vuelve la energía: de eso se encarga ControlEnergia,
-        // que prende las luces, sube la luz ambiental, baja los LED y despierta
-        // los relojes y el teclado de una sola vez
+        // Al subir la llave vuelve la energía: de eso se encarga ControlEnergia
         UnityEventTools.AddVoidPersistentListener(boton.alPresionar, new UnityAction(control.Encender));
         UnityEventTools.AddBoolPersistentListener(boton.alPresionar, new UnityAction<bool>(pilotoVerde.SetActive), true);
         UnityEventTools.AddBoolPersistentListener(boton.alPresionar, new UnityAction<bool>(pilotoRojo.SetActive), false);
         UnityEventTools.AddVoidPersistentListener(boton.alPresionar, new UnityAction(audio.Play));
-
         AvisarPanel(boton.alPresionar, 1);
         EditorUtility.SetDirty(boton);
     }
 
     // ------------------------------------------------------------------ escritorio
 
-    static void ArmarEscritorio(Transform p)
+    static void ArmarEscritorio(Transform p, List<Light> lucesCuarto)
     {
         var g = Grupo("Escritorio", p);
         g.transform.localPosition = new Vector3(1.5f, 0f, 2.6f);
 
-        Cubo("Tablero", g.transform, new Vector3(0f, 0.75f, 0f), new Vector3(1.8f, 0.06f, 0.9f), mMadera, true);
-        Cubo("Canto", g.transform, new Vector3(0f, 0.71f, 0f), new Vector3(1.84f, 0.03f, 0.94f), mMaderaOsc);
-        Cubo("Faldon", g.transform, new Vector3(0f, 0.58f, -0.42f), new Vector3(1.7f, 0.24f, 0.04f), mMadera);
+        // Tablero de nogal sobre patas de acero negro en forma de U
+        Cubo("Tablero", g.transform, new Vector3(0f, 0.74f, 0f), new Vector3(1.8f, 0.04f, 0.85f), mMadera, true);
+        foreach (float x in new[] { -0.84f, 0.84f })
+        {
+            Cubo("Pata_Frente", g.transform, new Vector3(x, 0.36f, -0.37f), new Vector3(0.04f, 0.72f, 0.04f), mNegro);
+            Cubo("Pata_Fondo", g.transform, new Vector3(x, 0.36f, 0.37f), new Vector3(0.04f, 0.72f, 0.04f), mNegro);
+            Cubo("Travesano", g.transform, new Vector3(x, 0.7f, 0f), new Vector3(0.04f, 0.03f, 0.78f), mNegro);
+            Cubo("Pie", g.transform, new Vector3(x, 0.015f, 0f), new Vector3(0.05f, 0.03f, 0.8f), mNegro);
+        }
 
-        Cubo("Pata_Izq_Frente", g.transform, new Vector3(-0.82f, 0.36f, -0.38f), new Vector3(0.08f, 0.72f, 0.08f), mMaderaOsc);
-        Cubo("Pata_Izq_Fondo", g.transform, new Vector3(-0.82f, 0.36f, 0.38f), new Vector3(0.08f, 0.72f, 0.08f), mMaderaOsc);
-
-        // Cajonera: se arma con paneles para que el cajón tenga hueco donde entrar
+        // Cajonera colgada debajo del tablero, con hueco para que entre el cajón
         var cajonera = Grupo("Cajonera", g.transform);
-        cajonera.transform.localPosition = new Vector3(0.52f, 0f, 0f);
-        Cubo("Lado_Izq", cajonera.transform, new Vector3(-0.31f, 0.36f, 0f), new Vector3(0.03f, 0.72f, 0.88f), mMadera);
-        Cubo("Lado_Der", cajonera.transform, new Vector3(0.31f, 0.36f, 0f), new Vector3(0.03f, 0.72f, 0.88f), mMadera);
-        Cubo("Fondo", cajonera.transform, new Vector3(0f, 0.36f, 0.43f), new Vector3(0.62f, 0.72f, 0.03f), mMadera);
-        Cubo("Base", cajonera.transform, new Vector3(0f, 0.02f, 0f), new Vector3(0.62f, 0.04f, 0.88f), mMaderaOsc);
-        Cubo("Division", cajonera.transform, new Vector3(0f, 0.40f, 0f), new Vector3(0.6f, 0.02f, 0.86f), mMadera);
+        cajonera.transform.localPosition = new Vector3(0.5f, 0f, 0f);
+        Cubo("Lado_Izq", cajonera.transform, new Vector3(-0.31f, 0.61f, 0f), new Vector3(0.02f, 0.22f, 0.84f), mNegro);
+        Cubo("Lado_Der", cajonera.transform, new Vector3(0.31f, 0.61f, 0f), new Vector3(0.02f, 0.22f, 0.84f), mNegro);
+        Cubo("Fondo", cajonera.transform, new Vector3(0f, 0.61f, 0.41f), new Vector3(0.62f, 0.22f, 0.02f), mNegro);
+        Cubo("Base", cajonera.transform, new Vector3(0f, 0.5f, 0f), new Vector3(0.62f, 0.02f, 0.84f), mNegro);
 
         // El cajón mira al Norte (hacia donde entra el jugador), por eso va rotado 180
         var cajon = Grupo("Cajon", g.transform);
-        cajon.transform.localPosition = new Vector3(0.52f, 0.22f, -0.42f);
+        cajon.transform.localPosition = new Vector3(0.5f, 0.61f, -0.41f);
         cajon.transform.localEulerAngles = new Vector3(0f, 180f, 0f);
 
-        Cubo("Frente", cajon.transform, Vector3.zero, new Vector3(0.6f, 0.3f, 0.04f), mMadera, true);
-        Cubo("Piso_Cajon", cajon.transform, new Vector3(0f, -0.12f, -0.38f), new Vector3(0.54f, 0.03f, 0.72f), mMaderaOsc);
-        Cubo("Lado_A", cajon.transform, new Vector3(-0.27f, -0.02f, -0.38f), new Vector3(0.03f, 0.22f, 0.72f), mMaderaOsc);
-        Cubo("Lado_B", cajon.transform, new Vector3(0.27f, -0.02f, -0.38f), new Vector3(0.03f, 0.22f, 0.72f), mMaderaOsc);
-        Cubo("Tirador", cajon.transform, new Vector3(0f, 0f, 0.04f), new Vector3(0.24f, 0.035f, 0.05f), mBronce);
+        Cubo("Frente", cajon.transform, Vector3.zero, new Vector3(0.6f, 0.2f, 0.03f), mMadera, true);
+        Cubo("Piso_Cajon", cajon.transform, new Vector3(0f, -0.08f, -0.38f), new Vector3(0.54f, 0.02f, 0.72f), mNegro);
+        Cubo("Lado_A", cajon.transform, new Vector3(-0.27f, -0.02f, -0.38f), new Vector3(0.02f, 0.13f, 0.72f), mNegro);
+        Cubo("Lado_B", cajon.transform, new Vector3(0.27f, -0.02f, -0.38f), new Vector3(0.02f, 0.13f, 0.72f), mNegro);
+        Cubo("Tirador", cajon.transform, new Vector3(0f, 0.06f, 0.025f), new Vector3(0.4f, 0.012f, 0.02f), mNegro);
 
         var inter = cajon.AddComponent<XRSimpleInteractable>();
         var drawer = cajon.AddComponent<Drawer>();
@@ -402,7 +308,7 @@ public static class ConstructorCuarto2
         EditorUtility.SetDirty(inter);
 
         // El medallón que hay que llevarse al Cuarto 4
-        var medallon = Cilindro("Medallon", cajon.transform, new Vector3(0f, -0.07f, -0.3f),
+        var medallon = Cilindro("Medallon", cajon.transform, new Vector3(0f, -0.055f, -0.3f),
                                 new Vector3(0.1f, 0.008f, 0.1f), mBronce, true);
         medallon.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
         var grab = medallon.AddComponent<XRGrabInteractable>();
@@ -414,104 +320,142 @@ public static class ConstructorCuarto2
         EditorUtility.SetDirty(grab);
         EditorUtility.SetDirty(pick);
 
-        Cilindro("Portalapices", g.transform, new Vector3(-0.72f, 0.83f, -0.25f), new Vector3(0.08f, 0.05f, 0.08f), mMetal);
-        Modelo("desk_lamp_arm_01", g.transform, new Vector3(0.65f, 0.78f, 0.25f), 200f, 1f);
+        ArmarComputadora(g.transform);
 
-        // Hoja de pistas: se toca y aparece el cartel con todo lo que hay que hacer
-        var hoja = Grupo("Hoja_Pistas", g.transform);
-        hoja.transform.localPosition = new Vector3(-0.45f, 0.79f, 0.02f);
-        hoja.transform.localEulerAngles = new Vector3(0f, 12f, 0f);
-        Cubo("Papel", hoja.transform, Vector3.zero, new Vector3(0.32f, 0.01f, 0.44f), mPapel, true);
-        Texto("Titulo_Hoja", hoja.transform, new Vector3(0f, 0.008f, 0f), new Vector3(-90f, 0f, 0f),
-              "NOTAS\n\n(tocar para leer)", 0.1f, new Color(0.2f, 0.17f, 0.15f), 0.3f, 0.4f);
+        // Lo que va arriba del escritorio (de Poly Haven, si está)
+        Modelo("desk_lamp_arm_01", g.transform, new Vector3(0.6f, 0.76f, 0.22f), 200f, 0.88f, false);
+        Modelo("potted_plant_04", g.transform, new Vector3(-0.78f, 0.76f, 0.28f), 0f, 0.27f, false);
 
-        var panelPistas = Grupo("Panel_Pistas", g.transform);
-        panelPistas.transform.localPosition = new Vector3(-0.45f, 1.45f, 0.1f);
-        Cubo("Fondo", panelPistas.transform, Vector3.zero, new Vector3(0.95f, 0.72f, 0.02f), mNegro);
-        Cubo("Borde", panelPistas.transform, new Vector3(0f, 0f, 0.012f), new Vector3(0.99f, 0.76f, 0.01f), mLedSuave);
-        var textoPistas = Texto("Texto_Pistas", panelPistas.transform, new Vector3(0f, 0f, -0.02f),
-                                new Vector3(0f, 180f, 0f),
-                                "QUE HAY QUE HACER\n\n" +
-                                "1 - Subir la llave del tablero, junto a la puerta\n" +
-                                "2 - Leer la bitacora del estante: dice a que hora\n" +
-                                "     suena cada campana y en que orden van\n" +
-                                "3 - Leer la placa del cuadro: dice que reloj es\n" +
-                                "     cada campana. Uno no figura: no lo toques\n" +
-                                "4 - Girar la manecilla de cada reloj hasta su hora.\n" +
-                                "     Al quedar en hora muestra su numero\n" +
-                                "5 - Marcar los numeros en el teclado, en el orden\n" +
-                                "     de la bitacora\n" +
-                                "6 - Llevarse el medallon del cajon",
-                                0.115f, new Color(0.75f, 0.95f, 1f), 0.92f, 0.68f);
-        textoPistas.lineSpacing = -14f;
-        panelPistas.SetActive(false);
+        // Sillón del director, detrás del escritorio
+        if (Modelo("mid_century_lounge_chair", p, new Vector3(1.5f, 0f, 3.6f), 180f, 1.17f, true) == null)
+            SillaSimple(p, new Vector3(1.5f, 0f, 3.5f));
 
-        var interHoja = hoja.AddComponent<XRSimpleInteractable>();
-        var pistas = hoja.AddComponent<MostrarPistas>();
-        pistas.panel = panelPistas;
-        Resaltar(hoja, hoja.transform.Find("Papel").GetComponent<Renderer>());
-        UnityEventTools.AddVoidPersistentListener(interHoja.selectEntered, new UnityAction(pistas.Alternar));
-        EditorUtility.SetDirty(interHoja);
-        EditorUtility.SetDirty(pistas);
-
-        // Silla del director, detrás del escritorio.
-        // Si está el modelo de Poly Haven se usa ese; si no, se arma con cubos.
-        if (Modelo("painted_wooden_chair_01", p, new Vector3(1.5f, 0f, 3.45f), 180f, 1f) != null) return;
-
-        var silla = Grupo("Silla", p);
-        silla.transform.localPosition = new Vector3(1.5f, 0f, 3.45f);
-        Cubo("Asiento", silla.transform, new Vector3(0f, 0.45f, 0f), new Vector3(0.5f, 0.07f, 0.5f), mMaderaOsc, true);
-        Cubo("Respaldo", silla.transform, new Vector3(0f, 0.75f, 0.23f), new Vector3(0.5f, 0.55f, 0.06f), mMaderaOsc);
-        Cubo("Pata_1", silla.transform, new Vector3(-0.21f, 0.22f, -0.21f), new Vector3(0.05f, 0.44f, 0.05f), mMaderaOsc);
-        Cubo("Pata_2", silla.transform, new Vector3(0.21f, 0.22f, -0.21f), new Vector3(0.05f, 0.44f, 0.05f), mMaderaOsc);
-        Cubo("Pata_3", silla.transform, new Vector3(-0.21f, 0.22f, 0.21f), new Vector3(0.05f, 0.44f, 0.05f), mMaderaOsc);
-        Cubo("Pata_4", silla.transform, new Vector3(0.21f, 0.22f, 0.21f), new Vector3(0.05f, 0.44f, 0.05f), mMaderaOsc);
+        // Lámpara colgante sobre el escritorio: su luz es una de las del cuarto
+        if (Modelo("modern_ceiling_lamp_01", p, new Vector3(1.5f, ALTO - 0.95f, 2.6f), 0f, 0.95f, false) == null)
+        {
+            var colgante = Grupo("Lampara_Colgante", p);
+            colgante.transform.localPosition = new Vector3(1.5f, 0f, 2.6f);
+            Cubo("Cable", colgante.transform, new Vector3(0f, ALTO - 0.45f, 0f), new Vector3(0.01f, 0.9f, 0.01f), mNegro);
+            Cilindro("Pantalla", colgante.transform, new Vector3(0f, ALTO - 0.95f, 0f), new Vector3(0.38f, 0.08f, 0.38f), mNegro);
+        }
+        lucesCuarto.Add(LuzPunto("Luz_Colgante", p, new Vector3(1.5f, ALTO - 1.05f, 2.6f),
+                                 new Color(1f, 0.85f, 0.65f), 2.2f, 5f));
     }
 
-    // ------------------------------------------------------------------ estantería
-
-    static void ArmarEstanteria(Transform p)
+    // Computadora del escritorio. El botón verde, más grande que el resto de los
+    // botones del cuarto, cambia la pantalla entre el aviso y las instrucciones.
+    static void ArmarComputadora(Transform escritorio)
     {
-        var g = Grupo("Estanteria", p);
-        g.transform.localPosition = new Vector3(5.7f, 0f, 2.6f);
+        var pc = Grupo("Computadora", escritorio);
+        pc.transform.localPosition = new Vector3(0.28f, 0.768f, 0.16f);
+        pc.transform.localEulerAngles = new Vector3(-6f, 0f, 0f);
 
-        Cubo("Lado_Norte", g.transform, new Vector3(0f, 0.95f, -0.85f), new Vector3(0.4f, 1.9f, 0.04f), mMadera);
-        Cubo("Lado_Sur", g.transform, new Vector3(0f, 0.95f, 0.85f), new Vector3(0.4f, 1.9f, 0.04f), mMadera);
-        Cubo("Fondo", g.transform, new Vector3(0.18f, 0.95f, 0f), new Vector3(0.04f, 1.9f, 1.7f), mMaderaOsc);
+        Cubo("Base", pc.transform, new Vector3(0f, 0.008f, 0f), new Vector3(0.24f, 0.016f, 0.15f), mNegro, true);
+        Cubo("Cuello", pc.transform, new Vector3(0f, 0.09f, 0.01f), new Vector3(0.05f, 0.18f, 0.03f), mNegro);
+        Cubo("Marco", pc.transform, new Vector3(0f, 0.3f, 0.005f), new Vector3(0.58f, 0.36f, 0.02f), mNegro, true);
+        Cubo("Pantalla", pc.transform, new Vector3(0f, 0.3f, -0.007f), new Vector3(0.54f, 0.32f, 0.004f), mPantallaPC);
 
-        float[] alturas = { 0.35f, 0.85f, 1.35f, 1.85f };
-        for (int i = 0; i < alturas.Length; i++)
-            Cubo("Balda_" + (i + 1), g.transform, new Vector3(0f, alturas[i], 0f),
-                 new Vector3(0.4f, 0.04f, 1.74f), mMadera, true);
+        var espera = Texto("Texto_Espera", pc.transform, new Vector3(0f, 0.3f, -0.012f), new Vector3(0f, 180f, 0f),
+                           "DIRECCION\n\nPULSA EL BOTON VERDE\npara ver que hay que hacer",
+                           0.3f, new Color(0.55f, 0.95f, 1f), 0.52f, 0.3f);
+        espera.lineSpacing = -14f;
 
-        // Libros de relleno
-        var libros = Grupo("Libros", g.transform);
-        Material[] colores = { mLibroA, mLibroB, mLibroC, mMaderaOsc };
-        int n = 0;
-        for (int balda = 0; balda < 3; balda++)
+        var instrucciones = Texto("Texto_Instrucciones", pc.transform, new Vector3(0f, 0.3f, -0.012f),
+                                  new Vector3(0f, 180f, 0f),
+                                  "LOS RELOJES DEL PASILLO\n\n" +
+                                  "Los cinco se pararon a las 4:40, cuando se\n" +
+                                  "corto la luz. Hay que volver a ponerlos en hora.\n\n" +
+                                  "- La bitacora, sobre el mueble largo, dice a que\n" +
+                                  "   hora suena cada campana del colegio.\n" +
+                                  "- La placa debajo del cuadro dice que reloj es\n" +
+                                  "   cada campana.\n" +
+                                  "- Agarra la aguja corta y girala hasta esa hora:\n" +
+                                  "   el reloj se enciende y muestra un numero.\n" +
+                                  "- Un reloj no figura en la placa. NO lo toques.\n\n" +
+                                  "Los numeros, en el orden de la bitacora, son el\n" +
+                                  "codigo del teclado de la salida.\n" +
+                                  "Despues hace falta la llave: el cuaderno del\n" +
+                                  "estante dice donde esta.",
+                                  0.165f, new Color(0.75f, 0.98f, 1f), 0.52f, 0.3f);
+        instrucciones.alignment = TextAlignmentOptions.TopLeft;
+        instrucciones.lineSpacing = -16f;
+        instrucciones.gameObject.SetActive(false);
+
+        // Teclado de la computadora, con sus teclas chiquitas
+        var teclado = Grupo("Teclado_PC", escritorio);
+        teclado.transform.localPosition = new Vector3(0.28f, 0.772f, -0.12f);
+        Cubo("Base", teclado.transform, Vector3.zero, new Vector3(0.44f, 0.015f, 0.18f), mNegro);
+        for (int fila = 0; fila < 3; fila++)
+            for (int col = 0; col < 12; col++)
+                Cubo("Tecla", teclado.transform,
+                     new Vector3(-0.19f + col * 0.0345f, 0.011f, -0.05f + fila * 0.032f),
+                     new Vector3(0.028f, 0.006f, 0.026f), mMetal);
+
+        // El botón de las pistas: va en el teclado, mucho más grande que las teclas
+        var boton = Cilindro("Boton_Pistas", teclado.transform, new Vector3(0.14f, 0.014f, 0.055f),
+                             new Vector3(0.08f, 0.012f, 0.08f), mVerde, true);
+        Texto("Etiqueta", teclado.transform, new Vector3(-0.04f, 0.012f, 0.06f), new Vector3(90f, 0f, 0f),
+              "PISTAS >", 0.09f, new Color(0.8f, 0.85f, 0.85f), 0.2f, 0.03f);
+
+        boton.AddComponent<XRSimpleInteractable>();
+        var pulsador = boton.AddComponent<PressableButton>();
+        pulsador.parteMovil = boton.transform;
+        pulsador.recorrido = 0.008f;
+        Resaltar(boton, boton.GetComponent<Renderer>());
+
+        var alternar = pc.AddComponent<AlternarObjetos>();
+        alternar.objetos = new[] { espera.gameObject, instrucciones.gameObject };
+        UnityEventTools.AddVoidPersistentListener(pulsador.alPresionar, new UnityAction(alternar.Alternar));
+        EditorUtility.SetDirty(pulsador);
+        EditorUtility.SetDirty(alternar);
+    }
+
+    static void SillaSimple(Transform p, Vector3 pos)
+    {
+        var s = Grupo("Silla", p);
+        s.transform.localPosition = pos;
+        Cubo("Asiento", s.transform, new Vector3(0f, 0.46f, 0f), new Vector3(0.52f, 0.06f, 0.5f), mTela, true);
+        Cubo("Respaldo", s.transform, new Vector3(0f, 0.78f, 0.23f), new Vector3(0.52f, 0.58f, 0.06f), mTela);
+        Cubo("Base", s.transform, new Vector3(0f, 0.22f, 0f), new Vector3(0.05f, 0.44f, 0.05f), mNegro);
+        Cubo("Pie", s.transform, new Vector3(0f, 0.02f, 0f), new Vector3(0.55f, 0.03f, 0.55f), mNegro);
+    }
+
+    // ------------------------------------------------------------------ aparador y cuadro
+
+    // Mueble largo contra la pared Oeste. Arriba de él están las dos pistas:
+    // la bitácora apoyada encima y el cuadro con su placa en la pared.
+    static void ArmarAparador(Transform p)
+    {
+        const float Z = 5f;          // centro del mueble a lo largo de la pared
+        const float ALTO_MUEBLE = 0.68f;
+
+        // Panel de listones de madera clara, de piso a techo, detrás del aparador:
+        // es la pared de acento del cuarto
+        var listones = Grupo("Listones", p);
+        for (float z = Z - 1.7f; z <= Z + 1.7f; z += 0.075f)
+            Cubo("Liston", listones.transform, new Vector3(0.0125f, ALTO / 2f, z),
+                 new Vector3(0.025f, ALTO - 0.02f, 0.045f), mMaderaClara);
+
+        if (Modelo("modern_wooden_cabinet", p, new Vector3(0.3f, 0f, Z), 90f, ALTO_MUEBLE, true) == null)
         {
-            float z = -0.75f;
-            for (int i = 0; i < 7; i++)
-            {
-                float grosor = 0.05f + (n % 3) * 0.015f;
-                float alto = 0.24f + (n % 4) * 0.025f;
-                z += grosor / 2f + 0.01f;
-                Cubo("Libro_" + n, libros.transform,
-                     new Vector3(-0.02f, alturas[balda] + 0.02f + alto / 2f, z),
-                     new Vector3(0.24f, alto, grosor), colores[n % colores.Length]);
-                z += grosor / 2f;
-                n++;
-            }
+            var a = Grupo("Aparador", p);
+            a.transform.localPosition = new Vector3(0.3f, 0f, Z);
+            Cubo("Cuerpo", a.transform, new Vector3(0f, 0.38f, 0f), new Vector3(0.5f, 0.6f, 2.4f), mMadera, true);
+            foreach (float z in new[] { -1.1f, 1.1f })
+                Cubo("Pata", a.transform, new Vector3(0f, 0.04f, z), new Vector3(0.4f, 0.08f, 0.04f), mNegro);
         }
 
-        // La bitácora: apoyada abierta sobre una balda, con el orden de los relojes
-        var bitacora = Grupo("Bitacora", g.transform);
-        bitacora.transform.localPosition = new Vector3(-0.05f, 0.93f, 0.45f);
-        bitacora.transform.localEulerAngles = new Vector3(-25f, 90f, 0f);
+        Modelo("ceramic_vase_01", p, new Vector3(0.3f, ALTO_MUEBLE, Z + 0.95f), 0f, 0.4f, false);
+        // La escultura de la ballena: la pieza llamativa del cuarto
+        Modelo("bronze_whale_statue", p, new Vector3(0.3f, ALTO_MUEBLE, Z + 0.35f), -110f, 0.42f, false);
+
+        // La bitácora, abierta sobre el aparador y un poco inclinada para leerla
+        var bitacora = Grupo("Bitacora", p);
+        bitacora.transform.localPosition = new Vector3(0.33f, ALTO_MUEBLE + 0.02f, Z - 0.7f);
+        bitacora.transform.localEulerAngles = new Vector3(20f, 90f, 0f);
         Cubo("Tapa", bitacora.transform, Vector3.zero, new Vector3(0.38f, 0.03f, 0.3f), mLibroA, true);
         Cubo("Hojas", bitacora.transform, new Vector3(0f, 0.02f, 0f), new Vector3(0.36f, 0.02f, 0.28f), mPapel);
-        var txt = Texto("Texto_Bitacora", bitacora.transform, new Vector3(0f, 0.035f, 0f),
-                        new Vector3(-90f, 0f, 0f),
+        var txt = Texto("Texto_Bitacora", bitacora.transform, new Vector3(0f, 0.035f, 0f), new Vector3(-90f, 0f, 0f),
                         "HORARIO DE CAMPANAS\n\n" +
                         "Entrada . . . 7:00\n" +
                         "Recreo  . . . 1:00\n" +
@@ -526,97 +470,148 @@ public static class ConstructorCuarto2
         Resaltar(bitacora, bitacora.transform.Find("Tapa").GetComponent<Renderer>());
         AvisarPanel(interBitacora.selectEntered, 2);
         EditorUtility.SetDirty(interBitacora);
-    }
 
-    // ------------------------------------------------------------------ cuadro
-
-    static void ArmarCuadro(Transform p)
-    {
-        var g = Grupo("Cuadro", p);
-        g.transform.localPosition = new Vector3(0.09f, 1.6f, 3.3f);
-        g.transform.localEulerAngles = new Vector3(0f, 90f, 0f);
-
-        Cubo("Marco", g.transform, Vector3.zero, new Vector3(0.8f, 1f, 0.06f), mBronce, true);
-        Cubo("Lienzo", g.transform, new Vector3(0f, 0f, 0.035f), new Vector3(0.7f, 0.9f, 0.01f), mMaderaOsc);
-        Cubo("Retrato", g.transform, new Vector3(0f, 0.08f, 0.042f), new Vector3(0.45f, 0.55f, 0.01f), mPapel);
-
-        Cubo("Placa", g.transform, new Vector3(0f, -0.33f, 0.045f), new Vector3(0.66f, 0.3f, 0.01f), mBronce);
-        var placa = Texto("Texto_Placa", g.transform, new Vector3(0f, -0.33f, 0.055f), Vector3.zero,
-                          "RELOJES DEL PASILLO\n\n" +
-                          "A - Entrada      B - Recreo\n" +
-                          "C - Salida        E - Cierre",
-                          0.13f, new Color(0.16f, 0.12f, 0.05f), 0.64f, 0.28f);
-        placa.lineSpacing = -14f;
-    }
-
-    // ------------------------------------------------------------------ lámpara
-
-    // Devuelve la luz de la lámpara, que arranca apagada hasta que vuelve la energía
-    static GameObject ArmarLampara(Transform p)
-    {
-        var g = Grupo("Lampara_Pie", p);
-        g.transform.localPosition = new Vector3(0.75f, 0f, 1.5f);
-
-        Cilindro("Base", g.transform, new Vector3(0f, 0.03f, 0f), new Vector3(0.34f, 0.03f, 0.34f), mMetal, true);
-        Cilindro("Tubo", g.transform, new Vector3(0f, 0.75f, 0f), new Vector3(0.05f, 0.72f, 0.05f), mMetal);
-        Cilindro("Pantalla", g.transform, new Vector3(0f, 1.55f, 0f), new Vector3(0.36f, 0.16f, 0.36f), mLampara);
-
-        // Queda encendida acá: la apaga ControlEnergia mientras no hay energía
-        var luz = new GameObject("Luz_Lampara");
-        luz.transform.SetParent(g.transform, false);
-        luz.transform.localPosition = new Vector3(0f, 1.42f, 0f);
-        var l = luz.AddComponent<Light>();
-        l.type = LightType.Point;
-        l.color = new Color(1f, 0.88f, 0.65f);
-        l.intensity = 3.2f;
-        l.range = 7f;
-        l.shadows = LightShadows.Soft;
-        return luz;
-    }
-
-    // ------------------------------------------------------------------ decoración
-
-    static void ArmarDecoracion(Transform p)
-    {
-        var g = Grupo("Decoracion", p);
-
-        // Diplomas colgados en la pared Oeste
-        for (int i = 0; i < 3; i++)
+        // El cuadro colgado sobre el aparador, y debajo la placa con la otra pista
+        if (Modelo("hanging_picture_frame_01", p, new Vector3(0.06f, 1.3f, Z), 90f, 0.84f, false) == null)
         {
-            var d = Grupo("Diploma_" + (i + 1), g.transform);
-            d.transform.localPosition = new Vector3(0.08f, 1.75f - i * 0.05f, 1.5f + i * 0.62f);
-            d.transform.localEulerAngles = new Vector3(0f, 90f, i == 1 ? 4f : -3f);
-            Cubo("Marco", d.transform, Vector3.zero, new Vector3(0.42f, 0.32f, 0.04f), mMaderaOsc);
-            Cubo("Papel", d.transform, new Vector3(0f, 0f, 0.026f), new Vector3(0.36f, 0.26f, 0.01f), mPapel);
+            var c = Grupo("Cuadro", p);
+            c.transform.localPosition = new Vector3(0.05f, 1.6f, Z);
+            c.transform.localEulerAngles = new Vector3(0f, 90f, 0f);
+            Cubo("Marco", c.transform, Vector3.zero, new Vector3(0.8f, 0.52f, 0.03f), mNegro);
+            Cubo("Lamina", c.transform, new Vector3(0f, 0f, 0.016f), new Vector3(0.72f, 0.44f, 0.005f), mPapel);
         }
 
-        // Alfombra bajo el escritorio
-        Cubo("Alfombra", g.transform, new Vector3(1.5f, 0.02f, 2.7f), new Vector3(2.4f, 0.02f, 2f), mAlfombra);
+        var placa = Grupo("Placa_Cuadro", p);
+        placa.transform.localPosition = new Vector3(0.035f, 1.1f, Z);
+        placa.transform.localEulerAngles = new Vector3(0f, 90f, 0f);
+        Cubo("Chapa", placa.transform, Vector3.zero, new Vector3(0.66f, 0.2f, 0.01f), mNegro);
+        var textoPlaca = Texto("Texto_Placa", placa.transform, new Vector3(0f, 0f, 0.008f), Vector3.zero,
+                               "RELOJES DEL PASILLO\n" +
+                               "A - Entrada      B - Recreo\n" +
+                               "C - Salida        E - Cierre",
+                               0.12f, new Color(0.92f, 0.92f, 0.9f), 0.64f, 0.19f);
+        textoPlaca.lineSpacing = -14f;
+    }
 
-        // Papelera y una planta seca: si están los modelos de Poly Haven se usan esos
-        if (Modelo("metal_trash_can", g.transform, new Vector3(2.55f, 0f, 3.1f), 0f, 1f) == null)
-            Cilindro("Papelera", g.transform, new Vector3(2.55f, 0.16f, 3.1f), new Vector3(0.26f, 0.16f, 0.26f), mMetal, true);
+    // ------------------------------------------------------------------ estantería
 
-        // Estos son decorativos: si el modelo de Poly Haven está, aparece; si no, no pasa nada
-        Modelo("potted_plant_01", g.transform, new Vector3(5.4f, 0f, 0.6f), 0f, 1f);
-        Modelo("cardboard_box_01", g.transform, new Vector3(0.7f, 0f, 6.4f), 25f, 1f);
-        Modelo("vintage_cabinet_01", g.transform, new Vector3(3.2f, 0f, 6.7f), 180f, 1f);
-
-        // Ventana tapiada en la pared Este
-        var v = Grupo("Ventana_Tapiada", g.transform);
-        v.transform.localPosition = new Vector3(ANCHO - 0.06f, 1.7f, 5.2f);
-        Cubo("Hueco", v.transform, Vector3.zero, new Vector3(0.06f, 1.1f, 1.3f), mNegro);
-        for (int i = 0; i < 3; i++)
+    static void ArmarEstanteria(Transform p)
+    {
+        // Estantería de cubos contra la pared Este, con cosas encima y en los huecos.
+        // Las alturas de los huecos salen de medir el propio modelo (ver AlturasDeEstantes).
+        var mueble = Modelo("wooden_display_shelves_01", p, new Vector3(5.62f, 0f, 1.7f), -90f, 1.556f, true);
+        if (mueble != null)
         {
-            var tabla = Cubo("Tabla_" + (i + 1), v.transform, new Vector3(-0.05f, -0.3f + i * 0.32f, 0f),
-                             new Vector3(0.04f, 0.2f, 1.45f), mMadera);
-            tabla.transform.localEulerAngles = new Vector3(i % 2 == 0 ? 6f : -5f, 0f, 0f);
+            float alto = 1.556f;
+            Modelo("book_encyclopedia_set_01", p, new Vector3(5.62f, alto, 1.45f), -90f, 0.2f, false);
+            Modelo("ceramic_vase_03", p, new Vector3(5.62f, alto, 2.05f), 0f, 0.41f, false);
+            Modelo("wooden_bowl_01", p, new Vector3(5.62f, alto, 1.78f), 0f, 0.09f, false);
+            Modelo("brass_vase_01", p, new Vector3(5.62f, 1.03f, 2.08f), 0f, 0.4f, false);
+            Modelo("potted_plant_04", p, new Vector3(5.62f, 1.03f, 1.34f), 0f, 0.27f, false);
+            ArmarCuaderno(p, new Vector3(5.6f, 1.575f, 1.68f));
+            return;
         }
 
-        // Papel tapiz despegado en una esquina
-        var tapiz = Cubo("Tapiz_Despegado", g.transform, new Vector3(0.06f, 2.2f, 6.6f),
-                         new Vector3(0.02f, 0.9f, 0.5f), mPapel);
-        tapiz.transform.localEulerAngles = new Vector3(0f, 0f, 12f);
+        // Versión simple: marco de acero negro con estantes de nogal y algunos libros
+        var g = Grupo("Estanteria", p);
+        g.transform.localPosition = new Vector3(5.75f, 0f, 1.45f);
+        foreach (float z in new[] { -0.28f, 0.28f })
+            foreach (float x in new[] { -0.2f, 0.2f })
+                Cubo("Parante", g.transform, new Vector3(x, 1.05f, z), new Vector3(0.03f, 2.1f, 0.03f), mNegro);
+
+        Material[] colores = { mLibroA, mLibroB, mLibroC };
+        float[] alturas = { 0.3f, 0.8f, 1.3f, 1.8f };
+        for (int i = 0; i < alturas.Length; i++)
+        {
+            Cubo("Estante_" + (i + 1), g.transform, new Vector3(0f, alturas[i], 0f), new Vector3(0.44f, 0.03f, 0.6f), mMadera, true);
+            if (i == alturas.Length - 1) continue;
+            for (int k = 0; k < 5; k++)
+            {
+                float alto = 0.22f + (k % 3) * 0.03f;
+                Cubo("Libro", g.transform, new Vector3(0.02f, alturas[i] + 0.015f + alto / 2f, -0.2f + k * 0.07f),
+                     new Vector3(0.22f, alto, 0.05f), colores[(i + k) % colores.Length]);
+            }
+        }
+    }
+
+    // Cuaderno que se agarra del estante: trae el acertijo que lleva hasta la llave
+    static void ArmarCuaderno(Transform p, Vector3 pos)
+    {
+        var g = Grupo("Cuaderno_Acertijo", p);
+        g.transform.localPosition = pos;
+        g.transform.localEulerAngles = new Vector3(0f, 200f, 0f);
+
+        Cubo("Tapa", g.transform, Vector3.zero, new Vector3(0.24f, 0.025f, 0.32f), mLibroB, true);
+        Cubo("Hojas", g.transform, new Vector3(0f, 0.016f, 0f), new Vector3(0.22f, 0.008f, 0.3f), mPapel);
+        var texto = Texto("Texto_Acertijo", g.transform, new Vector3(0f, 0.022f, 0f), new Vector3(-90f, 0f, 0f),
+                          "ACERTIJO\n\n" +
+                          "No tengo llave,\npero guardo una.\n\n" +
+                          "Nadie me mira,\ntodos me usan.\n\n" +
+                          "Blando por fuera,\nhueco por dentro:\n\n" +
+                          "levanta lo que cubre\nmi asiento.",
+                          0.1f, new Color(0.15f, 0.12f, 0.1f), 0.2f, 0.29f);
+        texto.lineSpacing = -16f;
+
+        var grab = g.AddComponent<XRGrabInteractable>();
+        var rb = g.GetComponent<Rigidbody>();
+        if (rb != null) { rb.isKinematic = true; rb.useGravity = false; }
+        Resaltar(g, g.transform.Find("Tapa").GetComponent<Renderer>());
+        EditorUtility.SetDirty(grab);
+    }
+
+    // ------------------------------------------------------------------ sala de estar
+
+    // Rincón con sofá y mesa ratona, del lado Este: le da vida al cuarto
+    static void ArmarSala(Transform p)
+    {
+        Cubo("Alfombra", p, new Vector3(4.75f, 0.006f, 4.6f), new Vector3(2.4f, 0.012f, 2.4f), mAlfombra);
+
+        if (Modelo("sofa_02", p, new Vector3(5.5f, 0f, 4.6f), -90f, 0.71f, true) == null)
+        {
+            var s = Grupo("Sofa", p);
+            s.transform.localPosition = new Vector3(5.5f, 0f, 4.6f);
+            Cubo("Base", s.transform, new Vector3(0f, 0.22f, 0f), new Vector3(0.85f, 0.4f, 1.8f), mTela, true);
+            Cubo("Respaldo", s.transform, new Vector3(0.33f, 0.58f, 0f), new Vector3(0.2f, 0.36f, 1.8f), mTela);
+            Cubo("Brazo_1", s.transform, new Vector3(0f, 0.5f, -0.85f), new Vector3(0.85f, 0.18f, 0.12f), mTela);
+            Cubo("Brazo_2", s.transform, new Vector3(0f, 0.5f, 0.85f), new Vector3(0.85f, 0.18f, 0.12f), mTela);
+        }
+
+        if (Modelo("modern_coffee_table_02", p, new Vector3(4.3f, 0f, 4.6f), 90f, 0.37f, true) == null)
+        {
+            var m = Grupo("Mesa_Ratona", p);
+            m.transform.localPosition = new Vector3(4.3f, 0f, 4.6f);
+            Cubo("Tapa", m.transform, new Vector3(0f, 0.37f, 0f), new Vector3(0.6f, 0.03f, 1.2f), mMadera, true);
+            foreach (float x in new[] { -0.26f, 0.26f })
+                foreach (float z in new[] { -0.55f, 0.55f })
+                    Cubo("Pata", m.transform, new Vector3(x, 0.18f, z), new Vector3(0.03f, 0.36f, 0.03f), mNegro);
+        }
+
+        Modelo("potted_plant_02", p, new Vector3(5.5f, 0f, 5.95f), 0f, 0.84f, false);
+
+        // La llave de la puerta, escondida debajo del almohadón del sofá
+        var llave = Grupo("Llave_Salida", p);
+        llave.transform.localPosition = new Vector3(5.45f, 0.42f, 4.55f);
+        llave.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
+        Cilindro("Cabeza", llave.transform, new Vector3(0f, 0.055f, 0f), new Vector3(0.05f, 0.006f, 0.05f), mBronce, true)
+            .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+        Cubo("Vastago", llave.transform, Vector3.zero, new Vector3(0.012f, 0.11f, 0.012f), mBronce);
+        Cubo("Diente_1", llave.transform, new Vector3(0.018f, -0.04f, 0f), new Vector3(0.024f, 0.012f, 0.01f), mBronce);
+        Cubo("Diente_2", llave.transform, new Vector3(0.016f, -0.062f, 0f), new Vector3(0.02f, 0.012f, 0.01f), mBronce);
+
+        var grabLlave = llave.AddComponent<XRGrabInteractable>();
+        var rbLlave = llave.GetComponent<Rigidbody>();
+        if (rbLlave != null) { rbLlave.isKinematic = true; rbLlave.useGravity = false; }
+        Resaltar(llave, llave.transform.Find("Cabeza").GetComponent<Renderer>());
+        EditorUtility.SetDirty(grabLlave);
+
+        // El almohadón que la tapa: hay que agarrarlo y correrlo
+        var almohadon = Cubo("Almohadon", p, new Vector3(5.45f, 0.48f, 4.55f),
+                             new Vector3(0.46f, 0.12f, 0.46f), mTela, true);
+        var grabCojin = almohadon.AddComponent<XRGrabInteractable>();
+        var rbCojin = almohadon.GetComponent<Rigidbody>();
+        if (rbCojin != null) { rbCojin.isKinematic = true; rbCojin.useGravity = false; }
+        Resaltar(almohadon, almohadon.GetComponent<Renderer>());
+        EditorUtility.SetDirty(grabCojin);
     }
 
     // ------------------------------------------------------------------ relojes
@@ -654,51 +649,77 @@ public static class ConstructorCuarto2
         var g = Grupo(nombre, p);
         g.transform.localPosition = new Vector3(x, ALTURA_RELOJ, 0.05f);
 
-        // La caja y la esfera muerta se ven siempre, aunque no haya energía
-        Cilindro("Caja", g.transform, Vector3.zero, new Vector3(0.34f, 0.035f, 0.34f), mMetal)
-            .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
-
-        var apagada = Cilindro("Esfera_Apagada", g.transform, new Vector3(0f, 0f, 0.034f),
-                               new Vector3(0.3f, 0.004f, 0.3f), mNegro);
-        apagada.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+        // El cuerpo del reloj se ve siempre, aunque no haya energía. Si está el modelo
+        // de Poly Haven se usa ese (trae la esfera con los números); sus agujas se
+        // ocultan, porque las que giran son las que se arman más abajo.
+        var reloj = Modelo("wall_clock", g.transform, Vector3.zero, 0f, 0.32f, false, false);
+        Renderer esferaRenderer = null;
+        if (reloj != null)
+        {
+            foreach (var r in reloj.GetComponentsInChildren<Renderer>())
+            {
+                if (r.name.ToLower().Contains("hand")) r.gameObject.SetActive(false);
+                else if (esferaRenderer == null && !r.name.ToLower().Contains("glass")) esferaRenderer = r;
+            }
+        }
 
         // Todo lo que se enciende cuando vuelve la luz
         var cara = Grupo("Cara", g.transform);
 
-        var esfera = Cilindro("Esfera", cara.transform, new Vector3(0f, 0f, 0.036f),
-                              new Vector3(0.3f, 0.004f, 0.3f), mEsfera);
-        esfera.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
-
-        // Marcas de las 12 horas
-        var marcas = Grupo("Marcas", cara.transform);
-        marcas.transform.localPosition = new Vector3(0f, 0f, 0.04f);
-        for (int h = 0; h < 12; h++)
+        if (reloj == null)
         {
-            float ang = h * 30f * Mathf.Deg2Rad;
-            bool grande = h % 3 == 0;
-            var m = Cubo("Marca_" + (h == 0 ? 12 : h), marcas.transform,
-                         new Vector3(Mathf.Sin(ang) * 0.117f, Mathf.Cos(ang) * 0.117f, 0f),
-                         new Vector3(grande ? 0.014f : 0.008f, grande ? 0.04f : 0.022f, 0.004f), mNegro);
-            m.transform.localEulerAngles = new Vector3(0f, 0f, -h * 30f);
+            // Versión simple, sin el modelo: caja negra y esfera con marcas y números
+            Cilindro("Caja", g.transform, Vector3.zero, new Vector3(0.34f, 0.035f, 0.34f), mNegro)
+                .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+            Cilindro("Esfera_Apagada", g.transform, new Vector3(0f, 0f, 0.034f), new Vector3(0.3f, 0.004f, 0.3f), mNegro)
+                .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+
+            var esfera = Cilindro("Esfera", cara.transform, new Vector3(0f, 0f, 0.036f),
+                                  new Vector3(0.3f, 0.004f, 0.3f), mEsfera);
+            esfera.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+            esferaRenderer = esfera.GetComponent<Renderer>();
+
+            // Números de las 12 horas
+            var numeros = Grupo("Numeros", cara.transform);
+            numeros.transform.localPosition = new Vector3(0f, 0f, 0.04f);
+            for (int h = 1; h <= 12; h++)
+            {
+                float ang = h * 30f * Mathf.Deg2Rad;
+                // -X es la derecha de quien mira el reloj, ahí van las 3
+                Texto("Numero_" + h, numeros.transform,
+                      new Vector3(-Mathf.Sin(ang) * 0.108f, Mathf.Cos(ang) * 0.108f, 0f), Vector3.zero,
+                      h.ToString(), 0.28f, new Color(0.1f, 0.1f, 0.1f), 0.06f, 0.05f);
+            }
         }
 
+        // Los giros van en positivo: el reloj se mira desde su +Z, y desde ahí un giro
+        // positivo en Z avanza en el sentido de las agujas (ver RelojManecilla)
+
         // Manecilla de los minutos: queda clavada en el minuto del apagón
+        // Con el modelo las agujas van pegadas a su esfera; sin él, sobre el cilindro
+        float zMin = reloj != null ? 0.018f : 0.046f;
+        float zHora = reloj != null ? 0.022f : 0.052f;
+
         var pivMin = Grupo("Manecilla_Minuto", cara.transform);
-        pivMin.transform.localPosition = new Vector3(0f, 0f, 0.046f);
-        pivMin.transform.localEulerAngles = new Vector3(0f, 0f, -MINUTOS_APAGON * 6f);
+        pivMin.transform.localPosition = new Vector3(0f, 0f, zMin);
+        pivMin.transform.localEulerAngles = new Vector3(0f, 0f, MINUTOS_APAGON * 6f);
         Cubo("Aguja", pivMin.transform, new Vector3(0f, 0.06f, 0f), new Vector3(0.009f, 0.13f, 0.005f), mNegro);
 
         // Manecilla de la hora: esta es la que el jugador agarra y gira
         var pivHora = Grupo("Manecilla_Hora", cara.transform);
-        pivHora.transform.localPosition = new Vector3(0f, 0f, 0.052f);
-        pivHora.transform.localEulerAngles = new Vector3(0f, 0f, -HORA_APAGON * 30f);
+        pivHora.transform.localPosition = new Vector3(0f, 0f, zHora);
+        pivHora.transform.localEulerAngles = new Vector3(0f, 0f, HORA_APAGON * 30f);
         var aguja = Cubo("Aguja", pivHora.transform, new Vector3(0f, 0.042f, 0f),
                          new Vector3(0.022f, 0.1f, 0.012f), mNegro, true);
 
-        Esfera("Pin", cara.transform, new Vector3(0f, 0f, 0.056f), new Vector3(0.022f, 0.022f, 0.022f), mBronce);
+        Esfera("Pin", cara.transform, new Vector3(0f, 0f, zHora + 0.004f), new Vector3(0.022f, 0.022f, 0.022f), mBronce);
 
-        Texto("Letra", cara.transform, new Vector3(0f, -0.085f, 0.042f), Vector3.zero,
-              letra, 0.55f, new Color(0.18f, 0.15f, 0.12f), 0.2f, 0.12f);
+        // La letra va en una chapita debajo del reloj, para no taparle los números
+        var chapaLetra = Grupo("Letra", g.transform);
+        chapaLetra.transform.localPosition = new Vector3(0f, -0.23f, -0.02f);
+        Cubo("Chapa", chapaLetra.transform, Vector3.zero, new Vector3(0.1f, 0.08f, 0.01f), mMetal);
+        Texto("Texto", chapaLetra.transform, new Vector3(0f, 0f, 0.008f), Vector3.zero,
+              letra, 0.5f, new Color(0.1f, 0.1f, 0.1f), 0.1f, 0.08f);
 
         // Todos los relojes se giran igual: el jugador agarra la manecilla de la hora
         var inter = pivHora.AddComponent<XRSimpleInteractable>();
@@ -714,7 +735,7 @@ public static class ConstructorCuarto2
             var luz = LuzApagada("Luz_Susto", cara.transform, new Vector3(0f, 0f, 0.25f),
                                  new Color(1f, 0.25f, 0.2f), 9f, 2.5f, false);
             var decoy = pivHora.AddComponent<RelojDecoy>();
-            decoy.vidrio = esfera.GetComponent<Renderer>();
+            decoy.vidrio = esferaRenderer;
             decoy.materialResquebrajado = mGrieta;
             decoy.luzSusto = luz.GetComponent<Light>();
             decoy.duracionDestello = 0.8f;
@@ -745,7 +766,7 @@ public static class ConstructorCuarto2
     // ------------------------------------------------------------------ teclado
 
     // Devuelve el grupo que se enciende cuando vuelve la energía
-    static GameObject ArmarTeclado(Transform raiz, Door puerta)
+    static GameObject ArmarTeclado(Transform raiz, CerraduraLlave cerradura)
     {
         var g = Grupo("Teclado", raiz);
         g.transform.localPosition = new Vector3(3.85f, 1.2f, FONDO - 0.08f);
@@ -807,9 +828,9 @@ public static class ConstructorCuarto2
         UnityEventTools.AddBoolPersistentListener(keypad.OnSolved, new UnityAction<bool>(luzOk.SetActive), true);
         UnityEventTools.AddBoolPersistentListener(keypad.OnSolved, new UnityAction<bool>(luzMal.SetActive), false);
         UnityEventTools.AddVoidPersistentListener(keypad.OnSolved, new UnityAction(audioOk.Play));
-        if (puerta != null)
-            UnityEventTools.AddVoidPersistentListener(keypad.OnSolved, new UnityAction(puerta.Abrir));
-
+        // El código ya no abre la puerta: habilita la cerradura, que además pide la llave
+        if (cerradura != null)
+            UnityEventTools.AddVoidPersistentListener(keypad.OnSolved, new UnityAction(cerradura.Habilitar));
         AvisarPanel(keypad.OnSolved, 4);
 
         UnityEventTools.AddBoolPersistentListener(keypad.alError, new UnityAction<bool>(luzMal.SetActive), true);
@@ -822,22 +843,22 @@ public static class ConstructorCuarto2
 
     // ------------------------------------------------------------------ puerta
 
-    static Door ArmarPuertaSalida(Transform raiz)
+    static CerraduraLlave ArmarPuertaSalida(Transform raiz)
     {
         var g = Grupo("Puerta_Salida", raiz);
         g.transform.localPosition = new Vector3(SALIDA_X0, 0f, FONDO);
 
         float ancho = SALIDA_X1 - SALIDA_X0;
-        Cubo("Jamba_Izq", g.transform, new Vector3(-0.07f, ALTO_PUERTA / 2f, 0f),
-             new Vector3(0.14f, ALTO_PUERTA, 0.24f), mMaderaOsc, true);
-        Cubo("Jamba_Der", g.transform, new Vector3(ancho + 0.07f, ALTO_PUERTA / 2f, 0f),
-             new Vector3(0.14f, ALTO_PUERTA, 0.24f), mMaderaOsc, true);
-        Cubo("Dintel", g.transform, new Vector3(ancho / 2f, ALTO_PUERTA + 0.07f, 0f),
-             new Vector3(ancho + 0.28f, 0.14f, 0.24f), mMaderaOsc, true);
+        Cubo("Jamba_Izq", g.transform, new Vector3(-0.04f, ALTO_PUERTA / 2f, 0f),
+             new Vector3(0.08f, ALTO_PUERTA, 0.2f), mNegro, true);
+        Cubo("Jamba_Der", g.transform, new Vector3(ancho + 0.04f, ALTO_PUERTA / 2f, 0f),
+             new Vector3(0.08f, ALTO_PUERTA, 0.2f), mNegro, true);
+        Cubo("Dintel", g.transform, new Vector3(ancho / 2f, ALTO_PUERTA + 0.04f, 0f),
+             new Vector3(ancho + 0.16f, 0.08f, 0.2f), mNegro, true);
 
-        Cubo("Cartel", g.transform, new Vector3(ancho / 2f, ALTO_PUERTA + 0.28f, -0.1f),
-             new Vector3(0.5f, 0.16f, 0.03f), mMetal);
-        Texto("Texto_Cartel", g.transform, new Vector3(ancho / 2f, ALTO_PUERTA + 0.28f, -0.13f),
+        Cubo("Cartel", g.transform, new Vector3(ancho / 2f, ALTO_PUERTA + 0.26f, -0.1f),
+             new Vector3(0.5f, 0.16f, 0.03f), mNegro);
+        Texto("Texto_Cartel", g.transform, new Vector3(ancho / 2f, ALTO_PUERTA + 0.26f, -0.12f),
               new Vector3(0f, 180f, 0f), "SALIDA", 0.14f, new Color(0.4f, 1f, 0.5f), 0.5f, 0.15f);
 
         var bisagra = Grupo("Bisagra", g.transform);
@@ -845,65 +866,125 @@ public static class ConstructorCuarto2
         // Ángulo negativo: la hoja gira hacia +Z, o sea hacia afuera del cuarto
         puerta.anguloApertura = -95f;
         puerta.duracion = 1.4f;
+        puerta.segundosParaCerrar = 6f;   // se cierra sola después de salir
 
+        // Hoja lisa de nogal con manija de barra larga
         Cubo("Hoja", bisagra.transform, new Vector3(ancho / 2f, ALTO_PUERTA / 2f, 0f),
-             new Vector3(ancho, ALTO_PUERTA, 0.06f), mMadera, true);
-        Cubo("Tablero_Alto", bisagra.transform, new Vector3(ancho / 2f, ALTO_PUERTA * 0.72f, -0.035f),
-             new Vector3(ancho - 0.3f, 0.6f, 0.02f), mMaderaOsc);
-        Cubo("Tablero_Bajo", bisagra.transform, new Vector3(ancho / 2f, ALTO_PUERTA * 0.3f, -0.035f),
-             new Vector3(ancho - 0.3f, 0.7f, 0.02f), mMaderaOsc);
-        Esfera("Manija", bisagra.transform, new Vector3(ancho - 0.14f, 1.05f, -0.06f),
-               new Vector3(0.07f, 0.07f, 0.07f), mBronce);
+             new Vector3(ancho, ALTO_PUERTA, 0.05f), mMadera, true);
+        Cubo("Manija", bisagra.transform, new Vector3(ancho - 0.12f, 1.05f, -0.07f),
+             new Vector3(0.025f, 0.6f, 0.025f), mNegro);
+        Cubo("Soporte_1", bisagra.transform, new Vector3(ancho - 0.12f, 1.3f, -0.045f),
+             new Vector3(0.02f, 0.02f, 0.04f), mNegro);
+        Cubo("Soporte_2", bisagra.transform, new Vector3(ancho - 0.12f, 0.8f, -0.045f),
+             new Vector3(0.02f, 0.02f, 0.04f), mNegro);
+
+        // Cerradura: la llave se encaja en la ranura y después se gira la perilla.
+        // Solo cede si el teclado ya acepto el codigo.
+        var cerradura = Grupo("Cerradura", bisagra.transform);
+        cerradura.transform.localPosition = new Vector3(ancho - 0.3f, 1.05f, -0.03f);
+
+        Cubo("Escudo", cerradura.transform, Vector3.zero, new Vector3(0.1f, 0.16f, 0.02f), mMetal, true);
+        Cubo("Ojo_Cerradura", cerradura.transform, new Vector3(0f, 0.02f, -0.012f), new Vector3(0.02f, 0.03f, 0.01f), mNegro);
+
+        var ranura = Grupo("Ranura_Llave", cerradura.transform);
+        ranura.transform.localPosition = new Vector3(0f, 0.02f, -0.05f);
+        var colisionRanura = ranura.AddComponent<SphereCollider>();
+        colisionRanura.isTrigger = true;
+        colisionRanura.radius = 0.07f;
+        var socket = ranura.AddComponent<XRSocketInteractor>();
+
+        var luzLista = LuzPunto("Luz_Lista", cerradura.transform, new Vector3(0f, 0.08f, -0.06f),
+                                new Color(0.4f, 1f, 0.5f), 1.2f, 0.5f);
+        luzLista.enabled = false;
+
+        var perilla = Cilindro("Perilla", cerradura.transform, new Vector3(0f, -0.05f, -0.035f),
+                               new Vector3(0.05f, 0.012f, 0.05f), mBronce, true);
+        perilla.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+        Texto("Etiqueta_Girar", cerradura.transform, new Vector3(0f, -0.1f, -0.012f), Vector3.zero,
+              "GIRAR", 0.07f, new Color(0.85f, 0.85f, 0.85f), 0.12f, 0.03f);
+
+        var cerraduraLlave = cerradura.AddComponent<CerraduraLlave>();
+        cerraduraLlave.ranura = socket;
+        cerraduraLlave.luzLista = luzLista;
+
+        perilla.AddComponent<XRSimpleInteractable>();
+        var botonGirar = perilla.AddComponent<PressableButton>();
+        botonGirar.parteMovil = perilla.transform;
+        botonGirar.recorrido = 0.004f;
+        Resaltar(perilla, perilla.GetComponent<Renderer>());
+        UnityEventTools.AddVoidPersistentListener(botonGirar.alPresionar, new UnityAction(cerraduraLlave.Girar));
+
+        // Al ceder la cerradura, la puerta se abre
+        UnityEventTools.AddVoidPersistentListener(cerraduraLlave.alAbrir, new UnityAction(puerta.Abrir));
+        AvisarPanel(cerraduraLlave.alAbrir, 5);
 
         EditorUtility.SetDirty(puerta);
-        return puerta;
+        EditorUtility.SetDirty(botonGirar);
+        EditorUtility.SetDirty(cerraduraLlave);
+        return cerraduraLlave;
     }
 
-    // ------------------------------------------------------------------ luces
+    // ------------------------------------------------------------------ luces y terror
 
-    // Devuelve la luz de sala. La apaga ControlEnergia al arrancar, no se apaga acá,
-    // porque el que decide si hay energía o no es ese script.
-    static GameObject ArmarLuces(Transform p)
+    // Lo único que ilumina mientras no hay energía: luces rojas de emergencia en las
+    // cuatro esquinas del techo, dos de ellas parpadeando. Al subir la llave del
+    // tablero se apagan todas (ControlEnergia las desactiva) y el cuarto se ve normal.
+    static List<GameObject> ArmarTerror(Transform p)
     {
-        // Luz verde de emergencia sobre la puerta de salida: es la única que
-        // sobrevive al apagón, así que queda encendida siempre
-        var emer = new GameObject("Luz_Emergencia");
-        emer.transform.SetParent(p, false);
-        emer.transform.localPosition = new Vector3((SALIDA_X0 + SALIDA_X1) / 2f, ALTO_PUERTA + 0.3f, FONDO - 0.4f);
-        var le = emer.AddComponent<Light>();
-        le.type = LightType.Point;
-        le.color = new Color(0.4f, 1f, 0.55f);
-        le.intensity = 1.6f;
-        le.range = 3.5f;
+        var rojas = new List<GameObject>();
+        float[] xs = { 0.35f, ANCHO - 0.35f };
+        float[] zs = { 0.35f, FONDO - 0.35f };
+        int n = 1;
+        foreach (float x in xs)
+            foreach (float z in zs)
+            {
+                var esquina = Grupo("Luz_Roja_" + n, p);
+                esquina.transform.localPosition = new Vector3(x, ALTO - 0.05f, z);
+                Cubo("Foco", esquina.transform, Vector3.zero, new Vector3(0.18f, 0.06f, 0.18f), mRojo);
 
-        // Mientras no hay energía parpadea, como un tubo a punto de quemarse
-        var parpadeo = emer.AddComponent<Parpadeo>();
-        parpadeo.intensidadMinima = 0.1f;
-        parpadeo.intensidadMaxima = 1.8f;
+                var luz = LuzPunto("Luz", esquina.transform, new Vector3(0f, -0.25f, 0f),
+                                   new Color(1f, 0.07f, 0.05f), 3f, 5.5f);
 
-        var sala = new GameObject("Luz_Sala");
-        sala.transform.SetParent(p, false);
-        sala.transform.localPosition = new Vector3(ANCHO / 2f, ALTO - 0.35f, FONDO / 2f);
-        var ls = sala.AddComponent<Light>();
-        ls.type = LightType.Point;
-        ls.color = new Color(1f, 0.96f, 0.88f);
-        ls.intensity = 4.5f;
-        ls.range = 18f;
-        ls.shadows = LightShadows.Soft;
-        return sala;
+                // Parpadean las de una diagonal, así no queda todo sincronizado
+                if (n == 1 || n == 4)
+                {
+                    var parpadeo = luz.gameObject.AddComponent<Parpadeo>();
+                    parpadeo.intensidadMinima = 0.3f;
+                    parpadeo.intensidadMaxima = 3f;
+                }
+
+                rojas.Add(esquina);
+                n++;
+            }
+        return rojas;
+    }
+
+    // ------------------------------------------------------------------ control de energía
+
+    static ControlEnergia ArmarControlEnergia(Transform raiz, List<Light> lucesCuarto,
+                                              List<GameObject> conEnergia, List<GameObject> sinEnergia)
+    {
+        var g = Grupo("Energia", raiz);
+        var control = g.AddComponent<ControlEnergia>();
+        control.lucesDelCuarto = lucesCuarto.ToArray();
+        control.objetosConEnergia = conEnergia.ToArray();
+        control.objetosSinEnergia = sinEnergia.ToArray();
+        // Los parpadeos solo corren mientras el cuarto está sin energía
+        control.efectosSinEnergia = raiz.GetComponentsInChildren<Parpadeo>();
+        EditorUtility.SetDirty(control);
+        return control;
+    }
+
+    // En el editor el ambiente queda como con luz, para poder trabajar cómodo.
+    // El apagón lo arma ControlEnergia recién al darle Play.
+    static void AjustarAmbienteEditor()
+    {
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+        RenderSettings.ambientLight = new Color(0.55f, 0.53f, 0.5f);
+        RenderSettings.fog = false;
     }
 
     // ------------------------------------------------------------------ apoyo
-
-    // La escena venía con la luz ambiental del skybox al máximo, así que todo se veía
-    // igual de iluminado aunque las luces estuvieran apagadas y el apagón no se notaba.
-    // Con ambiente casi negro, lo único que ilumina son las luces reales del cuarto.
-    // OJO: esto es un ajuste de toda la escena, también afecta al Cuarto 1.
-    static void OscurecerEscena()
-    {
-        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-        RenderSettings.ambientLight = new Color(0.04f, 0.045f, 0.06f);
-    }
 
     static void AsegurarInventario()
     {
@@ -923,12 +1004,262 @@ public static class ConstructorCuarto2
         }
 
         datos.solucion = "3719";
-        datos.pista = "Primero hay que devolver la energia desde el tablero. " +
-                      "La bitacora del estante da el orden de los relojes y el cuadro dice " +
-                      "a que hora hay que poner el reloj que quedo parado.";
+        datos.pista = "Primero hay que devolver la energia desde el tablero. La bitacora sobre el " +
+                      "aparador da la hora de cada campana y el orden; la placa del cuadro dice que " +
+                      "reloj es cada campana. Cada reloj se pone en hora girando su manecilla.";
         datos.mensajeAcierto = "La cerradura del teclado hace clic y la puerta se abre";
         datos.mensajeError = "El teclado parpadea en rojo: codigo incorrecto";
         EditorUtility.SetDirty(datos);
+    }
+
+    // Pone un modelo de Poly Haven si está descargado en el proyecto y devuelve el
+    // objeto que lo contiene; si no está, devuelve null y el que llama arma otra cosa.
+    // El modelo se escala a su altura real y se apoya en el piso del punto indicado,
+    // así no importa con qué escala o pivote venga el archivo.
+    // "apoyar": true deja la base del modelo a la altura del punto (muebles apoyados en
+    // el piso o sobre un mueble); false lo centra en el punto (cosas colgadas, como el reloj).
+    static GameObject Modelo(string nombrePolyHaven, Transform padre, Vector3 pos, float giroY,
+                             float altoReal, bool colisiona, bool apoyar = true)
+    {
+        var fuente = BuscarModelo(nombrePolyHaven);
+        if (fuente == null) return null;
+
+        // El giro va en un objeto contenedor: así no se pisa la rotación que trae el
+        // archivo (los FBX que vienen de Blender suelen traer una corrección en X)
+        var contenedor = Grupo(nombrePolyHaven, padre);
+        contenedor.transform.localPosition = pos;
+        contenedor.transform.localEulerAngles = new Vector3(0f, giroY, 0f);
+
+        var modelo = (GameObject)PrefabUtility.InstantiatePrefab(fuente, contenedor.transform);
+        modelo.transform.localPosition = Vector3.zero;
+        ArreglarMateriales(modelo);
+
+        if (!Limites(modelo, out Bounds b)) return contenedor;
+
+        if (altoReal > 0f && b.size.y > 0.0001f)
+        {
+            modelo.transform.localScale *= altoReal / b.size.y;
+            Limites(modelo, out b);
+        }
+
+        // Centrado sobre el punto, apoyado o centrado también en altura
+        Vector3 destino = contenedor.transform.position;
+        modelo.transform.position += destino - new Vector3(b.center.x, apoyar ? b.min.y : b.center.y, b.center.z);
+
+        if (colisiona)
+        {
+            Limites(modelo, out b);
+            var col = contenedor.AddComponent<BoxCollider>();
+            col.center = contenedor.transform.InverseTransformPoint(b.center);
+            Vector3 t = b.size;
+            // Con el contenedor girado 90 o 270 grados, el ancho y el fondo se intercambian
+            if (Mathf.Abs(Mathf.Sin(giroY * Mathf.Deg2Rad)) > 0.7f) t = new Vector3(t.z, t.y, t.x);
+            col.size = t;
+        }
+
+        return contenedor;
+    }
+
+    // Dos cosas que Unity no importa bien de los FBX de Poly Haven:
+    // - los vidrios ("_glass") salen opacos y tapan lo que hay detrás (la lámina del cuadro)
+    // - el follaje trae la transparencia en una textura aparte ("_alpha"), y sin ella las
+    //   hojas se ven como rectángulos blancos
+    // Se reemplazan esos materiales por unos armados acá.
+    static void ArreglarMateriales(GameObject modelo)
+    {
+        foreach (var r in modelo.GetComponentsInChildren<Renderer>())
+        {
+            var mats = r.sharedMaterials;
+            bool cambio = false;
+            for (int i = 0; i < mats.Length; i++)
+            {
+                if (mats[i] == null) continue;
+                string n = mats[i].name;
+
+                if (n.EndsWith("_glass"))
+                {
+                    mats[i] = MaterialVidrio();
+                    cambio = true;
+                    continue;
+                }
+
+                var diff = BuscarTextura(n + "_diff");
+                var alfa = BuscarTextura(n + "_alpha");
+                if (alfa == null) alfa = BuscarTextura(n + "_opacity");
+                if (diff != null && alfa != null)
+                {
+                    mats[i] = MaterialRecortado(n, diff, alfa, BuscarTextura(n + "_nor_gl"));
+                    cambio = true;
+                }
+            }
+            if (cambio) r.sharedMaterials = mats;
+        }
+    }
+
+    // Vidrio casi invisible, para que se vea lo que hay detrás
+    static Material MaterialVidrio()
+    {
+        var m = Mat("C2_Vidrio", new Color(1f, 1f, 1f, 0.08f), 0f, 0.95f);
+        m.SetFloat("_Surface", 1f);
+        m.SetFloat("_Blend", 0f);
+        m.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        m.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        m.SetFloat("_ZWrite", 0f);
+        m.SetOverrideTag("RenderType", "Transparent");
+        m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        m.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+        EditorUtility.SetDirty(m);
+        return m;
+    }
+
+    // Material con recorte por transparencia (para hojas): junta el color y la
+    // transparencia en una sola textura, que es como la usa Unity
+    static Material MaterialRecortado(string nombre, Texture2D diff, Texture2D alfa, Texture2D normal)
+    {
+        const string CARPETA = "Assets/Materials/Cuarto2/PolyHaven";
+        if (!AssetDatabase.IsValidFolder(CARPETA))
+            AssetDatabase.CreateFolder("Assets/Materials/Cuarto2", "PolyHaven");
+
+        var textura = CombinarAlfa(diff, alfa, CARPETA + "/" + nombre + "_rgba.png");
+
+        string ruta = CARPETA + "/" + nombre + ".mat";
+        var m = AssetDatabase.LoadAssetAtPath<Material>(ruta);
+        if (m == null)
+        {
+            m = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            AssetDatabase.CreateAsset(m, ruta);
+        }
+
+        m.SetTexture("_BaseMap", textura);
+        m.SetColor("_BaseColor", Color.white);
+        m.SetFloat("_Smoothness", 0.25f);
+        m.SetFloat("_AlphaClip", 1f);
+        m.SetFloat("_Cutoff", 0.5f);
+        m.EnableKeyword("_ALPHATEST_ON");
+        m.SetFloat("_Cull", 0f);   // las hojas se ven de los dos lados
+        m.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
+
+        if (normal != null)
+        {
+            ConfigurarComoNormal(normal);
+            m.SetTexture("_BumpMap", normal);
+            m.EnableKeyword("_NORMALMAP");
+        }
+
+        EditorUtility.SetDirty(m);
+        return m;
+    }
+
+    static Texture2D CombinarAlfa(Texture2D color, Texture2D alfa, string ruta)
+    {
+        var existente = AssetDatabase.LoadAssetAtPath<Texture2D>(ruta);
+        if (existente != null) return existente;
+
+        color = HacerLegible(color);
+        alfa = HacerLegible(alfa);
+        if (color.width != alfa.width || color.height != alfa.height) return color;
+
+        var pixeles = color.GetPixels();
+        var transparencia = alfa.GetPixels();
+        for (int i = 0; i < pixeles.Length; i++) pixeles[i].a = transparencia[i].r;
+
+        var t = new Texture2D(color.width, color.height, TextureFormat.RGBA32, false);
+        t.SetPixels(pixeles);
+        t.Apply();
+        File.WriteAllBytes(ruta, t.EncodeToPNG());
+        Object.DestroyImmediate(t);
+
+        AssetDatabase.ImportAsset(ruta);
+        return AssetDatabase.LoadAssetAtPath<Texture2D>(ruta);
+    }
+
+    static Texture2D HacerLegible(Texture2D t)
+    {
+        string ruta = AssetDatabase.GetAssetPath(t);
+        var importer = AssetImporter.GetAtPath(ruta) as TextureImporter;
+        if (importer != null && !importer.isReadable)
+        {
+            importer.isReadable = true;
+            importer.SaveAndReimport();
+        }
+        return AssetDatabase.LoadAssetAtPath<Texture2D>(ruta);
+    }
+
+    static bool Limites(GameObject go, out Bounds b)
+    {
+        b = new Bounds();
+        var renderers = go.GetComponentsInChildren<Renderer>();
+        if (renderers.Length == 0) return false;
+        b = renderers[0].bounds;
+        foreach (var r in renderers) b.Encapsulate(r.bounds);
+        return true;
+    }
+
+    // Carpetas donde se buscan los assets descargados de Poly Haven
+    static string[] CarpetasPolyHaven()
+    {
+        var carpetas = new List<string>();
+        foreach (var c in new[] { "Assets/PolyHaven", "Assets/Textures", "Assets/Modelos" })
+            if (AssetDatabase.IsValidFolder(c)) carpetas.Add(c);
+        return carpetas.ToArray();
+    }
+
+    static GameObject BuscarModelo(string nombre)
+    {
+        var carpetas = CarpetasPolyHaven();
+        if (carpetas.Length == 0) return null;
+
+        foreach (var guid in AssetDatabase.FindAssets("t:GameObject", carpetas))
+        {
+            string ruta = AssetDatabase.GUIDToAssetPath(guid);
+            if (!ruta.EndsWith(".fbx", System.StringComparison.OrdinalIgnoreCase)) continue;
+            string archivo = Path.GetFileNameWithoutExtension(ruta);
+            if (archivo == nombre || archivo.StartsWith(nombre + "_"))
+                return AssetDatabase.LoadAssetAtPath<GameObject>(ruta);
+        }
+        return null;
+    }
+
+    static Texture2D BuscarTextura(string prefijo)
+    {
+        var carpetas = CarpetasPolyHaven();
+        if (carpetas.Length == 0) return null;
+
+        foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", carpetas))
+        {
+            string ruta = AssetDatabase.GUIDToAssetPath(guid);
+            if (Path.GetFileNameWithoutExtension(ruta).StartsWith(prefijo))
+                return AssetDatabase.LoadAssetAtPath<Texture2D>(ruta);
+        }
+        return null;
+    }
+
+    // Los normal maps que vienen con los modelos también tienen que estar marcados
+    // como "Normal map", si no los muebles se ven con el relieve mal
+    static void ConfigurarNormalesDeModelos()
+    {
+        var carpetas = CarpetasPolyHaven();
+        if (carpetas.Length == 0) return;
+
+        foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", carpetas))
+        {
+            string ruta = AssetDatabase.GUIDToAssetPath(guid);
+            if (!Path.GetFileNameWithoutExtension(ruta).Contains("_nor_gl")) continue;
+            var textura = AssetDatabase.LoadAssetAtPath<Texture2D>(ruta);
+            if (textura != null) ConfigurarComoNormal(textura);
+        }
+    }
+
+    // Unity necesita que los normal maps estén importados como "Normal map",
+    // si no se ven planos o con los relieves invertidos
+    static void ConfigurarComoNormal(Texture2D textura)
+    {
+        string ruta = AssetDatabase.GetAssetPath(textura);
+        var importer = AssetImporter.GetAtPath(ruta) as TextureImporter;
+        if (importer == null || importer.textureType == TextureImporterType.NormalMap) return;
+
+        importer.textureType = TextureImporterType.NormalMap;
+        importer.SaveAndReimport();
     }
 
     static GameObject Grupo(string nombre, Transform padre)
@@ -969,6 +1300,9 @@ public static class ConstructorCuarto2
         go.transform.SetParent(padre, false);
         go.transform.localPosition = pos;
         go.transform.localEulerAngles = rot;
+        // "rot" se piensa como si el texto se leyera desde su +Z, pero TextMeshPro se
+        // lee desde su -Z: sin este giro todos los textos se verían en espejo
+        go.transform.Rotate(0f, 180f, 0f, Space.Self);
 
         var rt = go.GetComponent<RectTransform>();
         rt.sizeDelta = new Vector2(ancho, alto);
@@ -981,11 +1315,7 @@ public static class ConstructorCuarto2
         return t;
     }
 
-    // Luz que arranca apagada. "porObjeto" define cómo se la prende después:
-    // true  -> se prende activando el GameObject (así la prenden los eventos)
-    // false -> se prende habilitando el componente Light (así la prende RelojDecoy)
-    static GameObject LuzApagada(string nombre, Transform padre, Vector3 pos,
-                                 Color color, float intensidad, float rango, bool porObjeto = true)
+    static Light LuzPunto(string nombre, Transform padre, Vector3 pos, Color color, float intensidad, float rango)
     {
         var go = new GameObject(nombre);
         go.transform.SetParent(padre, false);
@@ -995,11 +1325,19 @@ public static class ConstructorCuarto2
         l.color = color;
         l.intensity = intensidad;
         l.range = rango;
+        return l;
+    }
 
-        if (porObjeto) go.SetActive(false);
+    // Luz que arranca apagada. "porObjeto" define cómo se la prende después:
+    // true  -> se prende activando el GameObject (así la prenden los eventos)
+    // false -> se prende habilitando el componente Light (así la prende RelojDecoy)
+    static GameObject LuzApagada(string nombre, Transform padre, Vector3 pos,
+                                 Color color, float intensidad, float rango, bool porObjeto = true)
+    {
+        var l = LuzPunto(nombre, padre, pos, color, intensidad, rango);
+        if (porObjeto) l.gameObject.SetActive(false);
         else l.enabled = false;
-
-        return go;
+        return l.gameObject;
     }
 
     static AudioSource AudioEn(string nombre, Transform padre)
@@ -1036,53 +1374,58 @@ public static class ConstructorCuarto2
         if (!AssetDatabase.IsValidFolder("Assets/Materials/Cuarto2"))
             AssetDatabase.CreateFolder("Assets/Materials", "Cuarto2");
 
-        // Los nombres sueltos ("american_walnut_veneer", etc.) son los de Poly Haven:
-        // si esas texturas están en el proyecto se usan, y si no queda el color plano.
-        mMadera = Mat("C2_Madera", new Color(0.36f, 0.23f, 0.14f), 0f, 0.25f,
-                      default, "american_walnut_veneer", 1f, 1f);
-        mMaderaOsc = Mat("C2_MaderaOscura", new Color(0.19f, 0.12f, 0.07f), 0f, 0.2f,
-                         default, "dark_wooden_planks", 1f, 1f);
-        mPared = Mat("C2_Pared", new Color(0.55f, 0.56f, 0.48f), 0f, 0.05f,
-                     default, "decrepit_wallpaper", 3f, 1.5f);
-        mZocalo = Mat("C2_Zocalo", new Color(0.23f, 0.16f, 0.1f), 0f, 0.2f,
-                      default, "dark_wooden_planks", 4f, 1f);
-        mPiso = Mat("C2_Piso", new Color(0.5f, 0.49f, 0.45f), 0f, 0.35f,
-                    default, "checkered_pavement_tiles", 3f, 3.5f);
-        mBaldosaA = Mat("C2_BaldosaClara", new Color(0.66f, 0.64f, 0.58f), 0f, 0.35f);
-        mBaldosaB = Mat("C2_BaldosaOscura", new Color(0.16f, 0.16f, 0.15f), 0f, 0.35f);
-        mMetal = Mat("C2_Metal", new Color(0.52f, 0.54f, 0.56f), 0.85f, 0.55f,
-                     default, "metal_plate", 1f, 1f);
-
-        hayTexturaPiso = BuscarTextura("checkered_pavement_tiles_diff") != null;
+        // Paleta moderna: paredes claras, parquet, nogal y acero negro.
+        // Los nombres sueltos ("herringbone_parquet", etc.) son texturas de Poly Haven:
+        // si están en el proyecto se usan, y si no queda el color plano.
+        // Paredes pintadas de un crema claro. Del yeso de Poly Haven se usa solo el
+        // relieve: su color es un gris medio que oscurecería la pintura.
+        mPared = Mat("C2_Pared", new Color(0.96f, 0.92f, 0.85f), 0f, 0.1f,
+                     default, "plastered_wall_04", 3f, 1.5f, false, true);
+        // Dos paredes con color: la de los relojes y la de la puerta de salida
+        mParedRelojes = Mat("C2_ParedRelojes", new Color(0.16f, 0.33f, 0.35f), 0f, 0.1f,
+                            default, "plastered_wall_04", 3f, 1.5f, false, true);
+        mParedPuerta = Mat("C2_ParedPuerta", new Color(0.62f, 0.33f, 0.24f), 0f, 0.1f,
+                           default, "plastered_wall_04", 3f, 1.5f, false, true);
+        // Madera clara para los listones de la pared del aparador
+        mMaderaClara = Mat("C2_MaderaClara", new Color(1f, 0.82f, 0.62f), 0f, 0.3f,
+                           default, "american_walnut_veneer", 0.3f, 2f, true);
+        // Pantalla de la computadora: encendida, se lee aunque el cuarto esté oscuro
+        mPantallaPC = Mat("C2_PantallaPC", new Color(0.04f, 0.09f, 0.13f), 0f, 0.7f,
+                          new Color(0.05f, 0.16f, 0.22f));
+        mTecho = Mat("C2_Techo", new Color(0.94f, 0.94f, 0.93f), 0f, 0.05f);
+        mPiso = Mat("C2_Piso", new Color(0.55f, 0.4f, 0.26f), 0f, 0.35f,
+                    default, "herringbone_parquet", 4f, 4.7f);
+        // El "nogal" de Poly Haven es una madera grisácea: se tiñe para darle el tono cálido
+        mMadera = Mat("C2_Madera", new Color(0.8f, 0.56f, 0.38f), 0f, 0.35f,
+                      default, "american_walnut_veneer", 1f, 1f, true);
+        mNegro = Mat("C2_Negro", new Color(0.05f, 0.05f, 0.055f), 0.3f, 0.35f);
+        mBlanco = Mat("C2_Blanco", new Color(0.93f, 0.93f, 0.92f), 0f, 0.3f);
+        mMetal = Mat("C2_Metal", new Color(0.52f, 0.54f, 0.56f), 0.85f, 0.55f);
         mBronce = Mat("C2_Bronce", new Color(0.72f, 0.52f, 0.22f), 0.9f, 0.6f);
-        mEsfera = Mat("C2_EsferaReloj", new Color(0.92f, 0.9f, 0.83f), 0f, 0.3f);
-        mNegro = Mat("C2_Negro", new Color(0.07f, 0.07f, 0.08f), 0.1f, 0.3f);
+        mEsfera = Mat("C2_EsferaReloj", new Color(0.95f, 0.94f, 0.9f), 0f, 0.4f);
         mVerde = Mat("C2_Verde", new Color(0.2f, 0.7f, 0.3f), 0f, 0.4f, new Color(0.15f, 0.8f, 0.3f));
         mRojo = Mat("C2_Rojo", new Color(0.7f, 0.15f, 0.12f), 0f, 0.4f, new Color(0.9f, 0.1f, 0.08f));
         mPantalla = Mat("C2_Pantalla", new Color(0.05f, 0.12f, 0.06f), 0f, 0.6f);
         mResaltado = Mat("C2_Resaltado", new Color(0.55f, 0.85f, 1f), 0f, 0.6f, new Color(0.25f, 0.6f, 0.9f));
         mGrieta = Mat("C2_VidrioRoto", new Color(0.5f, 0.5f, 0.52f), 0.2f, 0.75f);
-        mAlfombra = Mat("C2_Alfombra", new Color(0.32f, 0.11f, 0.12f), 0f, 0.05f,
-                        default, "dirty_carpet", 2f, 2f);
-        mPapel = Mat("C2_Papel", new Color(0.85f, 0.82f, 0.72f), 0f, 0.1f);
+        mAlfombra = Mat("C2_Alfombra", new Color(0.2f, 0.2f, 0.22f), 0f, 0.05f);
+        mPapel = Mat("C2_Papel", new Color(0.92f, 0.9f, 0.84f), 0f, 0.1f);
+        mTela = Mat("C2_Tela", new Color(0.24f, 0.25f, 0.27f), 0f, 0.1f);
+        mLuzTecho = Mat("C2_LuzTecho", new Color(1f, 1f, 0.97f), 0f, 0.5f, new Color(1.6f, 1.55f, 1.45f));
+        mDigito = Mat("C2_Digito", new Color(0.1f, 0.1f, 0.12f), 0f, 0.7f, new Color(0.15f, 0.9f, 1.1f));
         mLibroA = Mat("C2_LibroA", new Color(0.35f, 0.14f, 0.15f), 0f, 0.15f);
         mLibroB = Mat("C2_LibroB", new Color(0.14f, 0.25f, 0.33f), 0f, 0.15f);
         mLibroC = Mat("C2_LibroC", new Color(0.24f, 0.28f, 0.16f), 0f, 0.15f);
-        mLampara = Mat("C2_PantallaLampara", new Color(0.16f, 0.42f, 0.24f), 0f, 0.3f);
-
-        // Tiras LED: fuerte mientras no hay energía, suave cuando vuelve la luz
-        mLedFuerte = Mat("C2_LedFuerte", new Color(0.45f, 0.15f, 0.85f), 0f, 0.8f,
-                         new Color(1.7f, 0.5f, 3f));
-        mLedSuave = Mat("C2_LedSuave", new Color(0.35f, 0.15f, 0.6f), 0f, 0.8f,
-                        new Color(0.35f, 0.1f, 0.6f));
-        mDigito = Mat("C2_Digito", new Color(0.1f, 0.1f, 0.12f), 0f, 0.7f,
-                      new Color(0.15f, 0.9f, 1.1f));
     }
 
-    // "polyHaven" es el nombre del asset en Poly Haven (por ejemplo "dark_wooden_planks").
+    // "polyHaven" es el nombre del asset en Poly Haven (por ejemplo "herringbone_parquet").
     // Si sus texturas están en el proyecto se le ponen al material; si no, queda el color plano.
+    // "tenir": si es true, la textura se tiñe con el color; si es false se ve tal cual.
+    // "soloRelieve": usa solo el normal map (el relieve) y deja el color liso, como una
+    // pared pintada: sirve cuando la textura es más oscura que el color que se quiere.
     static Material Mat(string nombre, Color color, float metalico, float suavidad, Color emision = default,
-                        string polyHaven = null, float tileX = 1f, float tileY = 1f)
+                        string polyHaven = null, float tileX = 1f, float tileY = 1f,
+                        bool tenir = false, bool soloRelieve = false)
     {
         string ruta = "Assets/Materials/Cuarto2/" + nombre + ".mat";
         var m = AssetDatabase.LoadAssetAtPath<Material>(ruta);
@@ -1111,13 +1454,15 @@ public static class ConstructorCuarto2
         {
             var tiling = new Vector2(tileX, tileY);
 
-            var baseMap = BuscarTextura(polyHaven + "_diff");
+            var baseMap = soloRelieve ? null : BuscarTextura(polyHaven + "_diff");
+            if (soloRelieve && m.HasProperty("_BaseMap")) m.SetTexture("_BaseMap", null);
             if (baseMap != null && m.HasProperty("_BaseMap"))
             {
-                // Con textura, el color tiñe: se pone blanco para ver la textura tal cual
+                // Con textura, el color la tiñe: si no hay que teñir se pone blanco
+                // para que la textura se vea tal cual
                 m.SetTexture("_BaseMap", baseMap);
                 m.SetTextureScale("_BaseMap", tiling);
-                if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", Color.white);
+                if (!tenir && m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", Color.white);
             }
 
             // nor_gl es la versión OpenGL del normal map, que es la que usa Unity
@@ -1133,42 +1478,5 @@ public static class ConstructorCuarto2
 
         EditorUtility.SetDirty(m);
         return m;
-    }
-
-    // Pone un modelo de Poly Haven si está descargado en el proyecto.
-    // Devuelve null si no está, y ahí el que llama arma la versión con cubos.
-    static GameObject Modelo(string nombrePolyHaven, Transform padre, Vector3 pos, float giroY, float escala)
-    {
-        var guids = AssetDatabase.FindAssets(nombrePolyHaven + " t:GameObject");
-        if (guids.Length == 0) return null;
-
-        var fuente = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(guids[0]));
-        if (fuente == null) return null;
-
-        var go = (GameObject)PrefabUtility.InstantiatePrefab(fuente, padre);
-        go.name = nombrePolyHaven;
-        go.transform.localPosition = pos;
-        go.transform.localEulerAngles = new Vector3(0f, giroY, 0f);
-        go.transform.localScale = Vector3.one * escala;
-        return go;
-    }
-
-    static Texture2D BuscarTextura(string prefijo)
-    {
-        var guids = AssetDatabase.FindAssets(prefijo + " t:Texture2D");
-        if (guids.Length == 0) return null;
-        return AssetDatabase.LoadAssetAtPath<Texture2D>(AssetDatabase.GUIDToAssetPath(guids[0]));
-    }
-
-    // Unity necesita que los normal maps estén importados como "Normal map",
-    // si no se ven planos o con los relieves invertidos
-    static void ConfigurarComoNormal(Texture2D textura)
-    {
-        string ruta = AssetDatabase.GetAssetPath(textura);
-        var importer = AssetImporter.GetAtPath(ruta) as TextureImporter;
-        if (importer == null || importer.textureType == TextureImporterType.NormalMap) return;
-
-        importer.textureType = TextureImporterType.NormalMap;
-        importer.SaveAndReimport();
     }
 }

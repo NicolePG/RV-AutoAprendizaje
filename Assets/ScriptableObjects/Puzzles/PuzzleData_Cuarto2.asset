@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PuzzleData
   id: cuarto2_codigo
   nombreCuarto: "Direcci\xF3n"
-  pista: Primero hay que devolver la energia desde el tablero. La bitacora del estante
-    da el orden de los relojes y el cuadro dice a que hora hay que poner el reloj
-    que quedo parado.
+  pista: Primero hay que devolver la energia desde el tablero. La bitacora sobre
+    el aparador da la hora de cada campana y el orden; la placa del cuadro dice que
+    reloj es cada campana. Cada reloj se pone en hora girando su manecilla.
   tipo: 0
   solucion: 3719
   mensajeAcierto: La cerradura del teclado hace clic y la puerta se abre
