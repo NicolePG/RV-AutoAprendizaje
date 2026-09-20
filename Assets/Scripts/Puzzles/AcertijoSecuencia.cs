@@ -9,8 +9,12 @@ using UnityEngine.Events;
 // orden fijo. Ese es el orden en el que hay que accionar las palancas.
 //
 // La secuencia se repite sola cada tanto, así que el jugador puede mirarla de nuevo si
-// se le mezcló. Una palanca fuera de orden enciende la luz roja, suena grave y hay que
-// empezar la secuencia otra vez (las palancas no se bloquean, solo se reinicia la cuenta).
+// se le mezcló. Una palanca fuera de orden enciende la luz roja, suena grave y todas
+// vuelven arriba para empezar de nuevo.
+//
+// OJO con el orden: cada palanca tiene que aparecer UNA SOLA VEZ. Una palanca que ya
+// quedó abajo no se puede volver a tocar (así es como el jugador sabe que esa ya está),
+// así que si un número se repitiera, el acertijo no se podría terminar nunca.
 //
 // En la escena: va en un objeto vacío llamado "Acertijo_Palancas". En "haces" van los
 // tres haces de luz en el orden de las palancas 1, 2 y 3, y cada Palanca tiene que
@@ -18,7 +22,7 @@ using UnityEngine.Events;
 public class AcertijoSecuencia : MonoBehaviour
 {
     [Tooltip("El orden correcto, con los números de las palancas")]
-    public int[] secuencia = { 2, 3, 1, 3 };
+    public int[] secuencia = { 2, 3, 1 };
 
     [Tooltip("Los haces de luz de cada palanca, en orden: el 1, el 2 y el 3")]
     public GameObject[] haces;

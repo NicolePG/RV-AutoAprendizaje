@@ -60,8 +60,10 @@ public static class ConstructorCuarto4
     // Las tres palancas, a lo largo de la pared Este
     static readonly float[] Z_PALANCAS = { 3f, 4.75f, 6.5f };
 
-    // El orden en que se encienden los haces de luz, y en el que van las palancas
-    static readonly int[] SECUENCIA = { 2, 3, 1, 3 };
+    // El orden en que se encienden los haces de luz, y en el que van las palancas.
+    // Cada palanca aparece UNA SOLA VEZ a propósito: la que ya quedó abajo no se vuelve
+    // a tocar, así que con un número repetido el acertijo no se podría terminar.
+    static readonly int[] SECUENCIA = { 2, 3, 1 };
 
     static Material mParedAlta, mFriso, mGuarda, mPiso, mTecho, mAcero, mAceroOscuro, mNegro,
                     mBlanco, mVerdeLuz, mRojo, mAmbar, mPantalla, mResaltado, mPapel,
@@ -636,9 +638,13 @@ public static class ConstructorCuarto4
         if (fuente == null) return null;
 
         var contenedor = Grupo("Cuerpo_Modelo", padre);
-        // Acostado boca arriba y con la cabeza hacia la entrada. Si quedara boca abajo,
-        // se le cambia el 180 de la Y por 0 en el Inspector.
-        contenedor.transform.localEulerAngles = new Vector3(90f, 180f, 0f);
+        // Acostado boca arriba y con la cabeza hacia la entrada.
+        //
+        // Los -90 en X no son a ojo: el propio archivo FBX declara que su eje de arriba
+        // es la Y y que el frente es la Z (UpAxis 1, FrontAxis 2, los dos en positivo),
+        // que es justo como los usa Unity. Girando -90 en X, la cabeza (+Y) queda
+        // apuntando al -Z, o sea a la entrada, y la cara (+Z) queda mirando al techo.
+        contenedor.transform.localEulerAngles = new Vector3(-90f, 0f, 0f);
 
         var modelo = (GameObject)PrefabUtility.InstantiatePrefab(fuente, contenedor.transform);
         modelo.transform.localPosition = Vector3.zero;
