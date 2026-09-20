@@ -933,7 +933,7 @@ public static class ConstructorCuarto4
         Cilindro("Hueco", g.transform, new Vector3(0f, 0.06f, 0.03f), new Vector3(0.13f, 0.01f, 0.13f), mNegro)
             .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
         Texto("Etiqueta", g.transform, new Vector3(0f, -0.14f, 0.028f), Vector3.zero,
-              "LLAVE\nMAESTRA", 0.16f, new Color(0.9f, 0.93f, 0.9f), 0.28f, 0.12f);
+              "MEDALLON", 0.2f, new Color(0.9f, 0.93f, 0.9f), 0.28f, 0.1f);
 
         // El medallón encajado: aparece recién cuando el jugador lo pone
         var medallon = Cilindro("Medallon_Puesto", g.transform, new Vector3(0f, 0.06f, 0.038f),
