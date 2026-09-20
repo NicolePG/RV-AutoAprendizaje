@@ -624,6 +624,26 @@ public static class ConstructorCuarto4
         conGas.Add(llama);
     }
 
+    // Unity no siempre engancha la textura que viene al lado de un FBX, y el cuerpo
+    // queda gris. Se le pone un material armado acá con esa misma textura.
+    static void PintarCuerpo(GameObject modelo)
+    {
+        var textura = BuscarTextura("Zombie");
+        if (textura == null) return;
+
+        var material = Mat("C4_Cuerpo", Color.white, 0f, 0.12f);
+        if (material.HasProperty("_BaseMap")) material.SetTexture("_BaseMap", textura);
+        if (material.HasProperty("_MainTex")) material.SetTexture("_MainTex", textura);
+        EditorUtility.SetDirty(material);
+
+        foreach (var r in modelo.GetComponentsInChildren<Renderer>())
+        {
+            var mats = r.sharedMaterials;
+            for (int i = 0; i < mats.Length; i++) mats[i] = material;
+            r.sharedMaterials = mats;
+        }
+    }
+
     // La cabeza del cuerpo. Poly Haven no tiene modelos de personas (solo muebles,
     // herramientas y naturaleza), así que está armada a mano con formas simples, igual
     // que el resto del cuerpo.
@@ -726,13 +746,21 @@ public static class ConstructorCuarto4
         var torso = Grupo("Torso", cuerpo.transform);
         torso.transform.localPosition = new Vector3(0f, 0f, -0.05f);
 
-        // Si en el proyecto hay un modelo llamado "cuerpo_camilla" (bajado de Sketchfab,
-        // Mixamo o donde sea), se usa ese en lugar del cuerpo armado con cubos. Entra sin
-        // escalar y colgando del mismo pivote, así el susto lo incorpora igual; la
-        // posición y el tamaño se terminan de acomodar a ojo en el Inspector.
-        bool hayModelo = Modelo("cuerpo_camilla", torso.transform,
-                                new Vector3(0f, 0f, 0.05f), 0f, 0f, false, false) != null;
-        if (!hayModelo)
+        // El cuerpo de verdad: el modelo "cuerpo_camilla" que está en Assets/Modelos
+        // (un zombi CC0 de OpenGameArt). Si por lo que sea no estuviera, se arma el
+        // cuerpo con cubos como antes, así el cuarto nunca queda vacío.
+        var modeloCuerpo = Modelo("cuerpo_camilla", torso.transform, Vector3.zero, 0f, 1.75f, false, false);
+        if (modeloCuerpo != null)
+        {
+            // El modelo viene parado: se lo acuesta boca arriba (los -90 en X) con la
+            // cabeza hacia la entrada, y se lo sube hasta apoyarlo en la tabla.
+            // Si quedara boca abajo, en el Inspector se le cambia el -90 por 90.
+            modeloCuerpo.transform.localEulerAngles = new Vector3(-90f, 0f, 0f);
+            modeloCuerpo.transform.localPosition = new Vector3(0f, 0.12f, 0.05f);
+            PintarCuerpo(modeloCuerpo);
+        }
+
+        if (modeloCuerpo == null)
         {
             ArmarCabeza(torso.transform, new Vector3(0f, 0.12f, -0.77f));
             Cubo("Cuello", torso.transform, new Vector3(0f, 0.08f, -0.63f), new Vector3(0.1f, 0.09f, 0.08f), mPiel);
