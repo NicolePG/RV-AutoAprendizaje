@@ -860,21 +860,30 @@ public static class ConstructorCuarto4
                  new Vector3(0.05f, 0.05f, 0.02f), mPiel);
         }
 
-        // La sábana: lo tapa del cuello a los pies, con las puntas colgando al costado
-        var sabana = Grupo("Sabana", g.transform);
-        Cubo("Manta", sabana.transform, new Vector3(0f, 1.15f, 0.22f), new Vector3(0.84f, 0.03f, 1.62f), mSabana);
-        foreach (float x in new[] { -0.42f, 0.42f })
-            Cubo("Caida", sabana.transform, new Vector3(x, 1.04f, 0.22f), new Vector3(0.03f, 0.24f, 1.62f), mSabana);
-        Cubo("Caida_Pies", sabana.transform, new Vector3(0f, 1.04f, 1.03f), new Vector3(0.84f, 0.24f, 0.03f), mSabana);
+        // La sábana solo va con el cuerpo de cubos. Con el modelo de verdad tapaba el
+        // tronco entero y se veía un cajón blanco del que salían los brazos y las
+        // piernas, así que ahí el cuerpo queda a la vista, acostado y nada más.
+        GameObject sabana = null;
+        GameObject caida = null;
 
-        // La misma sábana pero tirada en el piso, para después del susto
-        var caida = Grupo("Sabana_Caida", g.transform);
-        caida.transform.localPosition = new Vector3(-0.72f, 0f, 0.1f);
-        caida.transform.localEulerAngles = new Vector3(0f, 18f, 0f);
-        Cubo("Tela_1", caida.transform, new Vector3(0f, 0.03f, 0f), new Vector3(0.8f, 0.06f, 1.1f), mSabana);
-        Cubo("Tela_2", caida.transform, new Vector3(0.12f, 0.09f, -0.2f), new Vector3(0.5f, 0.08f, 0.6f), mSabana);
-        Cubo("Tela_3", caida.transform, new Vector3(-0.15f, 0.08f, 0.3f), new Vector3(0.45f, 0.07f, 0.5f), mSabana);
-        caida.SetActive(false);
+        if (modeloCuerpo == null)
+        {
+            // Lo tapa del cuello a los pies, con las puntas colgando al costado
+            sabana = Grupo("Sabana", g.transform);
+            Cubo("Manta", sabana.transform, new Vector3(0f, 1.15f, 0.22f), new Vector3(0.84f, 0.03f, 1.62f), mSabana);
+            foreach (float x in new[] { -0.42f, 0.42f })
+                Cubo("Caida", sabana.transform, new Vector3(x, 1.04f, 0.22f), new Vector3(0.03f, 0.24f, 1.62f), mSabana);
+            Cubo("Caida_Pies", sabana.transform, new Vector3(0f, 1.04f, 1.03f), new Vector3(0.84f, 0.24f, 0.03f), mSabana);
+
+            // La misma sábana pero tirada en el piso, para después del susto
+            caida = Grupo("Sabana_Caida", g.transform);
+            caida.transform.localPosition = new Vector3(-0.72f, 0f, 0.1f);
+            caida.transform.localEulerAngles = new Vector3(0f, 18f, 0f);
+            Cubo("Tela_1", caida.transform, new Vector3(0f, 0.03f, 0f), new Vector3(0.8f, 0.06f, 1.1f), mSabana);
+            Cubo("Tela_2", caida.transform, new Vector3(0.12f, 0.09f, -0.2f), new Vector3(0.5f, 0.08f, 0.6f), mSabana);
+            Cubo("Tela_3", caida.transform, new Vector3(-0.15f, 0.08f, 0.3f), new Vector3(0.45f, 0.07f, 0.5f), mSabana);
+            caida.SetActive(false);
+        }
 
         // Cartel de la práctica, colgado del borde de la camilla
         var ficha = Grupo("Ficha", g.transform);
