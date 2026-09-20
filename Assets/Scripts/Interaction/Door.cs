@@ -21,6 +21,9 @@ public class Door : MonoBehaviour
     [Tooltip("Segundos hasta que se cierra sola despues de abrirse. 0 = queda abierta")]
     public float segundosParaCerrar;
 
+    [Tooltip("Segundos que espera antes de cerrarse cuando el jugador termina de pasar")]
+    public float esperaAlPasar = 2.5f;
+
     bool abierta;
     Quaternion rotacionCerrada;
 
@@ -43,8 +46,16 @@ public class Door : MonoBehaviour
         abierta = false;
 
         StopAllCoroutines();
+        StartCoroutine(CerrarDespues());
+    }
+
+    IEnumerator CerrarDespues()
+    {
+        // Un respiro antes de cerrarse, para no darle un portazo al jugador en la espalda
+        if (esperaAlPasar > 0f) yield return new WaitForSeconds(esperaAlPasar);
+
         if (sonido != null) AudioSource.PlayClipAtPoint(sonido, transform.position);
-        StartCoroutine(Girar(transform.localRotation, rotacionCerrada));
+        yield return Girar(transform.localRotation, rotacionCerrada);
     }
 
     IEnumerator GirarPuerta()

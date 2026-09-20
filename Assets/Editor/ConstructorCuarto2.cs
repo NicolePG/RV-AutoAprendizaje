@@ -973,15 +973,17 @@ public static class ConstructorCuarto2
         // Ángulo negativo: la hoja gira hacia +Z, o sea hacia afuera del cuarto
         puerta.anguloApertura = -95f;
         puerta.duracion = 1.4f;
-        puerta.segundosParaCerrar = 20f;   // red de seguridad si el jugador no sale
+        puerta.segundosParaCerrar = 30f;   // red de seguridad si el jugador no sale
+        puerta.esperaAlPasar = 3f;         // no le cierra la puerta encima al jugador
 
-        // Zona del otro lado del vano: apenas el jugador termina de pasar, la puerta
-        // se cierra atrás suyo y ya no puede volver al Cuarto 2
+        // Zona del otro lado del vano, ya bien metida en el pasillo: recién cuando el
+        // jugador llega hasta ahí la puerta se cierra atrás suyo, y con tres segundos
+        // más de espera. Así no se cierra apenas cruza el vano.
         var salida = Grupo("Zona_Salida", g.transform);
-        salida.transform.localPosition = new Vector3(ancho / 2f, 1.1f, 0.95f);
+        salida.transform.localPosition = new Vector3(ancho / 2f, 1.1f, 2f);
         var colisionSalida = salida.AddComponent<BoxCollider>();
         colisionSalida.isTrigger = true;
-        colisionSalida.size = new Vector3(ancho + 0.4f, 2.2f, 0.9f);
+        colisionSalida.size = new Vector3(ancho + 0.6f, 2.2f, 1.4f);
         var disparadorSalida = salida.AddComponent<DisparadorJugador>();
         UnityEventTools.AddVoidPersistentListener(disparadorSalida.alEntrar, new UnityAction(puerta.Cerrar));
         EditorUtility.SetDirty(disparadorSalida);

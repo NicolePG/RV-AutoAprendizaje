@@ -7,9 +7,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.XR.Interaction.Toolkit;
-using UnityEngine.XR.Interaction.Toolkit.Attachment;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
-using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
 
 // Arma el Cuarto 4 (Laboratorio de ciencias) adentro del objeto "Cuarto4_Laboratorio".
@@ -322,8 +320,9 @@ public static class ConstructorCuarto4
         string[] amperajes = { "10", "20", "15" };
         float[] xs = { -0.45f, 0f, 0.45f };
 
-        var encajes = new XRSocketInteractor[3];
+        var encajes = new Encaje[3];
         var lucesOk = new GameObject[3];
+        var audio = AudioEn("Audio_Acierto", g.transform);
 
         for (int i = 0; i < 3; i++)
         {
@@ -341,13 +340,23 @@ public static class ConstructorCuarto4
             Texto("Letra", hueco.transform, new Vector3(0f, 0.17f, 0.02f), Vector3.zero,
                   letras[i], 0.34f, new Color(0.95f, 0.98f, 0.95f), 0.2f, 0.14f);
 
-            // El encaje propiamente dicho: un disparador donde se suelta el fusible
+            // El hueco: el jugador le apunta con el fusible en la mano y lo toca.
+            // La caja de colisión es grande a propósito, para no tener que apuntar fino.
             var ranura = Grupo("Ranura", hueco.transform);
-            ranura.transform.localPosition = new Vector3(0f, 0f, 0.04f);
-            var colision = ranura.AddComponent<SphereCollider>();
-            colision.isTrigger = true;
-            colision.radius = 0.12f;
-            encajes[i] = ranura.AddComponent<XRSocketInteractor>();
+            ranura.transform.localPosition = new Vector3(0f, 0f, 0.05f);
+            var colision = ranura.AddComponent<BoxCollider>();
+            colision.size = new Vector3(0.2f, 0.2f, 0.12f);
+
+            // Dónde queda acomodado el fusible: metido en el tubo
+            var punto = Grupo("Punto", ranura.transform);
+            punto.transform.localPosition = new Vector3(0f, 0f, -0.02f);
+
+            ranura.AddComponent<XRSimpleInteractable>();
+            var encaje = ranura.AddComponent<Encaje>();
+            encaje.punto = punto.transform;
+            encaje.sonido = audio;
+            encajes[i] = encaje;
+            EditorUtility.SetDirty(encaje);
 
             // Lucecita verde: se prende cuando el fusible puesto es el correcto
             var luz = Cilindro("Luz_Ok", hueco.transform, new Vector3(0f, 0.27f, 0.02f),
@@ -361,8 +370,6 @@ public static class ConstructorCuarto4
         // aunque el cuarto esté a oscuras
         LuzPunto("Luz_Piloto", g.transform, new Vector3(0f, 0.48f, 0.45f),
                  new Color(0.65f, 1f, 0.75f), 1.2f, 2.8f);
-
-        var audio = AudioEn("Audio_Acierto", g.transform);
 
         var panel = g.AddComponent<PanelFusibles>();
         panel.encajes = encajes;
@@ -527,18 +534,14 @@ public static class ConstructorCuarto4
         Texto("Numero", g.transform, new Vector3(0f, 0.019f, 0f), new Vector3(-90f, 90f, 0f),
               amperaje, 0.17f, new Color(0.1f, 0.1f, 0.1f), 0.08f, 0.05f);
 
-        var agarre = g.AddComponent<XRGrabInteractable>();
-        // Al agarrarlo de lejos viene a la mano, si no queda flotando donde estaba y
-        // nunca se lo puede meter en el encaje del tablero
-        agarre.farAttachMode = InteractableFarAttachMode.Near;
-        var rb = g.GetComponent<Rigidbody>();
-        if (rb != null) { rb.isKinematic = true; rb.useGravity = false; }
+        // Se lleva igual que la llave del Cuarto 2: un toque y el fusible acompaña al
+        // jugador, sin sostener nada. Para ponerlo se toca el hueco del tablero.
+        g.AddComponent<XRSimpleInteractable>();
+        g.AddComponent<ObjetoLlevable>();
         Resaltar(g, g.transform.Find("Cuerpo").GetComponent<Renderer>());
 
         var datos = g.AddComponent<Fusible>();
         datos.amperaje = amperaje;
-
-        EditorUtility.SetDirty(agarre);
         EditorUtility.SetDirty(datos);
     }
 
@@ -1106,12 +1109,14 @@ public static class ConstructorCuarto4
     // que si no, el laboratorio se vería con la luz que dejó prendida el cuarto anterior.
     static void ArmarEntrada(Transform raiz, ControlEnergia control)
     {
+        // Va del lado de afuera, en el pasillo: así el laboratorio ya se ve oscuro desde
+        // el vano, antes de entrar, y no se pierde el efecto
         var zona = Grupo("Zona_Entrada", raiz);
-        zona.transform.localPosition = new Vector3((ENTRADA_X0 + ENTRADA_X1) / 2f, 1f, 0.5f);
+        zona.transform.localPosition = new Vector3((ENTRADA_X0 + ENTRADA_X1) / 2f, 1f, -0.9f);
 
         var colision = zona.AddComponent<BoxCollider>();
         colision.isTrigger = true;
-        colision.size = new Vector3(ENTRADA_X1 - ENTRADA_X0 + 0.6f, 2f, 0.6f);
+        colision.size = new Vector3(ENTRADA_X1 - ENTRADA_X0 + 0.8f, 2f, 1.4f);
 
         var disparador = zona.AddComponent<DisparadorJugador>();
         UnityEventTools.AddVoidPersistentListener(disparador.alEntrar, new UnityAction(control.Reaplicar));

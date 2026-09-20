@@ -1,29 +1,30 @@
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.XR.Interaction.Toolkit;
-using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 // Panel eléctrico del Cuarto 4 (Laboratorio), primer paso del cuarto.
 //
-// Tiene tres encajes (A, B, C). En la mesa de trabajo hay seis fusibles y solo tres
-// sirven: cada encaje acepta un amperaje distinto, escrito al lado del encaje. Cuando
+// Tiene tres huecos (A, B y C). En la mesa de trabajo hay fusibles y solo tres sirven:
+// cada hueco acepta un amperaje distinto, que sale de la hoja de los circuitos. Cuando
 // los tres están bien puestos vuelve la corriente y se dispara "alCompletar".
 //
-// En la escena: va en el objeto "Panel_Electrico". En "encajes" van los tres
-// XR Socket Interactor en el orden A, B, C, y en "amperajesCorrectos" el amperaje que
-// espera cada uno, en ese mismo orden. En "lucesOk" va la lucecita de cada encaje.
+// El jugador toca un fusible para llevarlo en la mano y después toca el hueco donde lo
+// quiere poner (ver ObjetoLlevable y Encaje). Si se equivocó, toca el hueco con la mano
+// vacía y el fusible vuelve a la mano.
+//
+// En la escena: va en el objeto "Panel_Electrico". En "encajes" van los tres Encaje en
+// el orden A, B, C, y en "amperajesCorrectos" el amperaje que espera cada uno.
 public class PanelFusibles : MonoBehaviour
 {
-    [Tooltip("Los tres encajes del panel, en el orden A, B, C")]
-    public XRSocketInteractor[] encajes;
+    [Tooltip("Los tres huecos del panel, en el orden A, B, C")]
+    public Encaje[] encajes;
 
-    [Tooltip("El amperaje que espera cada encaje, en el mismo orden")]
+    [Tooltip("El amperaje que espera cada hueco, en el mismo orden")]
     public string[] amperajesCorrectos;
 
-    [Tooltip("La luz verde de cada encaje: se prende cuando el fusible es el correcto")]
+    [Tooltip("La luz verde de cada hueco: se prende cuando el fusible es el correcto")]
     public GameObject[] lucesOk;
 
-    [Tooltip("Sonido corto cada vez que se acierta un encaje")]
+    [Tooltip("Sonido corto cada vez que se acierta un hueco")]
     public AudioSource audioAcierto;
 
     [Tooltip("Qué pasa cuando los tres fusibles están bien puestos")]
@@ -35,28 +36,16 @@ public class PanelFusibles : MonoBehaviour
     void OnEnable()
     {
         foreach (var encaje in encajes)
-        {
-            if (encaje == null) continue;
-            encaje.selectEntered.AddListener(Entro);
-            encaje.selectExited.AddListener(Salio);
-        }
+            if (encaje != null) encaje.alCambiar.AddListener(Revisar);
+
         Revisar();
     }
 
     void OnDisable()
     {
         foreach (var encaje in encajes)
-        {
-            if (encaje == null) continue;
-            encaje.selectEntered.RemoveListener(Entro);
-            encaje.selectExited.RemoveListener(Salio);
-        }
+            if (encaje != null) encaje.alCambiar.RemoveListener(Revisar);
     }
-
-    // Los dos eventos del socket traen datos distintos, así que hace falta un método
-    // para cada uno, pero los dos hacen lo mismo: volver a revisar el panel
-    void Entro(SelectEnterEventArgs args) => Revisar();
-    void Salio(SelectExitEventArgs args) => Revisar();
 
     void Revisar()
     {
@@ -80,17 +69,14 @@ public class PanelFusibles : MonoBehaviour
         alCompletar.Invoke();
     }
 
-    // ¿El fusible que está puesto en el encaje "i" es el del amperaje que pide?
+    // ¿El fusible que está puesto en el hueco "i" es el del amperaje que pide?
     bool EsCorrecto(int i)
     {
         var encaje = encajes[i];
-        if (encaje == null || !encaje.hasSelection) return false;
+        if (encaje == null || encaje.Contenido == null) return false;
         if (i >= amperajesCorrectos.Length) return false;
 
-        var puesto = encaje.interactablesSelected[0] as Component;
-        if (puesto == null) return false;
-
-        var fusible = puesto.GetComponentInParent<Fusible>();
+        var fusible = encaje.Contenido.GetComponentInParent<Fusible>();
         return fusible != null && fusible.amperaje == amperajesCorrectos[i];
     }
 }
