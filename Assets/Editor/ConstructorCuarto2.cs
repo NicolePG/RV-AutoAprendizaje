@@ -532,24 +532,24 @@ public static class ConstructorCuarto2
     {
         var g = Grupo("Cuaderno_Acertijo", p);
         g.transform.localPosition = pos;
-        g.transform.localEulerAngles = new Vector3(0f, 200f, 0f);
+        // Apenas torcido, como dejado ahí. El lado largo va sobre el ancho del estante.
+        g.transform.localEulerAngles = new Vector3(0f, 6f, 0f);
 
-        Cubo("Tapa", g.transform, Vector3.zero, new Vector3(0.26f, 0.025f, 0.34f), mLibroB, true);
-        Cubo("Hojas", g.transform, new Vector3(0f, 0.016f, 0f), new Vector3(0.24f, 0.008f, 0.32f), mPapel);
+        Cubo("Tapa", g.transform, Vector3.zero, new Vector3(0.26f, 0.025f, 0.4f), mLibroB, true);
+        Cubo("Hojas", g.transform, new Vector3(0f, 0.016f, 0f), new Vector3(0.24f, 0.008f, 0.38f), mPapel);
 
-        // El acertijo va impreso en la tapa: al tocar el libro se para de frente y se lee
+        // El acertijo va impreso en la tapa: al tocar el libro se para de frente y se lee.
+        // No nombra al sillón a propósito: el jugador tiene que darse cuenta solo.
         var texto = Texto("Texto_Acertijo", g.transform, new Vector3(0f, 0.022f, 0f), new Vector3(-90f, 0f, 0f),
                           "ACERTIJO\n\n" +
-                          "No tengo llave,\n" +
-                          "pero guardo una.\n\n" +
-                          "Nadie me mira,\n" +
-                          "todos me usan.\n\n" +
-                          "Blando por fuera,\n" +
-                          "hueco por dentro:\n\n" +
-                          "levanta lo que cubre\n" +
-                          "mi asiento.",
-                          0.2f, new Color(0.15f, 0.12f, 0.1f), 0.24f, 0.32f);
-        texto.lineSpacing = -22f;
+                          "Tengo brazos\n" +
+                          "y no abrazo,\n" +
+                          "tengo patas\n" +
+                          "y no camino.\n\n" +
+                          "Levanta lo blando\n" +
+                          "y tendras la llave",
+                          0.24f, new Color(0.15f, 0.12f, 0.1f), 0.24f, 0.38f);
+        texto.lineSpacing = -18f;
 
         g.AddComponent<XRSimpleInteractable>();
         var dePie = g.AddComponent<LibroDePie>();
@@ -874,12 +874,13 @@ public static class ConstructorCuarto2
         aviso.transform.localPosition = new Vector3(-1.05f, 1.55f, -0.08f);
         aviso.transform.localEulerAngles = new Vector3(0f, 180f, 0f);
         Cubo("Marco", aviso.transform, Vector3.zero, new Vector3(0.82f, 0.5f, 0.03f), mNegro, true);
-        Cubo("Papel", aviso.transform, new Vector3(0f, 0f, -0.018f), new Vector3(0.76f, 0.44f, 0.005f), mPapel);
-        var textoAviso = Texto("Texto_Aviso", aviso.transform, new Vector3(0f, 0f, -0.024f), Vector3.zero,
-                               "AVISO\n\nLa salida pide el codigo\nY la llave.\n\n" +
-                               "La llave no esta a la vista:\nbusca el cuaderno del estante.",
-                               0.17f, new Color(0.2f, 0.17f, 0.15f), 0.72f, 0.4f);
-        textoAviso.lineSpacing = -14f;
+        // El cartel esta girado 180, asi que lo que va "adelante" (hacia el cuarto) lleva
+        // z positivo. Con z negativo el papel y el texto quedaban detras del marco y no se veian.
+        Cubo("Papel", aviso.transform, new Vector3(0f, 0f, 0.018f), new Vector3(0.76f, 0.44f, 0.005f), mPapel);
+        var textoAviso = Texto("Texto_Aviso", aviso.transform, new Vector3(0f, 0f, 0.024f), Vector3.zero,
+                               "FALTA LA LLAVE\n\nVe al estante\ny agarra el cuaderno.",
+                               0.42f, new Color(0.2f, 0.17f, 0.15f), 0.72f, 0.4f);
+        textoAviso.lineSpacing = -12f;
 
         var bisagra = Grupo("Bisagra", g.transform);
         var puerta = bisagra.AddComponent<Door>();
@@ -920,7 +921,8 @@ public static class ConstructorCuarto2
         var perilla = Cilindro("Perilla", cerradura.transform, new Vector3(0f, -0.05f, -0.035f),
                                new Vector3(0.05f, 0.012f, 0.05f), mBronce, true);
         perilla.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
-        Texto("Etiqueta_Girar", cerradura.transform, new Vector3(0f, -0.1f, -0.012f), Vector3.zero,
+        // El jugador mira la puerta desde -Z: la etiqueta se lee girada 180
+        Texto("Etiqueta_Girar", cerradura.transform, new Vector3(0f, -0.1f, -0.012f), new Vector3(0f, 180f, 0f),
               "GIRAR", 0.07f, new Color(0.85f, 0.85f, 0.85f), 0.12f, 0.03f);
 
         var cerraduraLlave = cerradura.AddComponent<CerraduraLlave>();

@@ -47,6 +47,11 @@ public class ControlEnergia : MonoBehaviour
         Aplicar(true);
     }
 
+    // Vuelve a poner el clima de este cuarto. Hace falta porque la luz ambiental y la
+    // niebla son de toda la escena: el cuarto anterior las dejó como estaban allá, así
+    // que al entrar a este cuarto hay que volver a aplicar las suyas.
+    public void Reaplicar() => Aplicar(HayEnergia);
+
     void Aplicar(bool energia)
     {
         HayEnergia = energia;

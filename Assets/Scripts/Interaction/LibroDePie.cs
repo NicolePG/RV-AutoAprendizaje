@@ -55,8 +55,12 @@ public class LibroDePie : MonoBehaviour
             {
                 haciaJugador.Normalize();
                 posicion = posicionOriginal + Vector3.up * alturaExtra + haciaJugador * acercar;
-                // La tapa (su cara de arriba) queda mirando al jugador y el texto para arriba
-                rotacion = Quaternion.LookRotation(Vector3.down, haciaJugador);
+                // El texto está impreso sobre la cara de arriba de la tapa, o sea que mira
+                // hacia el +Y del libro y su renglón va hacia el +Z. Para leerlo parado hay
+                // que dejar el +Y apuntando al jugador y el +Z apuntando al cielo: eso es
+                // LookRotation(arriba, haciaJugador). Con Vector3.down el texto salía dado
+                // vuelta y no se entendía nada.
+                rotacion = Quaternion.LookRotation(Vector3.up, haciaJugador);
             }
         }
 
