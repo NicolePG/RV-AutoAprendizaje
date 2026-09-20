@@ -182,6 +182,16 @@ public static class ConstructorCuarto2
     static void Zocalo(Transform p, string nombre, float x, float z, float largoX, float largoZ)
         => Cubo(nombre, p, new Vector3(x, 0.04f, z), new Vector3(largoX, 0.08f, largoZ), mNegro);
 
+    // Caja de colisión invisible. Se usa cuando el collider automático de un modelo no
+    // sirve: el del sofá, por ejemplo, es una caja que envuelve el mueble entero y tapa
+    // lo que está apoyado en el asiento.
+    static void Colision(Transform p, string nombre, Vector3 centro, Vector3 tamano)
+    {
+        var go = Grupo(nombre, p);
+        go.transform.localPosition = centro;
+        go.AddComponent<BoxCollider>().size = tamano;
+    }
+
     // ------------------------------------------------------------------ panel de objetivos
 
     // Cartel colgado al lado de la entrada: dice qué hay que hacer ahora y se va
@@ -567,7 +577,11 @@ public static class ConstructorCuarto2
     {
         Cubo("Alfombra", p, new Vector3(4.75f, 0.006f, 4.6f), new Vector3(2.4f, 0.012f, 2.4f), mAlfombra);
 
-        if (Modelo("sofa_02", p, new Vector3(5.5f, 0f, 4.6f), -90f, 0.71f, true) == null)
+        // Ojo con el collider del sofá: el automático es una caja que envuelve TODO el
+        // mueble, incluido el asiento, y se tragaba la llave. Por eso el modelo va sin
+        // collider y las dos cajas se ponen a mano, dejando el asiento libre desde 0.42
+        // para arriba, que es donde está apoyada la llave.
+        if (Modelo("sofa_02", p, new Vector3(5.5f, 0f, 4.6f), -90f, 0.71f, false) == null)
         {
             var s = Grupo("Sofa", p);
             s.transform.localPosition = new Vector3(5.5f, 0f, 4.6f);
@@ -576,6 +590,9 @@ public static class ConstructorCuarto2
             Cubo("Brazo_1", s.transform, new Vector3(0f, 0.5f, -0.85f), new Vector3(0.85f, 0.18f, 0.12f), mTela);
             Cubo("Brazo_2", s.transform, new Vector3(0f, 0.5f, 0.85f), new Vector3(0.85f, 0.18f, 0.12f), mTela);
         }
+
+        Colision(p, "Colision_Sofa_Asiento", new Vector3(5.45f, 0.21f, 4.6f), new Vector3(0.95f, 0.42f, 1.95f));
+        Colision(p, "Colision_Sofa_Respaldo", new Vector3(5.86f, 0.52f, 4.6f), new Vector3(0.3f, 0.62f, 1.95f));
 
         if (Modelo("modern_coffee_table_02", p, new Vector3(4.3f, 0f, 4.6f), 90f, 0.37f, true) == null)
         {
@@ -590,23 +607,25 @@ public static class ConstructorCuarto2
         // Con collider, para que el jugador no la atraviese ni se teletransporte encima
         Modelo("potted_plant_02", p, new Vector3(5.5f, 0f, 5.95f), 0f, 0.84f, true);
 
-        // La llave de la puerta, escondida debajo de uno de los almohadones del sofá
+        // La llave de la puerta, acostada en el asiento y tapada por un almohadón.
+        // Va apenas por encima del collider del sofá, así el rayo del control la toca
+        // a ella y no al mueble: ese era el motivo por el que no se la podía agarrar.
         var llave = Grupo("Llave_Salida", p);
-        llave.transform.localPosition = new Vector3(5.45f, 0.44f, 4.95f);
-        llave.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
-        // Más grande que una llave de verdad, para que se note y sea fácil de agarrar
-        Cilindro("Cabeza", llave.transform, new Vector3(0f, 0.075f, 0f), new Vector3(0.075f, 0.008f, 0.075f), mOro)
-            .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
-        Cubo("Vastago", llave.transform, Vector3.zero, new Vector3(0.016f, 0.15f, 0.016f), mOro);
-        Cubo("Diente_1", llave.transform, new Vector3(0.026f, -0.055f, 0f), new Vector3(0.034f, 0.016f, 0.014f), mOro);
-        Cubo("Diente_2", llave.transform, new Vector3(0.024f, -0.085f, 0f), new Vector3(0.03f, 0.016f, 0.014f), mOro);
+        llave.transform.localPosition = new Vector3(5.45f, 0.45f, 4.95f);
+        llave.transform.localEulerAngles = new Vector3(0f, 25f, 0f);
 
-        // Un solo collider que envuelve toda la llave. Antes el único collider era el
-        // borde de la cabeza, de dos centímetros: había que apuntarle justo con el rayo
-        // y por eso no se la podía agarrar.
+        // Acostada: la cabeza es un disco plano y el vástago va a lo largo de la Z
+        Cilindro("Cabeza", llave.transform, new Vector3(0f, 0f, -0.075f),
+                 new Vector3(0.08f, 0.005f, 0.08f), mOro);
+        Cubo("Vastago", llave.transform, Vector3.zero, new Vector3(0.016f, 0.01f, 0.17f), mOro);
+        Cubo("Diente_1", llave.transform, new Vector3(0.026f, 0f, 0.05f), new Vector3(0.036f, 0.01f, 0.016f), mOro);
+        Cubo("Diente_2", llave.transform, new Vector3(0.024f, 0f, 0.082f), new Vector3(0.03f, 0.01f, 0.016f), mOro);
+
+        // Un solo collider bien generoso para toda la llave: se agarra de un clic,
+        // igual que los almohadones
         var colisionLlave = llave.AddComponent<BoxCollider>();
-        colisionLlave.center = new Vector3(0.008f, 0.005f, 0f);
-        colisionLlave.size = new Vector3(0.11f, 0.23f, 0.08f);
+        colisionLlave.center = new Vector3(0.008f, 0.01f, 0f);
+        colisionLlave.size = new Vector3(0.12f, 0.09f, 0.28f);
 
         var grabLlave = llave.AddComponent<XRGrabInteractable>();
         var rbLlave = llave.GetComponent<Rigidbody>();
@@ -619,8 +638,8 @@ public static class ConstructorCuarto2
         float[] zAlmohadones = { 4.25f, 4.95f };
         for (int i = 0; i < zAlmohadones.Length; i++)
         {
-            var almohadon = Esfera("Almohadon_" + (i + 1), p, new Vector3(5.45f, 0.5f, zAlmohadones[i]),
-                                   new Vector3(0.46f, 0.16f, 0.44f), mTela, true);
+            var almohadon = Esfera("Almohadon_" + (i + 1), p, new Vector3(5.45f, 0.54f, zAlmohadones[i]),
+                                   new Vector3(0.46f, 0.18f, 0.44f), mTela, true);
             almohadon.transform.localEulerAngles = new Vector3(0f, 0f, i == 0 ? 4f : -5f);
 
             var grabCojin = almohadon.AddComponent<XRGrabInteractable>();
@@ -896,7 +915,18 @@ public static class ConstructorCuarto2
         // Ángulo negativo: la hoja gira hacia +Z, o sea hacia afuera del cuarto
         puerta.anguloApertura = -95f;
         puerta.duracion = 1.4f;
-        puerta.segundosParaCerrar = 6f;   // se cierra sola después de salir
+        puerta.segundosParaCerrar = 20f;   // red de seguridad si el jugador no sale
+
+        // Zona del otro lado del vano: apenas el jugador termina de pasar, la puerta
+        // se cierra atrás suyo y ya no puede volver al Cuarto 2
+        var salida = Grupo("Zona_Salida", g.transform);
+        salida.transform.localPosition = new Vector3(ancho / 2f, 1.1f, 0.95f);
+        var colisionSalida = salida.AddComponent<BoxCollider>();
+        colisionSalida.isTrigger = true;
+        colisionSalida.size = new Vector3(ancho + 0.4f, 2.2f, 0.9f);
+        var disparadorSalida = salida.AddComponent<DisparadorJugador>();
+        UnityEventTools.AddVoidPersistentListener(disparadorSalida.alEntrar, new UnityAction(puerta.Cerrar));
+        EditorUtility.SetDirty(disparadorSalida);
 
         // Hoja lisa de nogal con manija de barra larga
         Cubo("Hoja", bisagra.transform, new Vector3(ancho / 2f, ALTO_PUERTA / 2f, 0f),

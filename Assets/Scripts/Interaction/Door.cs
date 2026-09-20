@@ -22,6 +22,9 @@ public class Door : MonoBehaviour
     public float segundosParaCerrar;
 
     bool abierta;
+    Quaternion rotacionCerrada;
+
+    void Awake() => rotacionCerrada = transform.localRotation;
 
     public void Abrir()
     {
@@ -32,17 +35,31 @@ public class Door : MonoBehaviour
         StartCoroutine(GirarPuerta());
     }
 
+    // Se conecta al disparador que está del otro lado del vano: apenas el jugador
+    // termina de pasar, la puerta se cierra atrás suyo.
+    public void Cerrar()
+    {
+        if (!abierta) return;
+        abierta = false;
+
+        StopAllCoroutines();
+        if (sonido != null) AudioSource.PlayClipAtPoint(sonido, transform.position);
+        StartCoroutine(Girar(transform.localRotation, rotacionCerrada));
+    }
+
     IEnumerator GirarPuerta()
     {
-        Quaternion cerrada = transform.localRotation;
-        Quaternion final = cerrada * Quaternion.Euler(0f, anguloApertura, 0f);
-        yield return Girar(cerrada, final);
+        Quaternion final = rotacionCerrada * Quaternion.Euler(0f, anguloApertura, 0f);
+        yield return Girar(transform.localRotation, final);
 
-        // Se cierra sola: da tiempo a salir y vuelve a su lugar
+        // Por si el jugador se queda adentro: pasados los segundos se cierra igual
         if (segundosParaCerrar <= 0f) yield break;
         yield return new WaitForSeconds(segundosParaCerrar);
+        if (!abierta) yield break;   // ya la cerró el disparador de la salida
+
+        abierta = false;
         if (sonido != null) AudioSource.PlayClipAtPoint(sonido, transform.position);
-        yield return Girar(final, cerrada);
+        yield return Girar(transform.localRotation, rotacionCerrada);
     }
 
     IEnumerator Girar(Quaternion desde, Quaternion hasta)
