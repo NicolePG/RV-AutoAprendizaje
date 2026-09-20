@@ -1,18 +1,21 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
-// Cerradura de la puerta de salida. Para que abra tienen que pasar tres cosas, en orden:
+// Cerradura de la puerta de salida. Para que abra tienen que pasar dos cosas, en
+// cualquier orden:
 // 1) el teclado acepta el código (alguien llama a Habilitar()),
-// 2) la llave está encajada en la ranura,
-// 3) el jugador gira la perilla (algo llama a Girar()).
+// 2) la llave queda encajada en la ranura (LlaveAutomatica llama a PonerLlave()).
 //
-// En la escena: va en la puerta, con la ranura (XRSocketInteractor) asignada.
+// Cuando se cumplen las dos, la llave gira sola y la puerta se abre. Si el jugador
+// prefiere, también puede girar la perilla a mano: la perilla llama a Girar().
+//
+// En la escena: va en la cerradura de la puerta, con "ranura" apuntando al objeto
+// vacío donde entra la llave (ese objeto es el que gira, y la llave cuelga de él).
 public class CerraduraLlave : MonoBehaviour
 {
-    [Tooltip("Donde se encaja la llave")]
-    public XRSocketInteractor ranura;
+    [Tooltip("El punto donde se encaja la llave: al abrir, gira y la llave gira con él")]
+    public Transform ranura;
 
     [Tooltip("Luz que avisa que el código ya fue aceptado y falta la llave")]
     public Light luzLista;
@@ -24,6 +27,7 @@ public class CerraduraLlave : MonoBehaviour
     public UnityEvent alAbrir = new UnityEvent();
 
     public bool CodigoAceptado { get; private set; }
+    public bool LlavePuesta { get; private set; }
 
     bool abierta;
 
@@ -35,35 +39,60 @@ public class CerraduraLlave : MonoBehaviour
     // Lo llama el teclado cuando el código es correcto
     public void Habilitar()
     {
+        if (CodigoAceptado) return;
         CodigoAceptado = true;
         if (luzLista != null) luzLista.enabled = true;
+
+        // Si la llave ya estaba puesta, no hace falta que el jugador haga nada más
+        if (LlavePuesta) StartCoroutine(GirarDespues(0.6f));
+    }
+
+    // Lo llama la llave cuando termina de encajarse en la ranura
+    public void PonerLlave()
+    {
+        if (LlavePuesta) return;
+        LlavePuesta = true;
+
+        // Con el código ya aceptado, la llave gira sola: entra y abre
+        if (CodigoAceptado) StartCoroutine(GirarDespues(0.6f));
     }
 
     // Lo llama la perilla al presionarla
     public void Girar()
     {
-        if (abierta || !CodigoAceptado) return;
-        if (ranura == null || !ranura.hasSelection) return;   // sin la llave puesta no gira
+        if (abierta || !CodigoAceptado || !LlavePuesta) return;
 
         abierta = true;
         if (sonidoGiro != null) AudioSource.PlayClipAtPoint(sonidoGiro, transform.position);
         StartCoroutine(GirarLlave());
     }
 
-    // La llave queda sujeta por la ranura, así que girando la ranura gira la llave
+    IEnumerator GirarDespues(float espera)
+    {
+        yield return new WaitForSeconds(espera);
+        Girar();
+    }
+
+    // La llave está colgada de la ranura, así que girando la ranura gira la llave
     IEnumerator GirarLlave()
     {
-        Quaternion inicial = ranura.transform.localRotation;
+        if (ranura == null)
+        {
+            alAbrir.Invoke();
+            yield break;
+        }
+
+        Quaternion inicial = ranura.localRotation;
         Quaternion final = inicial * Quaternion.Euler(0f, 0f, -90f);
 
         float t = 0f;
         while (t < 0.4f)
         {
             t += Time.deltaTime;
-            ranura.transform.localRotation = Quaternion.Slerp(inicial, final, t / 0.4f);
+            ranura.localRotation = Quaternion.Slerp(inicial, final, t / 0.4f);
             yield return null;
         }
-        ranura.transform.localRotation = final;
+        ranura.localRotation = final;
 
         alAbrir.Invoke();
     }

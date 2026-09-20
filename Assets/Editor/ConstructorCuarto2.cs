@@ -80,13 +80,14 @@ public static class ConstructorCuarto2
         ArmarEscritorio(mobiliario.transform, lucesCuarto);
         ArmarAparador(mobiliario.transform);
         ArmarEstanteria(mobiliario.transform);
-        ArmarSala(mobiliario.transform);
+        LlaveAutomatica llave = ArmarSala(mobiliario.transform);
 
         conEnergia.AddRange(ArmarRelojes(relojes.transform));
         List<GameObject> sinEnergia = ArmarTerror(luces.transform);
 
         ArmarRejaEntrada(raiz.transform);
         CerraduraLlave cerradura = ArmarPuertaSalida(raiz.transform);
+        ConectarLlave(llave, cerradura);
         conEnergia.Add(ArmarTeclado(raiz.transform, cerradura));
 
         var control = ArmarControlEnergia(raiz.transform, lucesCuarto, conEnergia, sinEnergia);
@@ -224,7 +225,7 @@ public static class ConstructorCuarto2
             "VOLVIO LA LUZ\n\nLos cinco relojes quedaron parados\na las 4:40, la hora del apagon.\nBusca la bitacora sobre el aparador.",
             "HAY QUE PONERLOS EN HORA\n\nLa bitacora dice a que hora suena\ncada campana. La placa del cuadro dice\nque reloj es cada una. Gira las manecillas.",
             "BIEN\n\nCada reloj en hora muestra su numero.\nSegui con los demas y marca el codigo\nen el orden que dice la bitacora.",
-            "CODIGO ACEPTADO\n\nAhora falta la llave.\nEl cuaderno del estante dice donde esta.\nDespues: encajala en la cerradura y gira la perilla.",
+            "CODIGO ACEPTADO\n\nAhora falta la llave.\nEl cuaderno del estante dice donde esta.\nTocala una vez y llevala hasta la puerta.",
             "PUERTA ABIERTA\n\nLlevate el medallon del cajon del escritorio\ny sali: la puerta se cierra sola."
         };
         texto.text = panelObjetivo.pasos[0];   // así ya se ve en el editor, sin darle Play
@@ -574,7 +575,7 @@ public static class ConstructorCuarto2
     // ------------------------------------------------------------------ sala de estar
 
     // Rincón con sofá y mesa ratona, del lado Este: le da vida al cuarto
-    static void ArmarSala(Transform p)
+    static LlaveAutomatica ArmarSala(Transform p)
     {
         Cubo("Alfombra", p, new Vector3(4.75f, 0.006f, 4.6f), new Vector3(2.4f, 0.012f, 2.4f), mAlfombra);
 
@@ -622,20 +623,18 @@ public static class ConstructorCuarto2
         Cubo("Diente_1", llave.transform, new Vector3(0.026f, 0f, 0.05f), new Vector3(0.036f, 0.01f, 0.016f), mOro);
         Cubo("Diente_2", llave.transform, new Vector3(0.024f, 0f, 0.082f), new Vector3(0.03f, 0.01f, 0.016f), mOro);
 
-        // Un solo collider bien generoso para toda la llave: se agarra de un clic,
-        // igual que los almohadones
+        // Un solo collider bien generoso para toda la llave: se agarra de un clic
         var colisionLlave = llave.AddComponent<BoxCollider>();
         colisionLlave.center = new Vector3(0.008f, 0.01f, 0f);
         colisionLlave.size = new Vector3(0.12f, 0.09f, 0.28f);
 
-        var grabLlave = llave.AddComponent<XRGrabInteractable>();
-        // Al agarrarla de lejos, la llave viene a la mano en vez de quedarse flotando
-        // donde estaba: así se la puede llevar hasta la puerta y meterla en la cerradura
-        grabLlave.farAttachMode = InteractableFarAttachMode.Near;
-        var rbLlave = llave.GetComponent<Rigidbody>();
-        if (rbLlave != null) { rbLlave.isKinematic = true; rbLlave.useGravity = false; }
+        // La llave no se agarra con la mano: con un clic se queda adelante de la vista
+        // y al acercarse a la puerta se va sola a la cerradura. Sosteniéndola con el
+        // gatillo todo el camino se caía a cada rato.
+        llave.AddComponent<XRSimpleInteractable>();
+        var llaveAutomatica = llave.AddComponent<LlaveAutomatica>();
         Resaltar(llave, llave.transform.Find("Cabeza").GetComponent<Renderer>());
-        EditorUtility.SetDirty(grabLlave);
+        EditorUtility.SetDirty(llaveAutomatica);
 
         // Dos almohadones que se pueden levantar: debajo del segundo está la llave.
         // Son esferas achatadas, que quedan con forma de almohadón y no de cubo.
@@ -653,6 +652,8 @@ public static class ConstructorCuarto2
             Resaltar(almohadon, almohadon.GetComponent<Renderer>());
             EditorUtility.SetDirty(grabCojin);
         }
+
+        return llaveAutomatica;
     }
 
     // ------------------------------------------------------------------ relojes
@@ -951,17 +952,11 @@ public static class ConstructorCuarto2
         Cubo("Escudo", cerradura.transform, Vector3.zero, new Vector3(0.1f, 0.16f, 0.02f), mMetal, true);
         Cubo("Ojo_Cerradura", cerradura.transform, new Vector3(0f, 0.02f, -0.012f), new Vector3(0.02f, 0.03f, 0.01f), mNegro);
 
-        // La ranura donde entra la llave. La zona es grande a propósito (16 cm): con el
-        // rayo del control la llave queda en la mano y hay que soltarla justo acá, así
-        // que si la zona es chica no encaja nunca.
+        // El punto donde entra la llave. No tiene collider ni nada: la llave se viene
+        // sola hasta acá cuando el jugador se acerca, y queda colgada de este objeto,
+        // que es el que gira cuando la cerradura cede.
         var ranura = Grupo("Ranura_Llave", cerradura.transform);
-        ranura.transform.localPosition = new Vector3(0f, 0.02f, -0.09f);
-        var colisionRanura = ranura.AddComponent<SphereCollider>();
-        colisionRanura.isTrigger = true;
-        colisionRanura.radius = 0.16f;
-        var socket = ranura.AddComponent<XRSocketInteractor>();
-        // Al soltarla, la llave se acomoda sola con el paletón hacia adentro de la puerta
-        socket.attachTransform = ranura.transform;
+        ranura.transform.localPosition = new Vector3(0f, 0.02f, -0.06f);
 
         var luzLista = LuzPunto("Luz_Lista", cerradura.transform, new Vector3(0f, 0.08f, -0.06f),
                                 new Color(0.4f, 1f, 0.5f), 1.2f, 0.5f);
@@ -975,7 +970,7 @@ public static class ConstructorCuarto2
               "GIRAR", 0.07f, new Color(0.85f, 0.85f, 0.85f), 0.12f, 0.03f);
 
         var cerraduraLlave = cerradura.AddComponent<CerraduraLlave>();
-        cerraduraLlave.ranura = socket;
+        cerraduraLlave.ranura = ranura.transform;
         cerraduraLlave.luzLista = luzLista;
 
         perilla.AddComponent<XRSimpleInteractable>();
@@ -993,6 +988,18 @@ public static class ConstructorCuarto2
         EditorUtility.SetDirty(botonGirar);
         EditorUtility.SetDirty(cerraduraLlave);
         return cerraduraLlave;
+    }
+
+    // La llave y la cerradura se arman por separado (una en el sofá y la otra en la
+    // puerta), así que acá se las presenta: la llave sabe a dónde tiene que ir y la
+    // cerradura se entera cuando la llave llegó.
+    static void ConectarLlave(LlaveAutomatica llave, CerraduraLlave cerradura)
+    {
+        if (llave == null || cerradura == null) return;
+
+        llave.ranura = cerradura.ranura;
+        UnityEventTools.AddVoidPersistentListener(llave.alEncajar, new UnityAction(cerradura.PonerLlave));
+        EditorUtility.SetDirty(llave);
     }
 
     // Reja que cae sobre la entrada apenas el jugador pisa el cuarto: desde ahí no se
