@@ -441,7 +441,7 @@ public static class ConstructorCuarto4
     static void ArmarEscritorioProfesor(Transform p)
     {
         var g = Grupo("Escritorio_Profesor", p);
-        g.transform.localPosition = new Vector3(1.5f, 0f, 8.4f);
+        g.transform.localPosition = new Vector3(0.95f, 0f, 8.4f);
 
         Cubo("Tapa", g.transform, new Vector3(0f, 0.76f, 0f), new Vector3(1.6f, 0.05f, 0.78f), mAcero, true);
         Cubo("Lateral_Izq", g.transform, new Vector3(-0.77f, 0.38f, 0f), new Vector3(0.05f, 0.76f, 0.78f), mAceroOscuro);
@@ -451,7 +451,7 @@ public static class ConstructorCuarto4
 
         // Un papel y una taza olvidados arriba, para que se vea que alguien trabajaba acá
         Cubo("Carpeta", g.transform, new Vector3(0.35f, 0.79f, -0.1f), new Vector3(0.3f, 0.02f, 0.4f), mPapel);
-        Modelo("SchoolChair_01", p, new Vector3(1.5f, 0f, 7.5f), 0f, 0.92f, true);
+        Modelo("SchoolChair_01", p, new Vector3(0.95f, 0f, 7.55f), 0f, 0.92f, true);
 
         // Cajón izquierdo: la nota del profesor
         var izq = ArmarCajon(g.transform, "Cajon_Izq", new Vector3(-0.38f, 0.5f, -0.4f));
