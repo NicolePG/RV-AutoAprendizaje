@@ -741,6 +741,10 @@ public static class ConstructorCuarto4
         susto.destello = destello;
         susto.grito = AudioEn("Audio_Grito", g.transform);
         susto.grito.volume = 1f;
+        susto.grito.spatialBlend = 0.6f;   // se escucha fuerte aunque el cuerpo esté al costado
+        // Si en el proyecto hay un audio que se llame "Grito", se engancha solo. Así no
+        // hay que volver a arrastrarlo cada vez que se reconstruye el cuarto.
+        susto.grito.clip = BuscarAsset<AudioClip>("Grito");
         EditorUtility.SetDirty(susto);
 
         return susto;
