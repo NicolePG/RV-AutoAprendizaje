@@ -726,38 +726,47 @@ public static class ConstructorCuarto4
         var torso = Grupo("Torso", cuerpo.transform);
         torso.transform.localPosition = new Vector3(0f, 0f, -0.05f);
 
-        ArmarCabeza(torso.transform, new Vector3(0f, 0.12f, -0.77f));
-        Cubo("Cuello", torso.transform, new Vector3(0f, 0.08f, -0.63f), new Vector3(0.1f, 0.09f, 0.08f), mPiel);
-        Cubo("Tronco", torso.transform, new Vector3(0f, 0.09f, -0.28f), new Vector3(0.4f, 0.2f, 0.62f), mPiel);
+        // Si en el proyecto hay un modelo llamado "cuerpo_camilla" (bajado de Sketchfab,
+        // Mixamo o donde sea), se usa ese en lugar del cuerpo armado con cubos. Entra sin
+        // escalar y colgando del mismo pivote, así el susto lo incorpora igual; la
+        // posición y el tamaño se terminan de acomodar a ojo en el Inspector.
+        bool hayModelo = Modelo("cuerpo_camilla", torso.transform,
+                                new Vector3(0f, 0f, 0.05f), 0f, 0f, false, false) != null;
+        if (!hayModelo)
+        {
+            ArmarCabeza(torso.transform, new Vector3(0f, 0.12f, -0.77f));
+            Cubo("Cuello", torso.transform, new Vector3(0f, 0.08f, -0.63f), new Vector3(0.1f, 0.09f, 0.08f), mPiel);
+            Cubo("Tronco", torso.transform, new Vector3(0f, 0.09f, -0.28f), new Vector3(0.4f, 0.2f, 0.62f), mPiel);
 
-        // Las costillas marcadas: es lo que lo hace parecer un cuerpo y no un cajón
-        for (int i = 0; i < 4; i++)
-            Cubo("Costilla", torso.transform, new Vector3(0f, 0.185f, -0.42f + i * 0.08f),
-                 new Vector3(0.33f - i * 0.02f, 0.025f, 0.035f), mPiel);
-        Cubo("Esternon", torso.transform, new Vector3(0f, 0.19f, -0.3f), new Vector3(0.05f, 0.03f, 0.3f), mPiel);
-        Cubo("Mancha_Pecho", torso.transform, new Vector3(0.06f, 0.196f, -0.2f),
-             new Vector3(0.22f, 0.004f, 0.26f), mMancha);
+            // Las costillas marcadas: es lo que lo hace parecer un cuerpo y no un cajón
+            for (int i = 0; i < 4; i++)
+                Cubo("Costilla", torso.transform, new Vector3(0f, 0.185f, -0.42f + i * 0.08f),
+                     new Vector3(0.33f - i * 0.02f, 0.025f, 0.035f), mPiel);
+            Cubo("Esternon", torso.transform, new Vector3(0f, 0.19f, -0.3f), new Vector3(0.05f, 0.03f, 0.3f), mPiel);
+            Cubo("Mancha_Pecho", torso.transform, new Vector3(0.06f, 0.196f, -0.2f),
+                 new Vector3(0.22f, 0.004f, 0.26f), mMancha);
 
-        Cubo("Brazo_Izq", torso.transform, new Vector3(-0.25f, 0.07f, -0.2f),
-             new Vector3(0.11f, 0.11f, 0.6f), mPiel);
+            Cubo("Brazo_Izq", torso.transform, new Vector3(-0.25f, 0.07f, -0.2f),
+                 new Vector3(0.11f, 0.11f, 0.6f), mPiel);
 
-        // El brazo derecho se salió de la sábana y cuelga por fuera de la camilla
-        Cubo("Hombro", torso.transform, new Vector3(0.3f, 0.09f, -0.4f),
-             new Vector3(0.24f, 0.13f, 0.22f), mPiel);
-        var brazo = Grupo("Brazo_Der", torso.transform);
-        brazo.transform.localPosition = new Vector3(0.42f, 0.04f, -0.2f);
-        brazo.transform.localEulerAngles = new Vector3(0f, 0f, -20f);
-        Cubo("Antebrazo", brazo.transform, new Vector3(0.03f, -0.16f, 0f),
-             new Vector3(0.11f, 0.34f, 0.12f), mPiel);
-        // La mano, con los dedos abiertos: es lo que queda colgando a la vista
-        var mano = Grupo("Mano", brazo.transform);
-        mano.transform.localPosition = new Vector3(0.06f, -0.34f, 0f);
-        Cubo("Palma", mano.transform, Vector3.zero, new Vector3(0.09f, 0.1f, 0.1f), mPiel);
-        for (int i = 0; i < 4; i++)
-            Cubo("Dedo", mano.transform, new Vector3(0.01f, -0.08f, -0.034f + i * 0.023f),
-                 new Vector3(0.05f, 0.075f, 0.017f), mPiel);
-        Cubo("Pulgar", mano.transform, new Vector3(-0.03f, -0.04f, -0.055f),
-             new Vector3(0.05f, 0.05f, 0.02f), mPiel);
+            // El brazo derecho se salió de la sábana y cuelga por fuera de la camilla
+            Cubo("Hombro", torso.transform, new Vector3(0.3f, 0.09f, -0.4f),
+                 new Vector3(0.24f, 0.13f, 0.22f), mPiel);
+            var brazo = Grupo("Brazo_Der", torso.transform);
+            brazo.transform.localPosition = new Vector3(0.42f, 0.04f, -0.2f);
+            brazo.transform.localEulerAngles = new Vector3(0f, 0f, -20f);
+            Cubo("Antebrazo", brazo.transform, new Vector3(0.03f, -0.16f, 0f),
+                 new Vector3(0.11f, 0.34f, 0.12f), mPiel);
+            // La mano, con los dedos abiertos: es lo que queda colgando a la vista
+            var mano = Grupo("Mano", brazo.transform);
+            mano.transform.localPosition = new Vector3(0.06f, -0.34f, 0f);
+            Cubo("Palma", mano.transform, Vector3.zero, new Vector3(0.09f, 0.1f, 0.1f), mPiel);
+            for (int i = 0; i < 4; i++)
+                Cubo("Dedo", mano.transform, new Vector3(0.01f, -0.08f, -0.034f + i * 0.023f),
+                     new Vector3(0.05f, 0.075f, 0.017f), mPiel);
+            Cubo("Pulgar", mano.transform, new Vector3(-0.03f, -0.04f, -0.055f),
+                 new Vector3(0.05f, 0.05f, 0.02f), mPiel);
+        }
 
         // La sábana: lo tapa del cuello a los pies, con las puntas colgando al costado
         var sabana = Grupo("Sabana", g.transform);
