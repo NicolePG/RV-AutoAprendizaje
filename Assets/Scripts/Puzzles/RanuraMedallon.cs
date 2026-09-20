@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.XR.Interaction.Toolkit;
@@ -35,6 +36,12 @@ public class RanuraMedallon : MonoBehaviour
     public AudioSource sonidoOk;
     public AudioSource sonidoError;
 
+    [Header("Cartel de la ranura: dice en qué estado está")]
+    public TMP_Text cartel;
+    public string textoBloqueada = "Bloqueada: falta la secuencia de palancas";
+    public string textoLista = "Toca aca con el medallon del Cuarto 2";
+    public string textoAbierta = "Abierta. Sali del laboratorio";
+
     [Tooltip("Qué pasa cuando el medallón entra")]
     public UnityEvent alAbrir = new UnityEvent();
 
@@ -43,7 +50,11 @@ public class RanuraMedallon : MonoBehaviour
     XRSimpleInteractable interactable;
     bool usada;
 
-    void Awake() => interactable = GetComponent<XRSimpleInteractable>();
+    void Awake()
+    {
+        interactable = GetComponent<XRSimpleInteractable>();
+        if (cartel != null) cartel.text = textoBloqueada;
+    }
 
     void OnEnable() => interactable.selectEntered.AddListener(Tocar);
     void OnDisable() => interactable.selectEntered.RemoveListener(Tocar);
@@ -54,6 +65,7 @@ public class RanuraMedallon : MonoBehaviour
         if (Habilitada) return;
         Habilitada = true;
         if (luzLista != null) luzLista.SetActive(true);
+        if (cartel != null) cartel.text = textoLista;
     }
 
     void Tocar(SelectEnterEventArgs args)
@@ -82,6 +94,7 @@ public class RanuraMedallon : MonoBehaviour
         if (loTrae && punto != null) enMano.Colocar(punto);
         else if (medallonPuesto != null) medallonPuesto.SetActive(true);
 
+        if (cartel != null) cartel.text = textoAbierta;
         if (sonidoOk != null) sonidoOk.Play();
         alAbrir.Invoke();
     }

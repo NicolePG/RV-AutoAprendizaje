@@ -66,7 +66,8 @@ public static class ConstructorCuarto4
     static Material mParedAlta, mFriso, mGuarda, mPiso, mTecho, mAcero, mAceroOscuro, mNegro,
                     mBlanco, mVerdeLuz, mRojo, mAmbar, mPantalla, mResaltado, mPapel,
                     mSabana, mPiel, mLuzTecho, mVidrioLab, mQuemadura, mLlama, mMancha,
-                    mHaz, mVapor, mRojoLuz, mFusA, mFusB, mFusC, mFusX, mFusY, mFusZ;
+                    mHaz, mVapor, mRojoLuz, mHueco, mPelo, mCartel,
+                    mFusA, mFusB, mFusC, mFusX, mFusY, mFusZ;
 
     // Cartel de objetivos: cada paso del cuarto le avisa para que cambie el texto
     static PanelObjetivo panelObjetivo;
@@ -291,6 +292,28 @@ public static class ConstructorCuarto4
         EditorUtility.SetDirty(panelObjetivo);
     }
 
+    // Cartel numerado de cada paso, colgado justo arriba de donde hay que hacer algo.
+    // La chapa es de color emisivo, así que se lee igual con el cuarto a oscuras, que es
+    // como el jugador entra. Devuelve el texto de abajo, por si hay que cambiarlo después.
+    static TextMeshPro CartelPaso(Transform p, string nombre, Vector3 pos, float giroY,
+                                  string titulo, string instruccion)
+    {
+        var g = Grupo("Cartel_" + nombre, p);
+        g.transform.localPosition = pos;
+        g.transform.localEulerAngles = new Vector3(0f, giroY, 0f);
+
+        Cubo("Marco", g.transform, Vector3.zero, new Vector3(1.05f, 0.42f, 0.04f), mAceroOscuro, true);
+        Cubo("Chapa", g.transform, new Vector3(0f, 0f, 0.025f), new Vector3(0.98f, 0.35f, 0.01f), mCartel);
+
+        Texto("Titulo", g.transform, new Vector3(0f, 0.09f, 0.035f), Vector3.zero,
+              titulo, 0.42f, new Color(0.12f, 0.1f, 0.05f), 0.94f, 0.13f);
+
+        var texto = Texto("Instruccion", g.transform, new Vector3(0f, -0.08f, 0.035f), Vector3.zero,
+                          instruccion, 0.26f, new Color(0.16f, 0.13f, 0.06f), 0.94f, 0.15f);
+        texto.lineSpacing = -12f;
+        return texto;
+    }
+
     static void AvisarPanel(UnityEventBase evento, int paso)
     {
         if (panelObjetivo == null) return;
@@ -315,6 +338,9 @@ public static class ConstructorCuarto4
               "TABLERO GENERAL", 0.22f, new Color(0.9f, 0.95f, 0.9f), 1.2f, 0.09f);
 
         Modelo("power_box_01", raiz, new Vector3(0.7f, 1.2f, FONDO - 0.12f), 180f, 0.5f, false, false);
+
+        CartelPaso(raiz, "Paso1", new Vector3(2.2f, 2.05f, FONDO - 0.07f), 180f,
+                   "1 - ELECTRICIDAD", "Pone un fusible en cada letra: A, B y C");
 
         string[] letras = { "A", "B", "C" };
         string[] amperajes = { "10", "20", "15" };
@@ -596,6 +622,34 @@ public static class ConstructorCuarto4
         conGas.Add(llama);
     }
 
+    // La cabeza del cuerpo. Poly Haven no tiene modelos de personas (solo muebles,
+    // herramientas y naturaleza), así que está armada a mano con formas simples, igual
+    // que el resto del cuerpo.
+    //
+    // La cara mira al Este, que es el lado desde donde el jugador gira las llaves de gas:
+    // acostado ya parece estar mirándolo, y cuando se incorpora lo sigue mirando, porque
+    // el giro del susto es sobre el eje X y no cambia hacia dónde apunta la cara.
+    static void ArmarCabeza(Transform p, Vector3 pos)
+    {
+        var g = Grupo("Cabeza", p);
+        g.transform.localPosition = pos;
+
+        Esfera("Craneo", g.transform, Vector3.zero, new Vector3(0.185f, 0.235f, 0.24f), mPiel);
+        // Pómulos hundidos y mandíbula caída, como una cara seca
+        Cubo("Pomulo_1", g.transform, new Vector3(0.06f, 0.035f, -0.075f), new Vector3(0.06f, 0.05f, 0.05f), mPiel);
+        Cubo("Pomulo_2", g.transform, new Vector3(0.06f, 0.035f, 0.075f), new Vector3(0.06f, 0.05f, 0.05f), mPiel);
+        Cubo("Mandibula", g.transform, new Vector3(0.05f, -0.07f, 0f), new Vector3(0.09f, 0.07f, 0.14f), mPiel);
+
+        // Cuencas y boca: huecos negros, que es lo que le da la cara de muerto
+        Esfera("Cuenca_1", g.transform, new Vector3(0.062f, 0.035f, -0.048f), new Vector3(0.07f, 0.06f, 0.06f), mHueco);
+        Esfera("Cuenca_2", g.transform, new Vector3(0.062f, 0.035f, 0.048f), new Vector3(0.07f, 0.06f, 0.06f), mHueco);
+        Cubo("Boca", g.transform, new Vector3(0.075f, -0.055f, 0f), new Vector3(0.05f, 0.055f, 0.075f), mHueco);
+        Cubo("Nariz", g.transform, new Vector3(0.082f, -0.005f, 0f), new Vector3(0.03f, 0.035f, 0.03f), mHueco);
+
+        // Pelo apelmazado hacia atrás
+        Esfera("Pelo", g.transform, new Vector3(-0.035f, 0.03f, 0f), new Vector3(0.16f, 0.2f, 0.23f), mPelo);
+    }
+
     // Mesa de acero simple, por si no está el modelo de Poly Haven
     static void MesaDeAcero(Transform p, Vector3 centro, float ancho, float largo, float alto)
     {
@@ -670,11 +724,20 @@ public static class ConstructorCuarto4
         var torso = Grupo("Torso", cuerpo.transform);
         torso.transform.localPosition = new Vector3(0f, 0f, -0.05f);
 
-        Esfera("Cabeza", torso.transform, new Vector3(0f, 0.11f, -0.77f), new Vector3(0.19f, 0.24f, 0.24f), mPiel);
-        Cubo("Cuello", torso.transform, new Vector3(0f, 0.08f, -0.63f), new Vector3(0.11f, 0.1f, 0.08f), mPiel);
-        Cubo("Tronco", torso.transform, new Vector3(0f, 0.1f, -0.28f), new Vector3(0.42f, 0.22f, 0.62f), mPiel);
-        Cubo("Brazo_Izq", torso.transform, new Vector3(-0.26f, 0.08f, -0.2f),
-             new Vector3(0.13f, 0.13f, 0.6f), mPiel);
+        ArmarCabeza(torso.transform, new Vector3(0f, 0.12f, -0.77f));
+        Cubo("Cuello", torso.transform, new Vector3(0f, 0.08f, -0.63f), new Vector3(0.1f, 0.09f, 0.08f), mPiel);
+        Cubo("Tronco", torso.transform, new Vector3(0f, 0.09f, -0.28f), new Vector3(0.4f, 0.2f, 0.62f), mPiel);
+
+        // Las costillas marcadas: es lo que lo hace parecer un cuerpo y no un cajón
+        for (int i = 0; i < 4; i++)
+            Cubo("Costilla", torso.transform, new Vector3(0f, 0.185f, -0.42f + i * 0.08f),
+                 new Vector3(0.33f - i * 0.02f, 0.025f, 0.035f), mPiel);
+        Cubo("Esternon", torso.transform, new Vector3(0f, 0.19f, -0.3f), new Vector3(0.05f, 0.03f, 0.3f), mPiel);
+        Cubo("Mancha_Pecho", torso.transform, new Vector3(0.06f, 0.196f, -0.2f),
+             new Vector3(0.22f, 0.004f, 0.26f), mMancha);
+
+        Cubo("Brazo_Izq", torso.transform, new Vector3(-0.25f, 0.07f, -0.2f),
+             new Vector3(0.11f, 0.11f, 0.6f), mPiel);
 
         // El brazo derecho se salió de la sábana y cuelga por fuera de la camilla
         Cubo("Hombro", torso.transform, new Vector3(0.3f, 0.09f, -0.4f),
@@ -684,8 +747,15 @@ public static class ConstructorCuarto4
         brazo.transform.localEulerAngles = new Vector3(0f, 0f, -20f);
         Cubo("Antebrazo", brazo.transform, new Vector3(0.03f, -0.16f, 0f),
              new Vector3(0.11f, 0.34f, 0.12f), mPiel);
-        Cubo("Mano", brazo.transform, new Vector3(0.06f, -0.34f, 0f),
-             new Vector3(0.1f, 0.14f, 0.11f), mPiel);
+        // La mano, con los dedos abiertos: es lo que queda colgando a la vista
+        var mano = Grupo("Mano", brazo.transform);
+        mano.transform.localPosition = new Vector3(0.06f, -0.34f, 0f);
+        Cubo("Palma", mano.transform, Vector3.zero, new Vector3(0.09f, 0.1f, 0.1f), mPiel);
+        for (int i = 0; i < 4; i++)
+            Cubo("Dedo", mano.transform, new Vector3(0.01f, -0.08f, -0.034f + i * 0.023f),
+                 new Vector3(0.05f, 0.075f, 0.017f), mPiel);
+        Cubo("Pulgar", mano.transform, new Vector3(-0.03f, -0.04f, -0.055f),
+             new Vector3(0.05f, 0.05f, 0.02f), mPiel);
 
         // La sábana: lo tapa del cuello a los pies, con las puntas colgando al costado
         var sabana = Grupo("Sabana", g.transform);
@@ -769,13 +839,9 @@ public static class ConstructorCuarto4
         Cubo("Brida", g.transform, new Vector3(0f, 0.06f, 0f), new Vector3(0.26f, 0.03f, 0.26f), mAceroOscuro);
         Cubo("Brida_Media", g.transform, new Vector3(0f, 1.25f, 0f), new Vector3(0.2f, 0.03f, 0.2f), mAceroOscuro);
 
-        // Cartel de gas, mirando al centro del cuarto
-        var cartel = Grupo("Cartel_Gas", g.transform);
-        cartel.transform.localPosition = new Vector3(-0.07f, 2.15f, 0f);
-        cartel.transform.localEulerAngles = new Vector3(0f, -90f, 0f);
-        Cubo("Chapa", cartel.transform, Vector3.zero, new Vector3(0.34f, 0.18f, 0.006f), mAmbar);
-        Texto("Texto", cartel.transform, new Vector3(0f, 0f, 0.006f), Vector3.zero,
-              "GAS", 0.32f, new Color(0.1f, 0.1f, 0.1f), 0.32f, 0.16f);
+        // Cartel del paso 2, colgado de la columna y mirando al centro del cuarto
+        CartelPaso(g.transform, "Paso2", new Vector3(-0.1f, 2.25f, 0f), -90f,
+                   "2 - GAS", "Sostene cada llave girando hasta el tope");
 
         // El sistema que cuenta las llaves y larga la niebla
         var gas = Grupo("Gas", raiz);
@@ -884,6 +950,9 @@ public static class ConstructorCuarto4
     static AcertijoSecuencia ArmarPalancas(Transform raiz)
     {
         var g = Grupo("Acertijo_Palancas", raiz);
+        CartelPaso(g.transform, "Paso3", new Vector3(ANCHO - 0.08f, 2.15f, 4.75f), -90f,
+                   "3 - SECUENCIA", "Accioná las palancas en el orden de las luces");
+
         var acertijo = g.AddComponent<AcertijoSecuencia>();
         acertijo.secuencia = SECUENCIA;
         acertijo.sonidoOk = AudioEn("Audio_Ok", g.transform);
@@ -1014,6 +1083,9 @@ public static class ConstructorCuarto4
         ranura.luzError = luzMal;
         ranura.sonidoOk = AudioEn("Audio_Ok", g.transform);
         ranura.sonidoError = AudioEn("Audio_Error", g.transform);
+        // El cartel de arriba va cambiando de texto según cómo esté la ranura
+        ranura.cartel = CartelPaso(raiz, "Paso4", new Vector3(4.7f, 1.68f, FONDO - 0.07f), 180f,
+                                   "4 - MEDALLON", "Bloqueada: falta la secuencia de palancas");
         Resaltar(g, g.transform.Find("Placa").GetComponent<Renderer>());
 
         // La secuencia de palancas habilita la ranura, y la ranura abre la puerta
@@ -1571,6 +1643,11 @@ public static class ConstructorCuarto4
         mBlanco = Mat("C4_Blanco", new Color(0.93f, 0.94f, 0.92f), 0f, 0.3f);
         mPapel = Mat("C4_Papel", new Color(0.92f, 0.9f, 0.84f), 0f, 0.1f);
         mSabana = Mat("C4_Sabana", new Color(0.87f, 0.88f, 0.84f), 0f, 0.08f);
+        // Los huecos de la cara (cuencas y boca), el pelo y los carteles de cada paso
+        mHueco = Mat("C4_Hueco", new Color(0.02f, 0.02f, 0.02f), 0f, 0.05f);
+        mPelo = Mat("C4_Pelo", new Color(0.09f, 0.08f, 0.07f), 0f, 0.1f);
+        mCartel = Mat("C4_Cartel", new Color(0.95f, 0.8f, 0.15f), 0f, 0.4f, new Color(0.45f, 0.35f, 0.04f));
+
         // La piel del cuerpo: gris verdoso, como de formol
         mPiel = Mat("C4_Piel", new Color(0.72f, 0.73f, 0.66f), 0f, 0.12f);
         mPantalla = Mat("C4_Pizarra", new Color(0.09f, 0.16f, 0.13f), 0f, 0.25f);
