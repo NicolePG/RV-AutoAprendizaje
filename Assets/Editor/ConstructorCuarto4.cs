@@ -7,6 +7,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Attachment;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
@@ -321,7 +322,7 @@ public static class ConstructorCuarto4
             ranura.transform.localPosition = new Vector3(0f, 0f, 0.04f);
             var colision = ranura.AddComponent<SphereCollider>();
             colision.isTrigger = true;
-            colision.radius = 0.07f;
+            colision.radius = 0.12f;
             encajes[i] = ranura.AddComponent<XRSocketInteractor>();
 
             // Lucecita verde: se prende cuando el fusible puesto es el correcto
@@ -417,6 +418,9 @@ public static class ConstructorCuarto4
               amperaje, 0.17f, new Color(0.1f, 0.1f, 0.1f), 0.08f, 0.05f);
 
         var agarre = g.AddComponent<XRGrabInteractable>();
+        // Al agarrarlo de lejos viene a la mano, si no queda flotando donde estaba y
+        // nunca se lo puede meter en el encaje del panel
+        agarre.farAttachMode = InteractableFarAttachMode.Near;
         var rb = g.GetComponent<Rigidbody>();
         if (rb != null) { rb.isKinematic = true; rb.useGravity = false; }
         Resaltar(g, g.transform.Find("Cuerpo").GetComponent<Renderer>());

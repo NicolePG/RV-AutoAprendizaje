@@ -7,6 +7,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Attachment;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
@@ -628,6 +629,9 @@ public static class ConstructorCuarto2
         colisionLlave.size = new Vector3(0.12f, 0.09f, 0.28f);
 
         var grabLlave = llave.AddComponent<XRGrabInteractable>();
+        // Al agarrarla de lejos, la llave viene a la mano en vez de quedarse flotando
+        // donde estaba: así se la puede llevar hasta la puerta y meterla en la cerradura
+        grabLlave.farAttachMode = InteractableFarAttachMode.Near;
         var rbLlave = llave.GetComponent<Rigidbody>();
         if (rbLlave != null) { rbLlave.isKinematic = true; rbLlave.useGravity = false; }
         Resaltar(llave, llave.transform.Find("Cabeza").GetComponent<Renderer>());
@@ -643,6 +647,7 @@ public static class ConstructorCuarto2
             almohadon.transform.localEulerAngles = new Vector3(0f, 0f, i == 0 ? 4f : -5f);
 
             var grabCojin = almohadon.AddComponent<XRGrabInteractable>();
+            grabCojin.farAttachMode = InteractableFarAttachMode.Near;
             var rbCojin = almohadon.GetComponent<Rigidbody>();
             if (rbCojin != null) { rbCojin.isKinematic = true; rbCojin.useGravity = false; }
             Resaltar(almohadon, almohadon.GetComponent<Renderer>());
@@ -946,12 +951,17 @@ public static class ConstructorCuarto2
         Cubo("Escudo", cerradura.transform, Vector3.zero, new Vector3(0.1f, 0.16f, 0.02f), mMetal, true);
         Cubo("Ojo_Cerradura", cerradura.transform, new Vector3(0f, 0.02f, -0.012f), new Vector3(0.02f, 0.03f, 0.01f), mNegro);
 
+        // La ranura donde entra la llave. La zona es grande a propósito (16 cm): con el
+        // rayo del control la llave queda en la mano y hay que soltarla justo acá, así
+        // que si la zona es chica no encaja nunca.
         var ranura = Grupo("Ranura_Llave", cerradura.transform);
-        ranura.transform.localPosition = new Vector3(0f, 0.02f, -0.05f);
+        ranura.transform.localPosition = new Vector3(0f, 0.02f, -0.09f);
         var colisionRanura = ranura.AddComponent<SphereCollider>();
         colisionRanura.isTrigger = true;
-        colisionRanura.radius = 0.07f;
+        colisionRanura.radius = 0.16f;
         var socket = ranura.AddComponent<XRSocketInteractor>();
+        // Al soltarla, la llave se acomoda sola con el paletón hacia adentro de la puerta
+        socket.attachTransform = ranura.transform;
 
         var luzLista = LuzPunto("Luz_Lista", cerradura.transform, new Vector3(0f, 0.08f, -0.06f),
                                 new Color(0.4f, 1f, 0.5f), 1.2f, 0.5f);
