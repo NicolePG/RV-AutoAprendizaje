@@ -24,6 +24,9 @@ public class PanelFusibles : MonoBehaviour
     [Tooltip("La luz verde de cada hueco: se prende cuando el fusible es el correcto")]
     public GameObject[] lucesOk;
 
+    [Tooltip("La luz roja de cada hueco: se prende cuando hay un fusible pero no es el que va")]
+    public GameObject[] lucesMal;
+
     [Tooltip("Sonido corto cada vez que se acierta un hueco")]
     public AudioSource audioAcierto;
 
@@ -54,9 +57,13 @@ public class PanelFusibles : MonoBehaviour
         int aciertos = 0;
         for (int i = 0; i < encajes.Length; i++)
         {
+            bool ocupado = encajes[i] != null && encajes[i].Contenido != null;
             bool bien = EsCorrecto(i);
             if (bien) aciertos++;
+
+            // Verde: el fusible que va. Rojo: hay uno puesto pero no es ese.
             if (i < lucesOk.Length && lucesOk[i] != null) lucesOk[i].SetActive(bien);
+            if (i < lucesMal.Length && lucesMal[i] != null) lucesMal[i].SetActive(ocupado && !bien);
         }
 
         // Un sonidito cada vez que se acierta uno más, para que se note el avance

@@ -29,6 +29,9 @@ public class ObjetoLlevable : MonoBehaviour
 
     public bool Colocado { get; private set; }
 
+    // En qué encaje está puesto ahora, si está en alguno. Lo usa el propio encaje.
+    public Encaje EncajeActual { get; set; }
+
     XRSimpleInteractable interactable;
     Transform camara;
     bool enMano;
@@ -53,6 +56,14 @@ public class ObjetoLlevable : MonoBehaviour
     {
         // Lo que estaba en la mano se queda donde está
         if (EnLaMano != null && EnLaMano != this) EnLaMano.Soltar();
+
+        // Si estaba puesto en un encaje, ese encaje queda vacío
+        if (EncajeActual != null)
+        {
+            var encaje = EncajeActual;
+            EncajeActual = null;
+            encaje.Sacar(this);
+        }
 
         transform.SetParent(null, true);
         enMano = true;

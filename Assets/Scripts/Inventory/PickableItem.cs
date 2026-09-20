@@ -3,32 +3,46 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
-// Objeto que se guarda en el inventario al agarrarlo por primera vez.
-// Al agarrarlo: se avisa al Inventory, la mano vibra (haptics) y el objeto desaparece
-// de la escena (ya quedó guardado, no hace falta seguir viéndolo/cargándolo).
+// Objeto que se guarda en el inventario la primera vez que el jugador lo agarra.
+// Al agarrarlo: se avisa al Inventory y la mano vibra (haptics).
 //
-// En la escena: va en el objeto especial (el que está dentro del cajón),
-// junto a un XRGrabInteractable.
-[RequireComponent(typeof(XRGrabInteractable))]
+// Sirve con las dos formas de agarrar que usa el juego: el XRGrabInteractable de toda
+// la vida, o el XRSimpleInteractable de un toque que usan los objetos llevables.
+//
+// "ocultarAlAgarrar" decide qué pasa con el objeto después: si es true desaparece de la
+// escena (ya quedó guardado), y si es false se queda a la vista, que es lo que conviene
+// cuando el jugador lo lleva en la mano y tiene que verlo.
+//
+// En la escena: va en el objeto especial (el del cajón del escritorio).
 public class PickableItem : MonoBehaviour
 {
     [Tooltip("El asset de datos de este objeto")]
     public ItemData datos;
 
-    XRGrabInteractable interactable;
+    [Tooltip("Si está marcado, el objeto desaparece al guardarse")]
+    public bool ocultarAlAgarrar = true;
 
-    void Awake()
+    XRBaseInteractable interactable;
+
+    void Awake() => interactable = GetComponent<XRBaseInteractable>();
+
+    void OnEnable()
     {
-        interactable = GetComponent<XRGrabInteractable>();
+        if (interactable != null) interactable.selectEntered.AddListener(AlAgarrar);
     }
 
-    void OnEnable() => interactable.selectEntered.AddListener(AlAgarrar);
-    void OnDisable() => interactable.selectEntered.RemoveListener(AlAgarrar);
+    void OnDisable()
+    {
+        if (interactable != null) interactable.selectEntered.RemoveListener(AlAgarrar);
+    }
 
     void AlAgarrar(SelectEnterEventArgs args)
     {
-        Inventory.Instancia.Agregar(datos);
-        args.interactorObject.transform.GetComponent<XRBaseInputInteractor>()?.SendHapticImpulse(0.5f, 0.15f);
-        gameObject.SetActive(false);
+        if (Inventory.Instancia != null) Inventory.Instancia.Agregar(datos);
+
+        var mano = args.interactorObject.transform.GetComponent<XRBaseInputInteractor>();
+        if (mano != null) mano.SendHapticImpulse(0.5f, 0.15f);
+
+        if (ocultarAlAgarrar) gameObject.SetActive(false);
     }
 }

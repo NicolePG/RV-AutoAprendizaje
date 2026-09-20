@@ -23,6 +23,9 @@ public class RanuraMedallon : MonoBehaviour
     [Tooltip("El medallón que se ve encajado en la ranura: arranca apagado")]
     public GameObject medallonPuesto;
 
+    [Tooltip("Dónde se acomoda el medallón que el jugador trae en la mano")]
+    public Transform punto;
+
     [Tooltip("Luz verde: se prende cuando la ranura queda habilitada")]
     public GameObject luzLista;
 
@@ -57,11 +60,15 @@ public class RanuraMedallon : MonoBehaviour
     {
         if (usada) return;
 
-        bool tieneElMedallon = medallon != null &&
+        // Vale de las dos formas: trayéndolo en la mano o teniéndolo guardado en el
+        // inventario (por si el jugador lo soltó en el camino)
+        var enMano = ObjetoLlevable.EnLaMano;
+        bool loTrae = enMano != null && EsElMedallon(enMano.gameObject);
+        bool loTieneGuardado = medallon != null &&
                                Inventory.Instancia != null &&
                                Inventory.Instancia.Tiene(medallon);
 
-        if (!Habilitada || !tieneElMedallon)
+        if (!Habilitada || (!loTrae && !loTieneGuardado))
         {
             if (luzError != null) luzError.SetActive(true);
             if (sonidoError != null) sonidoError.Play();
@@ -70,8 +77,18 @@ public class RanuraMedallon : MonoBehaviour
 
         usada = true;
         if (luzError != null) luzError.SetActive(false);
-        if (medallonPuesto != null) medallonPuesto.SetActive(true);
+
+        // Si lo trae en la mano, ese mismo medallón queda encajado en la ranura
+        if (loTrae && punto != null) enMano.Colocar(punto);
+        else if (medallonPuesto != null) medallonPuesto.SetActive(true);
+
         if (sonidoOk != null) sonidoOk.Play();
         alAbrir.Invoke();
+    }
+
+    bool EsElMedallon(GameObject objeto)
+    {
+        var datos = objeto.GetComponentInParent<PickableItem>();
+        return datos != null && datos.datos == medallon;
     }
 }

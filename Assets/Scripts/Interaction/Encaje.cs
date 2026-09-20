@@ -44,6 +44,7 @@ public class Encaje : MonoBehaviour
             if (Contenido == null) return;
             var sale = Contenido;
             Contenido = null;
+            sale.EncajeActual = null;
             sale.Agarrar();
             Avisar();
             return;
@@ -53,7 +54,16 @@ public class Encaje : MonoBehaviour
         if (Contenido != null) return;
 
         Contenido = enMano;
+        enMano.EncajeActual = this;
         enMano.Colocar(punto != null ? punto : transform);
+        Avisar();
+    }
+
+    // Lo llama el objeto cuando el jugador lo agarra directamente de acá adentro
+    public void Sacar(ObjetoLlevable objeto)
+    {
+        if (Contenido != objeto) return;
+        Contenido = null;
         Avisar();
     }
 

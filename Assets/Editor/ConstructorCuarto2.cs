@@ -318,26 +318,35 @@ public static class ConstructorCuarto2
         var drawer = cajon.AddComponent<Drawer>();
         drawer.aperturaMaxima = 0.45f;
         drawer.abrirDeUnToque = true;   // con el control, jalar de lejos es incómodo
+        drawer.bloqueado = true;        // hasta que se caiga la chapa atornillada
         Resaltar(cajon, cajon.transform.Find("Frente").GetComponent<Renderer>());
         EditorUtility.SetDirty(inter);
         EditorUtility.SetDirty(drawer);
 
         // El cajón está tapado por una chapa atornillada: hay que sacarle los tres
-        // tornillos antes de poder abrirlo. Mientras la chapa está puesta, tapa el
-        // frente del cajón y el rayo del control ni lo toca.
-        ArmarTapaAtornillada(g.transform, new Vector3(0.5f, 0.61f, -0.45f));
+        // tornillos. Cuando la chapa se suelta, desbloquea el cajón.
+        ArmarTapaAtornillada(g.transform, new Vector3(0.5f, 0.61f, -0.45f), drawer);
 
-        // El medallón que hay que llevarse al Cuarto 4
-        var medallon = Cilindro("Medallon", cajon.transform, new Vector3(0f, -0.055f, -0.3f),
-                                new Vector3(0.1f, 0.008f, 0.1f), mBronce, true);
-        medallon.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
-        var grab = medallon.AddComponent<XRGrabInteractable>();
-        var rb = medallon.GetComponent<Rigidbody>();
-        if (rb != null) { rb.isKinematic = true; rb.useGravity = false; }
+        // El medallón que hay que llevarse al Cuarto 4. Va adentro de un grupo para que
+        // el disco pueda estar girado sin que se deforme lo que cuelga de él.
+        var medallon = Grupo("Medallon", cajon.transform);
+        medallon.transform.localPosition = new Vector3(0f, -0.055f, -0.3f);
+        Cilindro("Disco", medallon.transform, Vector3.zero, new Vector3(0.11f, 0.007f, 0.11f), mOro)
+            .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+        Cilindro("Aro", medallon.transform, new Vector3(0f, 0f, 0.001f), new Vector3(0.13f, 0.004f, 0.13f), mBronce)
+            .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+
+        var colisionMedallon = medallon.AddComponent<BoxCollider>();
+        colisionMedallon.size = new Vector3(0.16f, 0.16f, 0.06f);
+
+        // Se lleva de un toque, igual que la llave y los fusibles, y queda a la vista
+        // todo el camino hasta el laboratorio
+        medallon.AddComponent<XRSimpleInteractable>();
+        medallon.AddComponent<ObjetoLlevable>();
         var pick = medallon.AddComponent<PickableItem>();
         pick.datos = BuscarAsset<ItemData>("ItemData_ObjetoEspecial");
-        Resaltar(medallon, medallon.GetComponent<Renderer>());
-        EditorUtility.SetDirty(grab);
+        pick.ocultarAlAgarrar = false;   // no desaparece: el jugador lo lleva en la mano
+        Resaltar(medallon, medallon.transform.Find("Disco").GetComponent<Renderer>());
         EditorUtility.SetDirty(pick);
 
         ArmarComputadora(g.transform);
@@ -426,7 +435,7 @@ public static class ConstructorCuarto2
     // Chapa atornillada que tapa el cajón del escritorio. Cada tornillo se saca con un
     // toque; cuando sale el tercero, la chapa se suelta y se cae al piso, y recién ahí
     // se puede abrir el cajón y sacar el medallón.
-    static void ArmarTapaAtornillada(Transform p, Vector3 pos)
+    static void ArmarTapaAtornillada(Transform p, Vector3 pos, Drawer cajon)
     {
         // La chapa va adentro de un grupo: si los tornillos fueran hijos del cubo,
         // heredarían su escala y saldrían aplastados
@@ -439,6 +448,10 @@ public static class ConstructorCuarto2
         rb.isKinematic = true;   // se queda quieta hasta que se sueltan los tornillos
         var panel = g.AddComponent<ScrewedPanel>();
         panel.tornillosRestantes = 3;
+
+        // Recién con la chapa en el piso se puede abrir el cajón
+        if (cajon != null)
+            UnityEventTools.AddVoidPersistentListener(panel.alSoltarse, new UnityAction(cajon.Desbloquear));
 
         Texto("Texto_Tapa", g.transform, new Vector3(0f, 0.025f, -0.013f), new Vector3(0f, 180f, 0f),
               "ARCHIVO\nDIRECCION", 0.5f, new Color(0.12f, 0.12f, 0.12f), 0.62f, 0.16f);

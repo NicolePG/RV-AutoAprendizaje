@@ -37,12 +37,20 @@ public class LlaveDeGas : MonoBehaviour
     [Tooltip("Qué pasa cuando la llave queda abierta del todo")]
     public UnityEvent alAbrir = new UnityEvent();
 
+    [Tooltip("Qué pasa cuando el giro va por la mitad. Ahí salta el susto de la camilla: " +
+             "el jugador tiene las manos ocupadas y no puede reaccionar")]
+    public UnityEvent alMitad = new UnityEvent();
+
+    [Tooltip("En qué punto del giro se dispara 'alMitad', de 0 a 1")]
+    public float puntoDelMedio = 0.6f;
+
     public bool Abierta { get; private set; }
     public float Progreso => progreso;
 
     XRSimpleInteractable interactable;
     float progreso;
     bool sosteniendo;
+    bool avisoMitad;
 
     void Awake() => interactable = GetComponent<XRSimpleInteractable>();
 
@@ -90,6 +98,12 @@ public class LlaveDeGas : MonoBehaviour
             aguja.localRotation = Quaternion.Euler(0f, 0f, -progreso * recorridoAguja);
 
         if (luzGirando != null) luzGirando.SetActive(sosteniendo && progreso < 1f);
+
+        if (!avisoMitad && progreso >= puntoDelMedio)
+        {
+            avisoMitad = true;
+            alMitad.Invoke();
+        }
 
         if (progreso < 1f) return;
 

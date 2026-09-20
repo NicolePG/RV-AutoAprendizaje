@@ -23,6 +23,13 @@ public class Drawer : MonoBehaviour
     [Tooltip("Qué tan rápido se abre solo, cuando abre de un toque")]
     public float velocidad = 3f;
 
+    [Tooltip("Si está marcado, el cajón no se abre hasta que algo llame a Desbloquear(). " +
+             "Se usa cuando hay una chapa atornillada encima.")]
+    public bool bloqueado;
+
+    // Lo llama la tapa atornillada cuando se suelta
+    public void Desbloquear() => bloqueado = false;
+
     bool abierto;
     XRSimpleInteractable interactable;
     Vector3 posicionCerrado; // posición local con el cajón cerrado
@@ -42,6 +49,8 @@ public class Drawer : MonoBehaviour
 
     void AlAgarrar(SelectEnterEventArgs args)
     {
+        if (bloqueado) return;
+
         if (abrirDeUnToque)
         {
             abierto = !abierto;

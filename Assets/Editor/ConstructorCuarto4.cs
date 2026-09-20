@@ -66,7 +66,7 @@ public static class ConstructorCuarto4
     static Material mParedAlta, mFriso, mGuarda, mPiso, mTecho, mAcero, mAceroOscuro, mNegro,
                     mBlanco, mVerdeLuz, mRojo, mAmbar, mPantalla, mResaltado, mPapel,
                     mSabana, mPiel, mLuzTecho, mVidrioLab, mQuemadura, mLlama, mMancha,
-                    mHaz, mVapor, mFusA, mFusB, mFusC, mFusX, mFusY, mFusZ;
+                    mHaz, mVapor, mRojoLuz, mFusA, mFusB, mFusC, mFusX, mFusY, mFusZ;
 
     // Cartel de objetivos: cada paso del cuarto le avisa para que cambie el texto
     static PanelObjetivo panelObjetivo;
@@ -109,12 +109,12 @@ public static class ConstructorCuarto4
         ArmarMesaTrabajo(mobiliario.transform);
         ArmarEscritorioProfesor(mobiliario.transform);
         ArmarPizarra(mobiliario.transform, conEnergia);
-        ArmarCamilla(mobiliario.transform);
+        SustoCamilla susto = ArmarCamilla(mobiliario.transform);
         ArmarDecoracion(mobiliario.transform);
 
         // Los acertijos, en el orden en que los va a resolver el jugador
         AcertijoSecuencia acertijo = ArmarPalancas(raiz.transform);
-        ArmarLineaGas(raiz.transform, acertijo);
+        ArmarLineaGas(raiz.transform, acertijo, susto);
 
         Door puerta = ArmarPuertaSalida(raiz.transform);
         ArmarRanura(raiz.transform, acertijo, puerta);
@@ -322,6 +322,7 @@ public static class ConstructorCuarto4
 
         var encajes = new Encaje[3];
         var lucesOk = new GameObject[3];
+        var lucesMal = new GameObject[3];
         var audio = AudioEn("Audio_Acierto", g.transform);
 
         for (int i = 0; i < 3; i++)
@@ -358,12 +359,19 @@ public static class ConstructorCuarto4
             encajes[i] = encaje;
             EditorUtility.SetDirty(encaje);
 
-            // Lucecita verde: se prende cuando el fusible puesto es el correcto
-            var luz = Cilindro("Luz_Ok", hueco.transform, new Vector3(0f, 0.27f, 0.02f),
-                               new Vector3(0.03f, 0.008f, 0.03f), mVerdeLuz);
+            // Dos lucecitas: verde si el fusible es el que va, roja si está equivocado.
+            // Así se ve de una cuál de los tres huecos está mal.
+            var luz = Cilindro("Luz_Ok", hueco.transform, new Vector3(-0.05f, 0.27f, 0.02f),
+                               new Vector3(0.045f, 0.008f, 0.045f), mVerdeLuz);
             luz.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
             luz.SetActive(false);
             lucesOk[i] = luz;
+
+            var luzMal = Cilindro("Luz_Mal", hueco.transform, new Vector3(0.05f, 0.27f, 0.02f),
+                                  new Vector3(0.045f, 0.008f, 0.045f), mRojoLuz);
+            luzMal.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+            luzMal.SetActive(false);
+            lucesMal[i] = luzMal;
         }
 
         // Luz piloto de batería: queda prendida siempre, así el tablero se encuentra
@@ -375,6 +383,7 @@ public static class ConstructorCuarto4
         panel.encajes = encajes;
         panel.amperajesCorrectos = amperajes;
         panel.lucesOk = lucesOk;
+        panel.lucesMal = lucesMal;
         panel.audioAcierto = audio;
 
         // Con los tres fusibles puestos vuelve la corriente a todo el cuarto
@@ -448,7 +457,9 @@ public static class ConstructorCuarto4
     static void ArmarEscritorioProfesor(Transform p)
     {
         var g = Grupo("Escritorio_Profesor", p);
-        g.transform.localPosition = new Vector3(0.95f, 0f, 8.4f);
+        g.transform.localPosition = new Vector3(0.55f, 0f, 8.3f);
+        // Contra la pared Oeste y mirando al centro, para dejar libre el frente del tablero
+        g.transform.localEulerAngles = new Vector3(0f, -90f, 0f);
 
         Cubo("Tapa", g.transform, new Vector3(0f, 0.76f, 0f), new Vector3(1.6f, 0.05f, 0.78f), mAcero, true);
         Cubo("Lateral_Izq", g.transform, new Vector3(-0.77f, 0.38f, 0f), new Vector3(0.05f, 0.76f, 0.78f), mAceroOscuro);
@@ -458,7 +469,7 @@ public static class ConstructorCuarto4
 
         // Un papel y una taza olvidados arriba, para que se vea que alguien trabajaba acá
         Cubo("Carpeta", g.transform, new Vector3(0.35f, 0.79f, -0.1f), new Vector3(0.3f, 0.02f, 0.4f), mPapel);
-        Modelo("SchoolChair_01", p, new Vector3(0.95f, 0f, 7.55f), 0f, 0.92f, true);
+        Modelo("SchoolChair_01", p, new Vector3(2.2f, 0f, 2.6f), 120f, 0.92f, true);
 
         // Cajón izquierdo: la nota del profesor
         var izq = ArmarCajon(g.transform, "Cajon_Izq", new Vector3(-0.38f, 0.5f, -0.4f));
@@ -627,7 +638,7 @@ public static class ConstructorCuarto4
     // ------------------------------------------------------------------ camilla
 
     // Mesa de disección de biología, con la sábana encima y el cuerpo debajo.
-    static void ArmarCamilla(Transform p)
+    static SustoCamilla ArmarCamilla(Transform p)
     {
         var g = Grupo("Camilla", p);
         g.transform.localPosition = new Vector3(3.3f, 0f, 4.4f);
@@ -643,27 +654,33 @@ public static class ConstructorCuarto4
                     .transform.localEulerAngles = new Vector3(0f, 0f, 90f);
             }
 
-        // El cuerpo, armado con cubos y una esfera. La cabeza queda destapada, mirando
-        // a la entrada: es lo primero que se ve al entrar al cuarto.
+        // El cuerpo, armado con cubos y una esfera. Va en dos partes: de la cintura para
+        // abajo queda quieto, y de la cintura para arriba cuelga de un pivote, que es el
+        // que se incorpora cuando salta el susto.
         var cuerpo = Grupo("Cuerpo", g.transform);
         cuerpo.transform.localPosition = new Vector3(0f, 0.93f, 0f);
 
-        Esfera("Cabeza", cuerpo.transform, new Vector3(0f, 0.11f, -0.82f), new Vector3(0.19f, 0.24f, 0.24f), mPiel);
-        Cubo("Cuello", cuerpo.transform, new Vector3(0f, 0.08f, -0.68f), new Vector3(0.11f, 0.1f, 0.08f), mPiel);
-        Cubo("Torso", cuerpo.transform, new Vector3(0f, 0.1f, -0.33f), new Vector3(0.42f, 0.22f, 0.62f), mPiel);
         Cubo("Cadera", cuerpo.transform, new Vector3(0f, 0.09f, 0.09f), new Vector3(0.36f, 0.2f, 0.28f), mPiel);
         foreach (float x in new[] { -0.1f, 0.1f })
             Cubo("Pierna", cuerpo.transform, new Vector3(x, 0.08f, 0.58f), new Vector3(0.15f, 0.17f, 0.72f), mPiel);
         foreach (float x in new[] { -0.09f, 0.09f })
             Cubo("Pie", cuerpo.transform, new Vector3(x, 0.09f, 1f), new Vector3(0.12f, 0.2f, 0.14f), mPiel);
-        Cubo("Brazo_Izq", cuerpo.transform, new Vector3(-0.26f, 0.08f, -0.25f),
+
+        // El pivote de la cintura: todo lo que está acá adentro se incorpora de golpe
+        var torso = Grupo("Torso", cuerpo.transform);
+        torso.transform.localPosition = new Vector3(0f, 0f, -0.05f);
+
+        Esfera("Cabeza", torso.transform, new Vector3(0f, 0.11f, -0.77f), new Vector3(0.19f, 0.24f, 0.24f), mPiel);
+        Cubo("Cuello", torso.transform, new Vector3(0f, 0.08f, -0.63f), new Vector3(0.11f, 0.1f, 0.08f), mPiel);
+        Cubo("Tronco", torso.transform, new Vector3(0f, 0.1f, -0.28f), new Vector3(0.42f, 0.22f, 0.62f), mPiel);
+        Cubo("Brazo_Izq", torso.transform, new Vector3(-0.26f, 0.08f, -0.2f),
              new Vector3(0.13f, 0.13f, 0.6f), mPiel);
 
         // El brazo derecho se salió de la sábana y cuelga por fuera de la camilla
-        Cubo("Hombro", cuerpo.transform, new Vector3(0.3f, 0.09f, -0.45f),
+        Cubo("Hombro", torso.transform, new Vector3(0.3f, 0.09f, -0.4f),
              new Vector3(0.24f, 0.13f, 0.22f), mPiel);
-        var brazo = Grupo("Brazo_Der", cuerpo.transform);
-        brazo.transform.localPosition = new Vector3(0.42f, 0.04f, -0.25f);
+        var brazo = Grupo("Brazo_Der", torso.transform);
+        brazo.transform.localPosition = new Vector3(0.42f, 0.04f, -0.2f);
         brazo.transform.localEulerAngles = new Vector3(0f, 0f, -20f);
         Cubo("Antebrazo", brazo.transform, new Vector3(0.03f, -0.16f, 0f),
              new Vector3(0.11f, 0.34f, 0.12f), mPiel);
@@ -676,6 +693,15 @@ public static class ConstructorCuarto4
         foreach (float x in new[] { -0.42f, 0.42f })
             Cubo("Caida", sabana.transform, new Vector3(x, 1.04f, 0.22f), new Vector3(0.03f, 0.24f, 1.62f), mSabana);
         Cubo("Caida_Pies", sabana.transform, new Vector3(0f, 1.04f, 1.03f), new Vector3(0.84f, 0.24f, 0.03f), mSabana);
+
+        // La misma sábana pero tirada en el piso, para después del susto
+        var caida = Grupo("Sabana_Caida", g.transform);
+        caida.transform.localPosition = new Vector3(-0.72f, 0f, 0.1f);
+        caida.transform.localEulerAngles = new Vector3(0f, 18f, 0f);
+        Cubo("Tela_1", caida.transform, new Vector3(0f, 0.03f, 0f), new Vector3(0.8f, 0.06f, 1.1f), mSabana);
+        Cubo("Tela_2", caida.transform, new Vector3(0.12f, 0.09f, -0.2f), new Vector3(0.5f, 0.08f, 0.6f), mSabana);
+        Cubo("Tela_3", caida.transform, new Vector3(-0.15f, 0.08f, 0.3f), new Vector3(0.45f, 0.07f, 0.5f), mSabana);
+        caida.SetActive(false);
 
         // Cartel de la práctica, colgado del borde de la camilla
         var ficha = Grupo("Ficha", g.transform);
@@ -702,6 +728,22 @@ public static class ConstructorCuarto4
         var luzFoco = LuzPunto("Luz", foco.transform, new Vector3(0f, -0.2f, 0f),
                                new Color(0.55f, 1f, 0.68f), 1.2f, 4f);
         luzFoco.gameObject.AddComponent<Parpadeo>();
+
+        // El susto: lo dispara la segunda llave de gas cuando va por la mitad del giro
+        var destello = LuzPunto("Destello", g.transform, new Vector3(0f, 1.6f, -0.6f),
+                                new Color(1f, 0.95f, 0.9f), 6f, 7f);
+        destello.enabled = false;
+
+        var susto = g.AddComponent<SustoCamilla>();
+        susto.torso = torso.transform;
+        susto.sabana = sabana;
+        susto.sabanaCaida = caida;
+        susto.destello = destello;
+        susto.grito = AudioEn("Audio_Grito", g.transform);
+        susto.grito.volume = 1f;
+        EditorUtility.SetDirty(susto);
+
+        return susto;
     }
 
     // ------------------------------------------------------------------ paso 2: gas
@@ -709,7 +751,7 @@ public static class ConstructorCuarto4
     // La columna de gas del medio del cuarto, con las dos llaves. No se abren de un
     // toque: hay que sostener el gatillo mientras el volante da dos vueltas. Con las dos
     // abiertas sale el gas, se llena todo de niebla y se ven los haces de luz.
-    static void ArmarLineaGas(Transform raiz, AcertijoSecuencia acertijo)
+    static void ArmarLineaGas(Transform raiz, AcertijoSecuencia acertijo, SustoCamilla susto)
     {
         var g = Grupo("Linea_Gas", raiz);
         g.transform.localPosition = new Vector3(5.4f, 0f, 4.7f);
@@ -751,8 +793,10 @@ public static class ConstructorCuarto4
             conGas.Add(chorro);
         }
 
-        ArmarLlaveGas(g.transform, sistema, "V1", 0.95f);
-        ArmarLlaveGas(g.transform, sistema, "V2", 1.75f);
+        ArmarLlaveGas(g.transform, sistema, "V1", 0.95f, null);
+        // El susto salta con la segunda: el jugador está sosteniendo, de costado a la
+        // camilla y sin poder reaccionar
+        ArmarLlaveGas(g.transform, sistema, "V2", 1.75f, susto);
 
         sistema.objetosConGas = conGas.ToArray();
 
@@ -767,7 +811,7 @@ public static class ConstructorCuarto4
 
     // Volante de la llave de gas. Mira al Oeste (al centro del cuarto), así el jugador
     // queda de costado a la camilla mientras la gira.
-    static void ArmarLlaveGas(Transform p, SistemaGas sistema, string nombre, float altura)
+    static void ArmarLlaveGas(Transform p, SistemaGas sistema, string nombre, float altura, SustoCamilla susto)
     {
         var g = Grupo("Llave_" + nombre, p);
         g.transform.localPosition = new Vector3(-0.16f, altura, 0f);
@@ -823,6 +867,8 @@ public static class ConstructorCuarto4
         Resaltar(g, aro.GetComponent<Renderer>());
 
         UnityEventTools.AddVoidPersistentListener(llave.alAbrir, new UnityAction(sistema.AbrirUna));
+        if (susto != null)
+            UnityEventTools.AddVoidPersistentListener(llave.alMitad, new UnityAction(susto.Disparar));
         EditorUtility.SetDirty(llave);
     }
 
@@ -935,11 +981,15 @@ public static class ConstructorCuarto4
         Texto("Etiqueta", g.transform, new Vector3(0f, -0.14f, 0.028f), Vector3.zero,
               "MEDALLON", 0.2f, new Color(0.9f, 0.93f, 0.9f), 0.28f, 0.1f);
 
-        // El medallón encajado: aparece recién cuando el jugador lo pone
+        // El medallón encajado: aparece recién cuando el jugador lo pone. Si lo trae en
+        // la mano, en vez de este se acomoda el suyo en el mismo punto.
         var medallon = Cilindro("Medallon_Puesto", g.transform, new Vector3(0f, 0.06f, 0.038f),
                                 new Vector3(0.11f, 0.006f, 0.11f), mAmbar);
         medallon.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
         medallon.SetActive(false);
+
+        var punto = Grupo("Punto_Medallon", g.transform);
+        punto.transform.localPosition = new Vector3(0f, 0.06f, 0.042f);
 
         var luzOk = Cilindro("Luz_Lista", g.transform, new Vector3(0f, 0.17f, 0.028f),
                              new Vector3(0.035f, 0.006f, 0.035f), mVerdeLuz);
@@ -955,6 +1005,7 @@ public static class ConstructorCuarto4
         var ranura = g.AddComponent<RanuraMedallon>();
         ranura.medallon = BuscarAsset<ItemData>("ItemData_ObjetoEspecial");
         ranura.medallonPuesto = medallon;
+        ranura.punto = punto.transform;
         ranura.luzLista = luzOk;
         ranura.luzError = luzMal;
         ranura.sonidoOk = AudioEn("Audio_Ok", g.transform);
@@ -1023,7 +1074,7 @@ public static class ConstructorCuarto4
         Modelo("metal_tool_chest", p, new Vector3(7.5f, 0f, 1.9f), -90f, 0.9f, true);
 
         // La silla de ruedas en el medio del cuarto, de frente a la entrada
-        Modelo("wheelchair_01", p, new Vector3(2.9f, 0f, 8.3f), 170f, 0.95f, true);
+        Modelo("wheelchair_01", p, new Vector3(6.5f, 0f, 1.6f), 145f, 0.95f, true);
 
         // El carro de instrumental, pegado a la camilla
         Modelo("industrial_storage_cart", p, new Vector3(4.35f, 0f, 3.3f), 90f, 0.9f, true);
@@ -1042,6 +1093,15 @@ public static class ConstructorCuarto4
         // Frascos de químicos sobre las mesas
         Modelo("bleach_bottle", p, new Vector3(1.12f, 0.79f, 6.3f), 30f, 0.26f, false);
         Modelo("plastic_bottle_gallon", p, new Vector3(0.65f, 0.9f, 2.65f), -20f, 0.3f, false);
+
+        // Cosas que le dan vida al laboratorio sin estorbar el paso
+        Modelo("portable_generator", p, new Vector3(7.3f, 0f, 8.8f), 200f, 0.6f, true);
+        Modelo("cardboard_box_01", p, new Vector3(6.4f, 0f, 8.9f), 25f, 0.4f, true);
+        Modelo("metal_toolbox", p, new Vector3(1.25f, 0.79f, 6.1f), 20f, 0.16f, false);
+        Modelo("utility_box_01", p, new Vector3(7.88f, 1.9f, 8.4f), -90f, 0.4f, false, false);
+        Modelo("industrial_wall_lamp", p, new Vector3(7.88f, 2.4f, 0.9f), -90f, 0.3f, false, false);
+        Modelo("WetFloorSign_01", p, new Vector3(2.6f, 0f, 6.6f), 40f, 0.6f, true);
+        Modelo("modular_pipes", p, new Vector3(0.12f, 2.75f, 4.75f), 0f, 0.3f, false, false);
 
         Modelo("medical_box", p, new Vector3(5.4f, 0f, 0.5f), 15f, 0.26f, true);
         Modelo("metal_trash_can", p, new Vector3(2.5f, 0f, 9f), 0f, 0.42f, true);
@@ -1489,10 +1549,11 @@ public static class ConstructorCuarto4
         // Paleta de laboratorio: verde claro arriba, azulejo verde abajo y acero.
         // Los nombres sueltos ("metal_plate", etc.) son texturas de Poly Haven: si están
         // en el proyecto se usan, y si no queda el color plano.
-        // Paredes de panel de hormigón liso, como un laboratorio nuevo, y abajo el
-        // azulejo blanco largo de los laboratorios y hospitales, teñido de verde suave
-        mParedAlta = Mat("C4_ParedAlta", new Color(0.88f, 0.92f, 0.9f), 0f, 0.15f,
-                         default, "concrete_panels", 2f, 1f, true);
+        // Pared de arriba pintada y lisa, sin el dibujo del hormigón: se usa solo el
+        // relieve de la textura y el color queda limpio, que es lo que la hace moderna.
+        // Abajo, el azulejo blanco largo de los laboratorios, teñido de verde suave.
+        mParedAlta = Mat("C4_ParedAlta", new Color(0.9f, 0.93f, 0.92f), 0f, 0.2f,
+                         default, "painted_plaster_wall", 3f, 1.5f, false, true);
         mFriso = Mat("C4_Azulejo", new Color(0.55f, 0.86f, 0.74f), 0f, 0.65f,
                      default, "long_white_tiles", 5f, 2f, true);
         mGuarda = Mat("C4_Guarda", new Color(0.12f, 0.24f, 0.2f), 0.2f, 0.4f);
@@ -1515,6 +1576,7 @@ public static class ConstructorCuarto4
 
         mVerdeLuz = Mat("C4_VerdeLuz", new Color(0.3f, 0.95f, 0.45f), 0f, 0.5f, new Color(0.2f, 1.1f, 0.35f));
         mRojo = Mat("C4_Rojo", new Color(0.65f, 0.14f, 0.12f), 0.2f, 0.4f);
+        mRojoLuz = Mat("C4_RojoLuz", new Color(1f, 0.25f, 0.2f), 0f, 0.5f, new Color(1.1f, 0.15f, 0.1f));
         mAmbar = Mat("C4_Ambar", new Color(0.95f, 0.72f, 0.15f), 0f, 0.4f);
         mLlama = Mat("C4_Llama", new Color(0.4f, 0.7f, 1f), 0f, 0.6f, new Color(0.3f, 0.8f, 1.6f));
         mLuzTecho = Mat("C4_LuzTecho", new Color(1f, 1f, 0.97f), 0f, 0.5f, new Color(1.5f, 1.6f, 1.5f));
