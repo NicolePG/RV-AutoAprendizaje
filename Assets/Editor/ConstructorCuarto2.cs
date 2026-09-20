@@ -220,30 +220,6 @@ public static class ConstructorCuarto2
         EditorUtility.SetDirty(panelObjetivo);
     }
 
-    // Cartel flotante: aparece delante de la cara del jugador para leerlo cómodo.
-    // Se usa para las pistas de la computadora y para el acertijo del cuaderno.
-    static PanelEnLaCara CrearPanelFlotante(Transform raiz, string nombre, string texto,
-                                            float tamano, float alto, Color color)
-    {
-        var g = Grupo(nombre, raiz);
-        g.transform.localPosition = new Vector3(ANCHO / 2f, 1.5f, FONDO / 2f);
-
-        var contenido = Grupo("Contenido", g.transform);
-        Cubo("Borde", contenido.transform, new Vector3(0f, 0f, -0.006f),
-             new Vector3(0.98f, alto + 0.04f, 0.006f), mVerde);
-        Cubo("Fondo", contenido.transform, Vector3.zero, new Vector3(0.94f, alto, 0.01f), mNegro);
-        var t = Texto("Texto", contenido.transform, new Vector3(0f, 0f, 0.012f), Vector3.zero,
-                      texto, tamano, color, 0.9f, alto - 0.04f);
-        t.alignment = TextAlignmentOptions.TopLeft;
-        t.lineSpacing = -14f;
-
-        var panel = g.AddComponent<PanelEnLaCara>();
-        panel.contenido = contenido;
-        contenido.SetActive(false);
-        EditorUtility.SetDirty(panel);
-        return panel;
-    }
-
     // Conecta un evento para que el cartel pase a mostrar un paso determinado
     static void AvisarPanel(UnityEventBase evento, int paso)
     {
@@ -377,33 +353,25 @@ public static class ConstructorCuarto2
 
         Cubo("Base", pc.transform, new Vector3(0f, 0.008f, 0f), new Vector3(0.24f, 0.016f, 0.15f), mNegro, true);
         Cubo("Cuello", pc.transform, new Vector3(0f, 0.09f, 0.01f), new Vector3(0.05f, 0.18f, 0.03f), mNegro);
-        Cubo("Marco", pc.transform, new Vector3(0f, 0.3f, 0.005f), new Vector3(0.58f, 0.36f, 0.02f), mNegro, true);
-        Cubo("Pantalla", pc.transform, new Vector3(0f, 0.3f, -0.007f), new Vector3(0.54f, 0.32f, 0.004f), mPantallaPC);
+        Cubo("Marco", pc.transform, new Vector3(0f, 0.34f, 0.005f), new Vector3(0.72f, 0.44f, 0.02f), mNegro, true);
+        Cubo("Pantalla", pc.transform, new Vector3(0f, 0.34f, -0.007f), new Vector3(0.68f, 0.4f, 0.004f), mPantallaPC);
 
-        var espera = Texto("Texto_Espera", pc.transform, new Vector3(0f, 0.3f, -0.012f), new Vector3(0f, 180f, 0f),
-                           "DIRECCION\n\nPULSA EL BOTON VERDE\ndel teclado",
-                           0.32f, new Color(0.55f, 0.95f, 1f), 0.52f, 0.3f);
+        // Mensaje de espera, corto y grande para que se lea desde el escritorio
+        var espera = Texto("Texto_Espera", pc.transform, new Vector3(0f, 0.34f, -0.012f), new Vector3(0f, 180f, 0f),
+                           "DIRECCION\n\nPULSA EL BOTON VERDE",
+                           0.42f, new Color(0.55f, 0.95f, 1f), 0.66f, 0.38f);
         espera.lineSpacing = -14f;
 
-        // Las pistas no van en la pantalla (queda chica y lejos): aparecen en un cartel
-        // grande delante de la cara al pulsar el botón
-        var pistas = CrearPanelFlotante(escritorio.parent.parent, "Panel_Pistas_Relojes",
-                                        "LOS RELOJES DEL PASILLO\n\n" +
-                                        "Los cinco se pararon a las 4:40,\n" +
-                                        "cuando se corto la luz.\n" +
-                                        "Hay que ponerlos en hora.\n\n" +
-                                        "- La bitacora, sobre el mueble largo,\n" +
-                                        "   dice a que hora suena cada campana.\n" +
-                                        "- La placa debajo del cuadro dice que\n" +
-                                        "   reloj es cada campana.\n" +
-                                        "- Agarra la aguja corta y girala hasta\n" +
-                                        "   esa hora: el reloj se enciende y\n" +
-                                        "   muestra un numero.\n" +
-                                        "- Un reloj no figura en la placa:\n" +
-                                        "   NO lo toques.\n\n" +
-                                        "Los numeros, en el orden de la bitacora,\n" +
-                                        "son el codigo del teclado de la salida.",
-                                        0.26f, 0.7f, new Color(0.8f, 0.97f, 1f));
+        // Las pistas: pocas líneas y letra grande, en la misma pantalla
+        var pistas = Texto("Texto_Pistas", pc.transform, new Vector3(0f, 0.34f, -0.012f), new Vector3(0f, 180f, 0f),
+                           "RELOJES DETENIDOS 4:40\n\n" +
+                           "Move la aguja corta de\n" +
+                           "cada reloj hasta su hora.\n\n" +
+                           "Los numeros que salen son\n" +
+                           "el codigo de la puerta.",
+                           0.34f, new Color(0.8f, 0.97f, 1f), 0.66f, 0.38f);
+        pistas.lineSpacing = -16f;
+        pistas.gameObject.SetActive(false);
 
         // Teclado de la computadora, con sus teclas chiquitas
         var teclado = Grupo("Teclado_PC", escritorio);
@@ -418,8 +386,9 @@ public static class ConstructorCuarto2
         // El botón de las pistas: va en el teclado, mucho más grande que las teclas
         var boton = Cilindro("Boton_Pistas", teclado.transform, new Vector3(0.14f, 0.014f, 0.055f),
                              new Vector3(0.08f, 0.012f, 0.08f), mVerde, true);
-        Texto("Etiqueta", teclado.transform, new Vector3(-0.04f, 0.012f, 0.06f), new Vector3(90f, 0f, 0f),
-              "PISTAS >", 0.09f, new Color(0.8f, 0.85f, 0.85f), 0.2f, 0.03f);
+        // Acostada sobre el teclado y mirando para arriba (-90 en X), si no se lee desde abajo
+        Texto("Etiqueta", teclado.transform, new Vector3(-0.02f, 0.012f, 0.055f), new Vector3(-90f, 0f, 0f),
+              "PISTAS >", 0.12f, new Color(0.85f, 0.9f, 0.9f), 0.22f, 0.03f);
 
         boton.AddComponent<XRSimpleInteractable>();
         var pulsador = boton.AddComponent<PressableButton>();
@@ -427,8 +396,11 @@ public static class ConstructorCuarto2
         pulsador.recorrido = 0.008f;
         Resaltar(boton, boton.GetComponent<Renderer>());
 
-        UnityEventTools.AddVoidPersistentListener(pulsador.alPresionar, new UnityAction(pistas.Alternar));
+        var alternar = pc.AddComponent<AlternarObjetos>();
+        alternar.objetos = new[] { espera.gameObject, pistas.gameObject };
+        UnityEventTools.AddVoidPersistentListener(pulsador.alPresionar, new UnityAction(alternar.Alternar));
         EditorUtility.SetDirty(pulsador);
+        EditorUtility.SetDirty(alternar);
     }
 
     static void SillaSimple(Transform p, Vector3 pos)
@@ -562,32 +534,29 @@ public static class ConstructorCuarto2
         g.transform.localPosition = pos;
         g.transform.localEulerAngles = new Vector3(0f, 200f, 0f);
 
-        Cubo("Tapa", g.transform, Vector3.zero, new Vector3(0.24f, 0.025f, 0.32f), mLibroB, true);
-        Cubo("Hojas", g.transform, new Vector3(0f, 0.016f, 0f), new Vector3(0.22f, 0.008f, 0.3f), mPapel);
-        Texto("Titulo", g.transform, new Vector3(0f, 0.022f, -0.1f), new Vector3(-90f, 0f, 0f),
-              "ACERTIJO", 0.14f, new Color(0.35f, 0.1f, 0.08f), 0.2f, 0.05f);
+        Cubo("Tapa", g.transform, Vector3.zero, new Vector3(0.26f, 0.025f, 0.34f), mLibroB, true);
+        Cubo("Hojas", g.transform, new Vector3(0f, 0.016f, 0f), new Vector3(0.24f, 0.008f, 0.32f), mPapel);
 
-        // El acertijo se lee en el cartel flotante, no en la tapa: agarrando el
-        // cuaderno aparece delante de la cara y al soltarlo se va
-        var acertijo = CrearPanelFlotante(p.parent, "Panel_Acertijo_Llave",
-                                          "CUADERNO DEL DIRECTOR\n\n" +
-                                          "No tengo llave,\n" +
-                                          "pero guardo una.\n\n" +
-                                          "Nadie me mira,\n" +
-                                          "todos me usan.\n\n" +
-                                          "Blando por fuera,\n" +
-                                          "hueco por dentro:\n\n" +
-                                          "levanta lo que cubre\n" +
-                                          "mi asiento.",
-                                          0.3f, 0.62f, new Color(1f, 0.93f, 0.75f));
+        // El acertijo va impreso en la tapa: al tocar el libro se para de frente y se lee
+        var texto = Texto("Texto_Acertijo", g.transform, new Vector3(0f, 0.022f, 0f), new Vector3(-90f, 0f, 0f),
+                          "ACERTIJO\n\n" +
+                          "No tengo llave,\n" +
+                          "pero guardo una.\n\n" +
+                          "Nadie me mira,\n" +
+                          "todos me usan.\n\n" +
+                          "Blando por fuera,\n" +
+                          "hueco por dentro:\n\n" +
+                          "levanta lo que cubre\n" +
+                          "mi asiento.",
+                          0.2f, new Color(0.15f, 0.12f, 0.1f), 0.24f, 0.32f);
+        texto.lineSpacing = -22f;
 
-        var grab = g.AddComponent<XRGrabInteractable>();
-        var rb = g.GetComponent<Rigidbody>();
-        if (rb != null) { rb.isKinematic = true; rb.useGravity = false; }
+        g.AddComponent<XRSimpleInteractable>();
+        var dePie = g.AddComponent<LibroDePie>();
+        dePie.alturaExtra = 0.12f;   // cuánto sube al pararse
+        dePie.acercar = 0.18f;      // cuánto se acerca al jugador
+        EditorUtility.SetDirty(dePie);
         Resaltar(g, g.transform.Find("Tapa").GetComponent<Renderer>());
-        UnityEventTools.AddVoidPersistentListener(grab.selectEntered, new UnityAction(acertijo.Mostrar));
-        UnityEventTools.AddVoidPersistentListener(grab.selectExited, new UnityAction(acertijo.Ocultar));
-        EditorUtility.SetDirty(grab);
     }
 
     // ------------------------------------------------------------------ sala de estar
