@@ -638,21 +638,28 @@ public static class ConstructorCuarto4
         if (fuente == null) return null;
 
         var contenedor = Grupo("Cuerpo_Modelo", padre);
-        // Acostado boca arriba y con la cabeza hacia la entrada.
-        //
-        // Los -90 en X no son a ojo: el propio archivo FBX declara que su eje de arriba
-        // es la Y y que el frente es la Z (UpAxis 1, FrontAxis 2, los dos en positivo),
-        // que es justo como los usa Unity. Girando -90 en X, la cabeza (+Y) queda
-        // apuntando al -Z, o sea a la entrada, y la cara (+Z) queda mirando al techo.
-        contenedor.transform.localEulerAngles = new Vector3(-90f, 0f, 0f);
-
         var modelo = (GameObject)PrefabUtility.InstantiatePrefab(fuente, contenedor.transform);
         modelo.transform.localPosition = Vector3.zero;
         modelo.transform.localRotation = Quaternion.identity;
 
         if (!Limites(modelo, out Bounds b)) return contenedor;
 
-        // El modelo viene parado, así que su alto es lo que mide de pies a cabeza
+        // De qué lado tiene la cabeza este modelo: el eje más largo de la caja que lo
+        // envuelve es el que va de los pies a la cabeza. No se puede dar por sentado que
+        // sea la Y: la cabecera de este FBX dice Y pero Unity lo importa con la Z para
+        // arriba, que es la costumbre de Blender. Midiéndolo, sirve venga como venga.
+        bool zArriba = b.size.z > b.size.y;
+
+        // Acostarlo boca arriba con la cabeza hacia la entrada:
+        // - si tiene la Z para arriba, media vuelta sobre la X manda la cabeza al -Z
+        // - si tiene la Y para arriba, alcanza con tumbarlo -90 sobre la X
+        // Si quedara boca abajo, se cambia en el Inspector: 180,0,0 por 0,180,0
+        // (o -90,0,0 por 90,180,0 en el otro caso).
+        contenedor.transform.localEulerAngles = zArriba
+            ? new Vector3(180f, 0f, 0f)
+            : new Vector3(-90f, 0f, 0f);
+
+        // El modelo viene parado, así que su lado más largo es lo que mide de pies a cabeza
         float alto = Mathf.Max(b.size.x, b.size.y, b.size.z);
         if (alto > 0.0001f) modelo.transform.localScale *= 1.72f / alto;
 
@@ -1046,10 +1053,12 @@ public static class ConstructorCuarto4
     static AcertijoSecuencia ArmarPalancas(Transform raiz)
     {
         var g = Grupo("Acertijo_Palancas", raiz);
-        CartelPaso(g.transform, "Paso3", new Vector3(ANCHO - 0.08f, 2.15f, 4.75f), -90f,
-                   "3 - SECUENCIA", "Accioná las palancas en el orden de las luces");
+        // El cartel de este paso lleva la cuenta: el acertijo le va cambiando el texto
+        var cartel = CartelPaso(g.transform, "Paso3", new Vector3(ANCHO - 0.08f, 2.15f, 4.75f), -90f,
+                                "3 - SECUENCIA", "Accioná las palancas en el orden de las luces");
 
         var acertijo = g.AddComponent<AcertijoSecuencia>();
+        acertijo.cartel = cartel;
         acertijo.secuencia = SECUENCIA;
         acertijo.sonidoOk = AudioEn("Audio_Ok", g.transform);
         acertijo.sonidoError = AudioEn("Audio_Error", g.transform);

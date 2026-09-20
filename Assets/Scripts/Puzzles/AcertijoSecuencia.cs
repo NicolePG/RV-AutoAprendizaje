@@ -1,4 +1,5 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -40,6 +41,8 @@ public class AcertijoSecuencia : MonoBehaviour
     public float segundosEntreRepeticiones = 4f;
 
     [Header("Avisos")]
+    [Tooltip("Cartel que va diciendo cuántas palancas van bien")]
+    public TMP_Text cartel;
     public GameObject luzOk;
     public GameObject luzError;
     public AudioSource sonidoOk;
@@ -53,11 +56,14 @@ public class AcertijoSecuencia : MonoBehaviour
 
     int paso;
 
+    void Start() => Avisar();
+
     // Lo llama el sistema de gas cuando la niebla deja ver los haces
     public void Activar()
     {
         if (Activo || Resuelto) return;
         Activo = true;
+        Avisar();
         StartCoroutine(MostrarSecuencia());
     }
 
@@ -74,6 +80,7 @@ public class AcertijoSecuencia : MonoBehaviour
         if (numero != secuencia[paso]) { Fallo(); return false; }
 
         paso++;
+        Avisar();
         if (paso < secuencia.Length)
         {
             if (sonidoOk != null) sonidoOk.Play();
@@ -88,6 +95,7 @@ public class AcertijoSecuencia : MonoBehaviour
         if (luzError != null) luzError.SetActive(false);
         if (luzOk != null) luzOk.SetActive(true);
         if (sonidoOk != null) sonidoOk.Play();
+        Avisar();
         OnSolved.Invoke();
         return true;
     }
@@ -95,6 +103,7 @@ public class AcertijoSecuencia : MonoBehaviour
     void Fallo()
     {
         paso = 0;
+        Avisar();
         if (sonidoError != null) sonidoError.Play();
         if (luzError != null) StartCoroutine(Parpadear(luzError, 0.8f));
 
@@ -103,6 +112,18 @@ public class AcertijoSecuencia : MonoBehaviour
         if (palancas == null) return;
         foreach (var palanca in palancas)
             if (palanca != null) palanca.Reiniciar();
+    }
+
+    // El cartel de las palancas va contando cuántas van bien. Sirve para que el jugador
+    // sepa que la última que tocó contó, y para darse cuenta enseguida si algo no anda.
+    void Avisar()
+    {
+        if (cartel == null) return;
+
+        int total = secuencia != null ? secuencia.Length : 0;
+        if (Resuelto) cartel.text = "Secuencia completa";
+        else if (!Activo) cartel.text = "Todavia no hay gas: las luces no se ven";
+        else cartel.text = "Van " + paso + " de " + total + " - mira el orden de las luces";
     }
 
     IEnumerator Parpadear(GameObject luz, float segundos)
