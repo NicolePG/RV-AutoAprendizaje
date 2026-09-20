@@ -16,6 +16,14 @@ public class Drawer : MonoBehaviour
     [Tooltip("Cuánto se puede abrir el cajón, en metros")]
     public float aperturaMaxima = 0.4f;
 
+    [Tooltip("Si está marcado, el cajón se abre y se cierra con un solo toque, sin jalarlo. " +
+             "Con el control a distancia jalar es incómodo, así que en los cajones lejanos conviene.")]
+    public bool abrirDeUnToque;
+
+    [Tooltip("Qué tan rápido se abre solo, cuando abre de un toque")]
+    public float velocidad = 3f;
+
+    bool abierto;
     XRSimpleInteractable interactable;
     Vector3 posicionCerrado; // posición local con el cajón cerrado
     Vector3 eje;             // dirección en la que se abre (su Z local, en el espacio del padre)
@@ -34,12 +42,27 @@ public class Drawer : MonoBehaviour
 
     void AlAgarrar(SelectEnterEventArgs args)
     {
+        if (abrirDeUnToque)
+        {
+            abierto = !abierto;
+            return;
+        }
+
         aperturaAlAgarrar = Vector3.Dot(transform.localPosition - posicionCerrado, eje);
         manoAlAgarrar = PosicionSobreEje(args.interactorObject);
     }
 
     void Update()
     {
+        if (abrirDeUnToque)
+        {
+            // Se desliza solo hasta quedar abierto o cerrado del todo
+            Vector3 destino = posicionCerrado + eje * (abierto ? aperturaMaxima : 0f);
+            transform.localPosition = Vector3.Lerp(transform.localPosition, destino,
+                                                   1f - Mathf.Exp(-velocidad * Time.deltaTime));
+            return;
+        }
+
         if (!interactable.isSelected) return;
 
         // Cuánto se movió la mano sobre el eje desde que agarró el cajón

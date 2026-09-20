@@ -109,6 +109,7 @@ public static class ConstructorCuarto4
 
         ArmarMesaQuimica(mobiliario.transform);
         ArmarMesaTrabajo(mobiliario.transform);
+        ArmarEscritorioProfesor(mobiliario.transform);
         ArmarPizarra(mobiliario.transform, conEnergia);
         ArmarCamilla(mobiliario.transform);
         ArmarDecoracion(mobiliario.transform);
@@ -282,7 +283,7 @@ public static class ConstructorCuarto4
         panelObjetivo.texto = texto;
         panelObjetivo.pasos = new[]
         {
-            "SIN ENERGIA\n\nEl tablero del fondo pide tres fusibles.\nEstan en la mesa de trabajo, y la hoja\nde al lado dice cuanto aguanta cada circuito.",
+            "SIN ENERGIA\n\nEl tablero del fondo pide tres fusibles: A, B y C.\nLa hoja de la mesa de trabajo dice cual va en cada uno.\nOjo: uno de los tres no esta sobre la mesa.",
             "VOLVIO LA LUZ\n\nLa linea de gas esta cerrada.\nAbri las dos llaves de la columna del medio:\nhay que sostenerlas hasta el tope.",
             "SALE EL GAS\n\nLa niebla dejo ver tres haces de luz\nsobre las palancas. Se encienden en un orden:\nmiralo bien y repetilo con las palancas.",
             "SECUENCIA CORRECTA\n\nSe habilito la ranura de al lado de la puerta.\nTocala llevando el medallon\nque sacaste del cajon del Cuarto 2.",
@@ -319,7 +320,6 @@ public static class ConstructorCuarto4
 
         string[] letras = { "A", "B", "C" };
         string[] amperajes = { "10", "20", "15" };
-        Material[] colores = { mFusA, mFusB, mFusC };
         float[] xs = { -0.45f, 0f, 0.45f };
 
         var encajes = new XRSocketInteractor[3];
@@ -391,30 +391,37 @@ public static class ConstructorCuarto4
 
         float tapa = 0.79f;
 
-        // Los seis fusibles, en dos filas. Los tres primeros son los que sirven.
-        string[] amperajes = { "10", "20", "15", "5", "30", "25" };
-        Material[] colores = { mFusA, mFusB, mFusC, mFusX, mFusY, mFusZ };
-        for (int i = 0; i < 6; i++)
+        // Cinco fusibles sobre la mesa: dos sirven y tres no. El tercero que sirve está
+        // guardado en el cajón del escritorio del profesor, así hay que buscarlo.
+        string[] amperajes = { "10", "20", "5", "30", "25" };
+        Material[] colores = { mFusA, mFusB, mFusX, mFusY, mFusZ };
+        for (int i = 0; i < amperajes.Length; i++)
         {
             float x = (i % 2 == 0) ? -0.17f : 0.09f;
             float z = -0.5f + (i / 2) * 0.45f;
             ArmarFusible(g.transform, new Vector3(x, tapa + 0.02f, z), amperajes[i], colores[i]);
         }
 
+        Texto("Cartel_Mesa", g.transform, new Vector3(-0.17f, tapa + 0.003f, -0.78f), new Vector3(-90f, 90f, 0f),
+              "FUSIBLES", 0.26f, new Color(0.35f, 0.33f, 0.3f), 0.3f, 0.06f);
+
         // La hoja del electricista: el consumo de cada circuito. Hay que multiplicar.
         var hoja = Grupo("Hoja_Circuitos", g.transform);
         hoja.transform.localPosition = new Vector3(0.13f, tapa + 0.002f, 0.62f);
         hoja.transform.localEulerAngles = new Vector3(0f, 10f, 0f);
-        Cubo("Papel", hoja.transform, Vector3.zero, new Vector3(0.32f, 0.002f, 0.42f), mPapel);
+        Cubo("Papel", hoja.transform, Vector3.zero, new Vector3(0.32f, 0.002f, 0.44f), mPapel);
         var texto = Texto("Texto", hoja.transform, new Vector3(0f, 0.003f, 0f), new Vector3(-90f, 90f, 0f),
                           "CIRCUITOS\n\n" +
                           "A  campana   2 x 5A\n" +
                           "B  luces     4 x 5A\n" +
                           "C  heladera  3 x 5A\n\n" +
-                          "Cada fusible tiene\n" +
-                          "que aguantar justo\n" +
-                          "lo que consume.",
-                          0.26f, new Color(0.2f, 0.18f, 0.15f), 0.3f, 0.4f);
+                          "En cada letra va el\n" +
+                          "fusible que da ese\n" +
+                          "total. Ej: 2 x 5A = 10A\n\n" +
+                          "El de la heladera\n" +
+                          "quedo en el cajon\n" +
+                          "del escritorio.",
+                          0.25f, new Color(0.2f, 0.18f, 0.15f), 0.3f, 0.42f);
         texto.lineSpacing = -14f;
 
         // Lámpara de trabajo a pilas sobre la mesa: los fusibles se ven desde la entrada
@@ -424,6 +431,79 @@ public static class ConstructorCuarto4
                  new Color(0.8f, 1f, 0.85f), 1.4f, 2.6f);
 
         Modelo("metal_stool_02", p, new Vector3(1.85f, 0f, 6.4f), 25f, 0.62f, true);
+    }
+
+    // ------------------------------------------------------------------ escritorio
+
+    // Escritorio del profesor, contra la pared del fondo. En el cajón de la derecha está
+    // el fusible que falta en la mesa de trabajo, y en el de la izquierda la nota que
+    // avisa cómo se abren las llaves de gas. Los dos cajones se abren con un toque.
+    static void ArmarEscritorioProfesor(Transform p)
+    {
+        var g = Grupo("Escritorio_Profesor", p);
+        g.transform.localPosition = new Vector3(1.5f, 0f, 8.4f);
+
+        Cubo("Tapa", g.transform, new Vector3(0f, 0.76f, 0f), new Vector3(1.6f, 0.05f, 0.78f), mAcero, true);
+        Cubo("Lateral_Izq", g.transform, new Vector3(-0.77f, 0.38f, 0f), new Vector3(0.05f, 0.76f, 0.78f), mAceroOscuro);
+        Cubo("Lateral_Der", g.transform, new Vector3(0.77f, 0.38f, 0f), new Vector3(0.05f, 0.76f, 0.78f), mAceroOscuro);
+        Cubo("Respaldo", g.transform, new Vector3(0f, 0.45f, 0.36f), new Vector3(1.55f, 0.62f, 0.04f), mAceroOscuro);
+        Cubo("Separador", g.transform, new Vector3(0f, 0.38f, 0f), new Vector3(0.04f, 0.72f, 0.74f), mAceroOscuro);
+
+        // Un papel y una taza olvidados arriba, para que se vea que alguien trabajaba acá
+        Cubo("Carpeta", g.transform, new Vector3(0.35f, 0.79f, -0.1f), new Vector3(0.3f, 0.02f, 0.4f), mPapel);
+        Modelo("SchoolChair_01", p, new Vector3(1.5f, 0f, 7.5f), 0f, 0.92f, true);
+
+        // Cajón izquierdo: la nota del profesor
+        var izq = ArmarCajon(g.transform, "Cajon_Izq", new Vector3(-0.38f, 0.5f, -0.4f));
+        var dentroIzq = Grupo("Contenido", izq.transform);
+        dentroIzq.transform.localEulerAngles = new Vector3(0f, 180f, 0f);
+        var nota = Grupo("Nota", dentroIzq.transform);
+        nota.transform.localPosition = new Vector3(0f, -0.055f, 0.26f);
+        Cubo("Papel", nota.transform, Vector3.zero, new Vector3(0.26f, 0.002f, 0.34f), mPapel);
+        var textoNota = Texto("Texto", nota.transform, new Vector3(0f, 0.003f, 0f), new Vector3(-90f, 90f, 0f),
+                              "NOTA\n\n" +
+                              "Las llaves de gas\n" +
+                              "estan duras.\n\n" +
+                              "Hay que agarrarlas\n" +
+                              "y no soltar hasta\n" +
+                              "que el manometro\n" +
+                              "llegue al tope.",
+                              0.24f, new Color(0.2f, 0.18f, 0.15f), 0.24f, 0.32f);
+        textoNota.lineSpacing = -14f;
+
+        // Cajón derecho: el fusible que falta
+        var der = ArmarCajon(g.transform, "Cajon_Der", new Vector3(0.38f, 0.5f, -0.4f));
+        var dentroDer = Grupo("Contenido", der.transform);
+        dentroDer.transform.localEulerAngles = new Vector3(0f, 180f, 0f);
+        ArmarFusible(dentroDer.transform, new Vector3(0f, -0.05f, 0.26f), "15", mFusC);
+
+        // Lucecita de batería sobre el escritorio, para que se encuentre a oscuras
+        LuzPunto("Luz_Escritorio", g.transform, new Vector3(0f, 1.2f, -0.3f),
+                 new Color(0.7f, 1f, 0.8f), 1.1f, 2.8f);
+    }
+
+    // Cajón que se abre con un toque. Lo que va adentro tiene que ser hijo suyo.
+    static GameObject ArmarCajon(Transform p, string nombre, Vector3 pos)
+    {
+        var cajon = Grupo(nombre, p);
+        cajon.transform.localPosition = pos;
+        // Girado 180 para que se abra hacia el frente del escritorio
+        cajon.transform.localEulerAngles = new Vector3(0f, 180f, 0f);
+
+        Cubo("Frente", cajon.transform, Vector3.zero, new Vector3(0.66f, 0.24f, 0.03f), mAcero, true);
+        Cubo("Piso_Cajon", cajon.transform, new Vector3(0f, -0.09f, -0.34f), new Vector3(0.6f, 0.02f, 0.66f), mAceroOscuro);
+        Cubo("Lado_A", cajon.transform, new Vector3(-0.3f, -0.03f, -0.34f), new Vector3(0.02f, 0.15f, 0.66f), mAceroOscuro);
+        Cubo("Lado_B", cajon.transform, new Vector3(0.3f, -0.03f, -0.34f), new Vector3(0.02f, 0.15f, 0.66f), mAceroOscuro);
+        Cubo("Tirador", cajon.transform, new Vector3(0f, 0.07f, 0.028f), new Vector3(0.42f, 0.014f, 0.025f), mAceroOscuro);
+
+        cajon.AddComponent<XRSimpleInteractable>();
+        var drawer = cajon.AddComponent<Drawer>();
+        drawer.aperturaMaxima = 0.4f;
+        drawer.abrirDeUnToque = true;
+        Resaltar(cajon, cajon.transform.Find("Frente").GetComponent<Renderer>());
+        EditorUtility.SetDirty(drawer);
+
+        return cajon;
     }
 
     // Un fusible: cilindro de vidrio con casquillos de metal y el amperaje escrito.
@@ -931,10 +1011,13 @@ public static class ConstructorCuarto4
 
     static void ArmarDecoracion(Transform p)
     {
-        // Estanterías modernas de acero contra la pared de la entrada
-        Modelo("steel_frame_shelves_01", p, new Vector3(3.9f, 0f, 0.5f), 0f, 1.75f, true);
-        Modelo("worn_metal_rack", p, new Vector3(6.6f, 0f, 0.55f), 0f, 1.6f, true);
-        Modelo("drawer_cabinet", p, new Vector3(0.8f, 0f, 8.7f), 0f, 0.9f, true);
+        // Estanterías de acero contra la pared de la entrada, las dos del mismo tipo
+        // para que se vean como un mueble de laboratorio y no como cosas sueltas
+        Modelo("steel_frame_shelves_02", p, new Vector3(3.6f, 0f, 0.5f), 0f, 1.8f, true);
+        Modelo("steel_frame_shelves_03", p, new Vector3(5.1f, 0f, 0.5f), 0f, 1.8f, true);
+        Modelo("Shelf_01", p, new Vector3(6.6f, 0f, 0.55f), 0f, 1.6f, true);
+        Modelo("drawer_cabinet", p, new Vector3(0.6f, 0f, 1.2f), 90f, 0.9f, true);
+        Modelo("metal_tool_chest", p, new Vector3(7.5f, 0f, 1.9f), -90f, 0.9f, true);
 
         // La silla de ruedas en el medio del cuarto, de frente a la entrada
         Modelo("wheelchair_01", p, new Vector3(2.9f, 0f, 8.3f), 170f, 0.95f, true);
@@ -1401,10 +1484,12 @@ public static class ConstructorCuarto4
         // Paleta de laboratorio: verde claro arriba, azulejo verde abajo y acero.
         // Los nombres sueltos ("metal_plate", etc.) son texturas de Poly Haven: si están
         // en el proyecto se usan, y si no queda el color plano.
-        mParedAlta = Mat("C4_ParedAlta", new Color(0.83f, 0.89f, 0.82f), 0f, 0.1f,
-                         default, "plastered_wall_04", 3f, 1.5f, false, true);
-        mFriso = Mat("C4_Azulejo", new Color(0.42f, 0.72f, 0.6f), 0f, 0.55f,
-                     default, "square_tiles_02", 6f, 2f, true);
+        // Paredes de panel de hormigón liso, como un laboratorio nuevo, y abajo el
+        // azulejo blanco largo de los laboratorios y hospitales, teñido de verde suave
+        mParedAlta = Mat("C4_ParedAlta", new Color(0.88f, 0.92f, 0.9f), 0f, 0.15f,
+                         default, "concrete_panels", 2f, 1f, true);
+        mFriso = Mat("C4_Azulejo", new Color(0.55f, 0.86f, 0.74f), 0f, 0.65f,
+                     default, "long_white_tiles", 5f, 2f, true);
         mGuarda = Mat("C4_Guarda", new Color(0.12f, 0.24f, 0.2f), 0.2f, 0.4f);
         mPiso = Mat("C4_Piso", new Color(0.62f, 0.64f, 0.63f), 0.55f, 0.45f,
                     default, "metal_plate", 4f, 4.7f);

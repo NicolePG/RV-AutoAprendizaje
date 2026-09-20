@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 // Tornillo que se quita tocándolo con la punta del destornillador.
 // Al quitarse: suena, se cae al piso (se le agrega física) y avisa a su tapa.
@@ -17,11 +19,35 @@ public class Screw : MonoBehaviour
     [Tooltip("Sonido al quitarse (opcional)")]
     public AudioClip sonido;
 
+    [Tooltip("Si está marcado, el tornillo se saca con un toque del control, sin destornillador")]
+    public bool sacarConUnToque;
+
     bool quitado;
+
+    void OnEnable()
+    {
+        if (!sacarConUnToque) return;
+        var interactable = GetComponent<XRSimpleInteractable>();
+        if (interactable != null) interactable.selectEntered.AddListener(Tocar);
+    }
+
+    void OnDisable()
+    {
+        var interactable = GetComponent<XRSimpleInteractable>();
+        if (interactable != null) interactable.selectEntered.RemoveListener(Tocar);
+    }
+
+    void Tocar(SelectEnterEventArgs args) => Quitar();
 
     void OnTriggerEnter(Collider otro)
     {
-        if (quitado || otro != puntaHerramienta) return;
+        if (otro != puntaHerramienta) return;
+        Quitar();
+    }
+
+    void Quitar()
+    {
+        if (quitado) return;
         quitado = true;
 
         if (sonido != null) AudioSource.PlayClipAtPoint(sonido, transform.position);

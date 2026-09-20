@@ -226,7 +226,7 @@ public static class ConstructorCuarto2
             "HAY QUE PONERLOS EN HORA\n\nLa bitacora dice a que hora suena\ncada campana. La placa del cuadro dice\nque reloj es cada una. Gira las manecillas.",
             "BIEN\n\nCada reloj en hora muestra su numero.\nSegui con los demas y marca el codigo\nen el orden que dice la bitacora.",
             "CODIGO ACEPTADO\n\nFalta la llave: el cuaderno del\nestante dice donde esta.\nTocala, traela y girala en la cerradura.",
-            "PUERTA ABIERTA\n\nLlevate el medallon del cajon del escritorio\ny sali: la puerta se cierra sola."
+            "PUERTA ABIERTA\n\nAntes de salir: el cajon del escritorio\nesta tapado por una chapa con tres tornillos.\nSacalos, abri el cajon y llevate el medallon."
         };
         texto.text = panelObjetivo.pasos[0];   // así ya se ve en el editor, sin darle Play
         EditorUtility.SetDirty(panelObjetivo);
@@ -317,8 +317,15 @@ public static class ConstructorCuarto2
         var inter = cajon.AddComponent<XRSimpleInteractable>();
         var drawer = cajon.AddComponent<Drawer>();
         drawer.aperturaMaxima = 0.45f;
+        drawer.abrirDeUnToque = true;   // con el control, jalar de lejos es incómodo
         Resaltar(cajon, cajon.transform.Find("Frente").GetComponent<Renderer>());
         EditorUtility.SetDirty(inter);
+        EditorUtility.SetDirty(drawer);
+
+        // El cajón está tapado por una chapa atornillada: hay que sacarle los tres
+        // tornillos antes de poder abrirlo. Mientras la chapa está puesta, tapa el
+        // frente del cajón y el rayo del control ni lo toca.
+        ArmarTapaAtornillada(g.transform, new Vector3(0.5f, 0.61f, -0.45f));
 
         // El medallón que hay que llevarse al Cuarto 4
         var medallon = Cilindro("Medallon", cajon.transform, new Vector3(0f, -0.055f, -0.3f),
@@ -414,6 +421,51 @@ public static class ConstructorCuarto2
         UnityEventTools.AddVoidPersistentListener(pulsador.alPresionar, new UnityAction(alternar.Alternar));
         EditorUtility.SetDirty(pulsador);
         EditorUtility.SetDirty(alternar);
+    }
+
+    // Chapa atornillada que tapa el cajón del escritorio. Cada tornillo se saca con un
+    // toque; cuando sale el tercero, la chapa se suelta y se cae al piso, y recién ahí
+    // se puede abrir el cajón y sacar el medallón.
+    static void ArmarTapaAtornillada(Transform p, Vector3 pos)
+    {
+        // La chapa va adentro de un grupo: si los tornillos fueran hijos del cubo,
+        // heredarían su escala y saldrían aplastados
+        var g = Grupo("Tapa_Cajon", p);
+        g.transform.localPosition = pos;
+
+        Cubo("Chapa", g.transform, Vector3.zero, new Vector3(0.68f, 0.28f, 0.02f), mMetal, true);
+
+        var rb = g.AddComponent<Rigidbody>();
+        rb.isKinematic = true;   // se queda quieta hasta que se sueltan los tornillos
+        var panel = g.AddComponent<ScrewedPanel>();
+        panel.tornillosRestantes = 3;
+
+        Texto("Texto_Tapa", g.transform, new Vector3(0f, 0.025f, -0.013f), new Vector3(0f, 180f, 0f),
+              "ARCHIVO\nDIRECCION", 0.5f, new Color(0.12f, 0.12f, 0.12f), 0.62f, 0.16f);
+
+        // Los tres tornillos, hijos de la chapa para que se caigan con ella si queda alguno
+        Vector3[] puntos =
+        {
+            new Vector3(-0.28f, 0.1f, -0.02f),
+            new Vector3(0.28f, 0.1f, -0.02f),
+            new Vector3(0f, -0.1f, -0.02f)
+        };
+
+        for (int i = 0; i < puntos.Length; i++)
+        {
+            var t = Cilindro("Tornillo_" + (i + 1), g.transform, puntos[i],
+                             new Vector3(0.05f, 0.02f, 0.05f), mBronce, true);
+            t.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+
+            t.AddComponent<XRSimpleInteractable>();
+            var tornillo = t.AddComponent<Screw>();
+            tornillo.tapa = panel;
+            tornillo.sacarConUnToque = true;   // se saca tocándolo, sin destornillador
+            Resaltar(t, t.GetComponent<Renderer>());
+            EditorUtility.SetDirty(tornillo);
+        }
+
+        EditorUtility.SetDirty(panel);
     }
 
     static void SillaSimple(Transform p, Vector3 pos)

@@ -11,7 +11,11 @@ public class Inventory : MonoBehaviour
 {
     public static Inventory Instancia { get; private set; }
 
-    readonly List<ItemData> items = new List<ItemData>();
+    // Se ve en el Inspector mientras el juego corre: es la forma de comprobar, en una
+    // prueba, que el objeto se guardó de verdad. Todavía no hay interfaz en el visor.
+    [SerializeField]
+    [Tooltip("Lo que el jugador lleva encima. Se llena solo al agarrar los objetos")]
+    List<ItemData> items = new List<ItemData>();
 
     void Awake()
     {
