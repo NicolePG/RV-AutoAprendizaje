@@ -24,8 +24,16 @@ public class ObjetoLlevable : MonoBehaviour
     [Tooltip("Qué tan rápido acompaña al jugador")]
     public float velocidad = 9f;
 
+    [Tooltip("Si está marcado, el objeto se queda con el jugador para siempre y viaja a " +
+             "un costado de la vista. No ocupa la mano, así que agarrar otra cosa no lo " +
+             "suelta. Es lo que hace el medallón, que se usa recién dos acertijos después.")]
+    public bool quedaConElJugador;
+
     // El objeto que el jugador tiene ahora en la mano (solo puede ser uno)
     public static ObjetoLlevable EnLaMano { get; private set; }
+
+    // El que se lleva encima todo el juego, aparte de lo que tenga en la mano
+    public static ObjetoLlevable DelJugador { get; private set; }
 
     public bool Colocado { get; private set; }
 
@@ -66,8 +74,9 @@ public class ObjetoLlevable : MonoBehaviour
 
     public void Agarrar()
     {
-        // Lo que estaba en la mano se queda donde está
-        if (EnLaMano != null && EnLaMano != this) EnLaMano.Soltar();
+        // Lo que estaba en la mano se queda donde está. Lo que se lleva encima no
+        // molesta: son dos cosas distintas.
+        if (!quedaConElJugador && EnLaMano != null && EnLaMano != this) EnLaMano.Soltar();
 
         // Si estaba puesto en un encaje, ese encaje queda vacío
         if (EncajeActual != null)
@@ -80,7 +89,8 @@ public class ObjetoLlevable : MonoBehaviour
         transform.SetParent(null, true);
         enMano = true;
         Colocado = false;
-        EnLaMano = this;
+        if (quedaConElJugador) DelJugador = this;
+        else EnLaMano = this;
         Colisiones(false);
     }
 
@@ -109,6 +119,7 @@ public class ObjetoLlevable : MonoBehaviour
     {
         enMano = false;
         if (EnLaMano == this) EnLaMano = null;
+        if (DelJugador == this) DelJugador = null;
         Colisiones(true);
     }
 
@@ -122,7 +133,10 @@ public class ObjetoLlevable : MonoBehaviour
             camara = Camera.main.transform;
         }
 
+        // Lo que se lleva encima va a un costado, para no taparle la vista ni confundirse
+        // con lo que tiene en la mano
         Vector3 destino = camara.position + camara.forward * distancia - camara.up * bajar;
+        if (quedaConElJugador) destino -= camara.right * 0.28f;
         Quaternion giro = Quaternion.LookRotation(camara.forward, Vector3.up);
 
         float t = 1f - Mathf.Exp(-velocidad * Time.deltaTime);

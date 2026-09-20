@@ -679,12 +679,12 @@ public static class ConstructorCuarto4
         Cubo("Bandeja", g.transform, new Vector3(0f, -0.55f, 0.05f), new Vector3(1.5f, 0.03f, 0.07f), mAceroOscuro);
 
         var texto = Texto("Texto_Diagrama", g.transform, new Vector3(0f, 0f, 0.03f), Vector3.zero,
-                          "PRACTICA 4 - MECHEROS\n\n" +
-                          "1. Abrir las DOS llaves de la columna.\n" +
-                          "    No sueltes: hay que girarlas hasta el tope.\n\n" +
-                          "2. El gas hace visible la luz.\n" +
-                          "    Mira donde cae y en que orden.",
-                          0.4f, new Color(0.85f, 0.95f, 0.85f), 1.46f, 0.9f);
+                          "PRACTICA 4\n\n" +
+                          "1. Abri las DOS llaves\n" +
+                          "    de la columna.\n\n" +
+                          "2. El gas hace ver la luz.\n" +
+                          "    Mira en que orden cae.",
+                          0.78f, new Color(0.85f, 0.95f, 0.85f), 1.46f, 0.92f);
         texto.lineSpacing = -14f;
         texto.alignment = TextAlignmentOptions.TopLeft;
         texto.gameObject.SetActive(false);
@@ -970,6 +970,7 @@ public static class ConstructorCuarto4
         acertijo.sonidoError = AudioEn("Audio_Error", g.transform);
 
         var haces = new GameObject[3];
+        var palancas = new Palanca[3];
         for (int i = 0; i < 3; i++)
         {
             float z = Z_PALANCAS[i];
@@ -979,9 +980,10 @@ public static class ConstructorCuarto4
                      new Vector3(0.75f, 0.002f, 0.75f), mQuemadura);
 
             haces[i] = ArmarHaz(g.transform, i + 1, z);
-            ArmarPalanca(g.transform, acertijo, i + 1, z);
+            palancas[i] = ArmarPalanca(g.transform, acertijo, i + 1, z);
         }
         acertijo.haces = haces;
+        acertijo.palancas = palancas;
 
         // Luces de aviso de la secuencia, arriba del cartel para que no se pisen
         var avisos = Grupo("Avisos", g.transform);
@@ -1018,7 +1020,7 @@ public static class ConstructorCuarto4
         return g;
     }
 
-    static void ArmarPalanca(Transform p, AcertijoSecuencia acertijo, int numero, float z)
+    static Palanca ArmarPalanca(Transform p, AcertijoSecuencia acertijo, int numero, float z)
     {
         var g = Grupo("Palanca_P" + numero, p);
         g.transform.localPosition = new Vector3(ANCHO - 0.06f, 1.15f, z);
@@ -1039,14 +1041,23 @@ public static class ConstructorCuarto4
         Texto("Etiqueta", g.transform, new Vector3(0f, -0.29f, 0.04f), Vector3.zero,
               "P" + numero, 0.22f, new Color(0.95f, 0.95f, 0.9f), 0.22f, 0.09f);
 
+        // Luz verde de la palanca: se prende cuando queda bien puesta y ahí ya no se toca
+        var luzOk = Cilindro("Luz_Ok", g.transform, new Vector3(0f, 0.27f, 0.04f),
+                             new Vector3(0.06f, 0.01f, 0.06f), mVerdeLuz);
+        luzOk.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+        luzOk.SetActive(false);
+
         brazo.AddComponent<XRSimpleInteractable>();
         var palanca = brazo.AddComponent<Palanca>();
         palanca.numero = numero;
         palanca.brazo = brazo.transform;
         palanca.acertijo = acertijo;
+        palanca.luzOk = luzOk;
         palanca.sonido = AudioEn("Audio_Palanca", g.transform);
         Resaltar(brazo, perilla.GetComponent<Renderer>());
         EditorUtility.SetDirty(palanca);
+
+        return palanca;
     }
 
     // ------------------------------------------------------------------ final: la ranura
@@ -1183,7 +1194,7 @@ public static class ConstructorCuarto4
         Modelo("plastic_bottle_gallon", p, new Vector3(0.65f, 0.9f, 2.65f), -20f, 0.3f, false);
 
         // Cosas que le dan vida al laboratorio sin estorbar el paso
-        Modelo("portable_generator", p, new Vector3(2.9f, 0f, 8.9f), 200f, 0.6f, true);
+        Modelo("portable_generator", p, new Vector3(7.6f, 0f, 1.15f), 200f, 0.6f, true);
         Modelo("cardboard_box_01", p, new Vector3(2.2f, 0f, 1.1f), 25f, 0.4f, true);
         Modelo("metal_toolbox", p, new Vector3(1.25f, 0.79f, 6.1f), 20f, 0.16f, false);
         Modelo("utility_box_01", p, new Vector3(0.12f, 1.9f, 7.2f), 90f, 0.4f, false, false);
@@ -1196,7 +1207,7 @@ public static class ConstructorCuarto4
         Modelo("metal_stool_02", p, new Vector3(2.4f, 0f, 2.3f), 200f, 0.62f, true);
 
         // Matafuegos colgado de la pared Este
-        Modelo("korean_fire_extinguisher_01", p, new Vector3(7.85f, 0.85f, 1.2f), -90f, 0.42f, false, false);
+        Modelo("korean_fire_extinguisher_01", p, new Vector3(7.85f, 1f, 0.55f), -90f, 0.42f, false, false);
 
         // Lámparas enjauladas colgando del techo, una de ellas quemándose
         ArmarLamparaColgante(p, new Vector3(2.2f, 0f, 1.6f), true);
@@ -1237,27 +1248,27 @@ public static class ConstructorCuarto4
     {
         var g = Grupo("Tanques", p);
 
-        float[] zs = { 7.4f, 8.25f, 9.1f };
+        float[] zs = { 7.3f, 8.15f, 9f };
         for (int i = 0; i < zs.Length; i++)
-            ArmarTanque(g.transform, i + 1, new Vector3(7.3f, 0f, zs[i]), i);
+            ArmarTanque(g.transform, i + 1, new Vector3(7.55f, 0f, zs[i]), i);
 
         // El caño que los alimenta, corriendo por arriba de los tres
-        Cilindro("Caño_Madre", g.transform, new Vector3(7.3f, 2.2f, 8.25f),
+        Cilindro("Caño_Madre", g.transform, new Vector3(7.55f, 2.2f, 8.15f),
                  new Vector3(0.09f, 1.1f, 0.09f), mManguera)
             .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
 
         // Mangueras cruzando el techo hasta la columna de gas, como en un laboratorio real
-        Cilindro("Manguera_Techo_1", g.transform, new Vector3(6.4f, 3.1f, 8.25f),
+        Cilindro("Manguera_Techo_1", g.transform, new Vector3(6.6f, 3.1f, 8.15f),
                  new Vector3(0.07f, 0.95f, 0.07f), mManguera)
             .transform.localEulerAngles = new Vector3(0f, 0f, 90f);
         Cilindro("Manguera_Techo_2", g.transform, new Vector3(5.5f, 3.1f, 6.6f),
                  new Vector3(0.07f, 1.7f, 0.07f), mManguera)
             .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
-        Cilindro("Bajada", g.transform, new Vector3(7.3f, 2.65f, 8.25f),
+        Cilindro("Bajada", g.transform, new Vector3(7.55f, 2.65f, 8.15f),
                  new Vector3(0.07f, 0.45f, 0.07f), mManguera);
 
-        ArmarConsola(g.transform, new Vector3(6.15f, 0f, 9.05f), 195f);
-        CartelRadiactivo(g.transform, new Vector3(7.88f, 2.15f, 7.4f), -90f);
+        ArmarConsola(g.transform, new Vector3(3.8f, 0f, 9.05f), 185f);
+        CartelRadiactivo(g.transform, new Vector3(7.9f, 2.2f, 6.9f), -90f);
         CartelRadiactivo(g.transform, new Vector3(4.0f, 1.9f, 0.06f), 0f);
     }
 

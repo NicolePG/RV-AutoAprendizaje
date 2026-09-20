@@ -342,7 +342,9 @@ public static class ConstructorCuarto2
         // Se lleva de un toque, igual que la llave y los fusibles, y queda a la vista
         // todo el camino hasta el laboratorio
         medallon.AddComponent<XRSimpleInteractable>();
-        medallon.AddComponent<ObjetoLlevable>();
+        var llevable = medallon.AddComponent<ObjetoLlevable>();
+        // Se queda con el jugador hasta el Cuarto 4: agarrar un fusible no lo suelta
+        llevable.quedaConElJugador = true;
         var pick = medallon.AddComponent<PickableItem>();
         pick.datos = BuscarAsset<ItemData>("ItemData_ObjetoEspecial");
         pick.ocultarAlAgarrar = false;   // no desaparece: el jugador lo lleva en la mano

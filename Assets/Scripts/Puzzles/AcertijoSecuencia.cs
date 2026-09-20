@@ -23,6 +23,9 @@ public class AcertijoSecuencia : MonoBehaviour
     [Tooltip("Los haces de luz de cada palanca, en orden: el 1, el 2 y el 3")]
     public GameObject[] haces;
 
+    [Tooltip("Las tres palancas: hacen falta para volver a subirlas todas si se falla")]
+    public Palanca[] palancas;
+
     [Tooltip("Cuánto queda encendido cada haz, en segundos")]
     public float segundosEncendido = 0.7f;
 
@@ -54,22 +57,23 @@ public class AcertijoSecuencia : MonoBehaviour
         StartCoroutine(MostrarSecuencia());
     }
 
-    // Lo llama cada palanca al accionarse
-    public void Marcar(int numero)
+    // Lo llama cada palanca al accionarse. Devuelve true si era la que tocaba: con eso
+    // la palanca sabe si quedarse abajo y prender su luz verde, o volver a subir.
+    public bool Marcar(int numero)
     {
-        if (Resuelto) return;
+        if (Resuelto) return false;
 
-        // Sin gas todavía no se ve el orden: accionar palancas no hace nada
-        if (!Activo) { Fallo(); return; }
+        // Sin gas todavía no se ve el orden: accionar palancas no sirve de nada
+        if (!Activo) { Fallo(); return false; }
 
-        if (secuencia == null || secuencia.Length == 0) return;
-        if (numero != secuencia[paso]) { Fallo(); return; }
+        if (secuencia == null || secuencia.Length == 0) return false;
+        if (numero != secuencia[paso]) { Fallo(); return false; }
 
         paso++;
         if (paso < secuencia.Length)
         {
             if (sonidoOk != null) sonidoOk.Play();
-            return;
+            return true;
         }
 
         Resuelto = true;
@@ -81,6 +85,7 @@ public class AcertijoSecuencia : MonoBehaviour
         if (luzOk != null) luzOk.SetActive(true);
         if (sonidoOk != null) sonidoOk.Play();
         OnSolved.Invoke();
+        return true;
     }
 
     void Fallo()
@@ -88,6 +93,12 @@ public class AcertijoSecuencia : MonoBehaviour
         paso = 0;
         if (sonidoError != null) sonidoError.Play();
         if (luzError != null) StartCoroutine(Parpadear(luzError, 0.8f));
+
+        // Todas las palancas vuelven arriba y se les apaga la luz: la secuencia
+        // empieza de cero y se ve que empieza de cero
+        if (palancas == null) return;
+        foreach (var palanca in palancas)
+            if (palanca != null) palanca.Reiniciar();
     }
 
     IEnumerator Parpadear(GameObject luz, float segundos)

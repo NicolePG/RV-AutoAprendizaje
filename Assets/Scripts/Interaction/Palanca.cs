@@ -3,12 +3,15 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
-// Palanca del laboratorio. Al tocarla, el brazo baja, vuelve a subir y le avisa al
-// acertijo de la secuencia qué número se accionó.
+// Palanca del laboratorio. Al tocarla baja y le avisa al acertijo de la secuencia qué
+// número se accionó.
 //
-// En la escena: va en la palanca, junto a un XR Simple Interactable. En "brazo" va la
-// parte que gira, en "acertijo" el objeto que tiene el AcertijoSecuencia y en "numero"
-// el número de esta palanca (1, 2 o 3).
+// Si era la que tocaba, la palanca SE QUEDA ABAJO y se le prende la luz verde, así el
+// jugador ve de una que esa ya está hecha y no la vuelve a tocar. Si se equivocó, todas
+// vuelven a subir y se apagan, y hay que empezar la secuencia de nuevo.
+//
+// En la escena: va en el brazo de la palanca, junto a un XR Simple Interactable. En
+// "acertijo" va el objeto con el AcertijoSecuencia y en "numero" cuál palanca es.
 [RequireComponent(typeof(XRSimpleInteractable))]
 public class Palanca : MonoBehaviour
 {
@@ -21,8 +24,11 @@ public class Palanca : MonoBehaviour
     [Tooltip("Cuántos grados baja")]
     public float anguloBajada = 55f;
 
-    [Tooltip("Cuánto tarda en bajar y volver, en segundos")]
+    [Tooltip("Cuánto tarda en bajar o subir, en segundos")]
     public float duracion = 0.25f;
+
+    [Tooltip("Luz verde de esta palanca: se prende cuando quedó bien puesta")]
+    public GameObject luzOk;
 
     [Tooltip("El acertijo que lleva la cuenta de la secuencia")]
     public AcertijoSecuencia acertijo;
@@ -30,40 +36,67 @@ public class Palanca : MonoBehaviour
     [Tooltip("Sonido del golpe de la palanca")]
     public AudioSource sonido;
 
+    public bool Abajo { get; private set; }
+
     XRSimpleInteractable interactable;
+    Quaternion arriba;
     bool moviendose;
 
-    void Awake() => interactable = GetComponent<XRSimpleInteractable>();
+    void Awake()
+    {
+        interactable = GetComponent<XRSimpleInteractable>();
+        if (brazo != null) arriba = brazo.localRotation;
+        if (luzOk != null) luzOk.SetActive(false);
+    }
 
     void OnEnable() => interactable.selectEntered.AddListener(Accionar);
     void OnDisable() => interactable.selectEntered.RemoveListener(Accionar);
 
     void Accionar(SelectEnterEventArgs args)
     {
-        if (moviendose) return;
-        StartCoroutine(Mover());
+        // Ya está hecha: no se vuelve a tocar
+        if (Abajo || moviendose) return;
 
         if (sonido != null) sonido.Play();
-        if (acertijo != null) acertijo.Marcar(numero);
+
+        // El acertijo dice si era la que tocaba
+        bool acierto = acertijo != null && acertijo.Marcar(numero);
+
+        if (acierto)
+        {
+            Abajo = true;
+            if (luzOk != null) luzOk.SetActive(true);
+            StartCoroutine(Girar(Abajo));
+            return;
+        }
+
+        // Si se equivocó, esta baja y sube sola; las demás las reinicia el acertijo
+        StartCoroutine(Rebotar());
     }
 
-    IEnumerator Mover()
+    // Lo llama el acertijo cuando alguien se equivoca: todas vuelven arriba
+    public void Reiniciar()
     {
-        moviendose = true;
-
-        Quaternion arriba = brazo != null ? brazo.localRotation : Quaternion.identity;
-        Quaternion abajo = arriba * Quaternion.Euler(anguloBajada, 0f, 0f);
-
-        yield return Girar(arriba, abajo);
-        yield return new WaitForSeconds(0.15f);
-        yield return Girar(abajo, arriba);
-
-        moviendose = false;
+        if (!Abajo) return;
+        Abajo = false;
+        if (luzOk != null) luzOk.SetActive(false);
+        StartCoroutine(Girar(false));
     }
 
-    IEnumerator Girar(Quaternion desde, Quaternion hasta)
+    IEnumerator Rebotar()
+    {
+        yield return Girar(true);
+        yield return new WaitForSeconds(0.2f);
+        yield return Girar(false);
+    }
+
+    IEnumerator Girar(bool baja)
     {
         if (brazo == null) yield break;
+
+        moviendose = true;
+        Quaternion desde = brazo.localRotation;
+        Quaternion hasta = baja ? arriba * Quaternion.Euler(anguloBajada, 0f, 0f) : arriba;
 
         float t = 0f;
         while (t < duracion)
@@ -73,5 +106,6 @@ public class Palanca : MonoBehaviour
             yield return null;
         }
         brazo.localRotation = hasta;
+        moviendose = false;
     }
 }
