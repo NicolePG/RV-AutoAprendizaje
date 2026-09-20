@@ -66,7 +66,7 @@ public static class ConstructorCuarto4
     static Material mParedAlta, mFriso, mGuarda, mPiso, mTecho, mAcero, mAceroOscuro, mNegro,
                     mBlanco, mVerdeLuz, mRojo, mAmbar, mPantalla, mResaltado, mPapel,
                     mSabana, mPiel, mLuzTecho, mVidrioLab, mQuemadura, mLlama, mMancha,
-                    mHaz, mVapor, mRojoLuz, mHueco, mPelo, mCartel,
+                    mHaz, mVapor, mRojoLuz, mHueco, mPelo, mCartel, mCorte,
                     mLiquido, mVidrioTanque, mManguera, mPantallaVerde, mAmarillo,
                     mFusA, mFusB, mFusC, mFusX, mFusY, mFusZ;
 
@@ -746,6 +746,30 @@ public static class ConstructorCuarto4
             Cubo("Mancha_Pecho", torso.transform, new Vector3(0.06f, 0.196f, -0.2f),
                  new Vector3(0.22f, 0.004f, 0.26f), mMancha);
 
+            // El corte en Y de la autopsia, cosido: es lo que lo vuelve un cuerpo de
+            // laboratorio y no un maniquí
+            foreach (float lado in new[] { -1f, 1f })
+            {
+                var rama = Cubo("Corte_Rama", torso.transform,
+                                new Vector3(lado * 0.09f, 0.198f, -0.48f),
+                                new Vector3(0.012f, 0.004f, 0.24f), mCorte);
+                rama.transform.localEulerAngles = new Vector3(0f, lado * 26f, 0f);
+            }
+            Cubo("Corte_Centro", torso.transform, new Vector3(0f, 0.198f, -0.2f),
+                 new Vector3(0.012f, 0.004f, 0.36f), mCorte);
+            // Las puntadas cruzando el corte
+            for (int i = 0; i < 9; i++)
+                Cubo("Puntada", torso.transform, new Vector3(0f, 0.2f, -0.36f + i * 0.045f),
+                     new Vector3(0.05f, 0.003f, 0.008f), mHueco);
+
+            // La etiqueta del dedo del pie, como en las morgues
+            var etiqueta = Grupo("Etiqueta_Pie", cuerpo.transform);
+            etiqueta.transform.localPosition = new Vector3(0.09f, 0.02f, 1.1f);
+            etiqueta.transform.localEulerAngles = new Vector3(0f, 0f, 12f);
+            Cubo("Carton", etiqueta.transform, Vector3.zero, new Vector3(0.09f, 0.002f, 0.06f), mPapel);
+            Cubo("Hilo", etiqueta.transform, new Vector3(0f, 0.002f, -0.05f),
+                 new Vector3(0.004f, 0.002f, 0.05f), mPapel);
+
             Cubo("Brazo_Izq", torso.transform, new Vector3(-0.25f, 0.07f, -0.2f),
                  new Vector3(0.11f, 0.11f, 0.6f), mPiel);
 
@@ -1190,6 +1214,13 @@ public static class ConstructorCuarto4
                      new Color(0.75f, 1f, 0.8f), 1.1f, 3.5f);
 
         // Frascos de químicos sobre las mesas
+        // Plantas: el laboratorio lleva años cerrado y la vegetación se metió adentro,
+        // como en las fotos de referencia
+        Modelo("potted_plant_02", p, new Vector3(3.15f, 0f, 0.85f), 20f, 0.9f, true);
+        Modelo("potted_plant_02", p, new Vector3(0.5f, 0f, 4.55f), -30f, 0.85f, true);
+        Modelo("potted_plant_04", p, new Vector3(3.8f, 0.92f, 9.05f), 0f, 0.3f, false);
+        Modelo("potted_plant_04", p, new Vector3(0.62f, 0.9f, 2.6f), 40f, 0.28f, false);
+
         Modelo("bleach_bottle", p, new Vector3(1.12f, 0.79f, 6.3f), 30f, 0.26f, false);
         Modelo("plastic_bottle_gallon", p, new Vector3(0.65f, 0.9f, 2.65f), -20f, 0.3f, false);
 
@@ -1802,6 +1833,7 @@ public static class ConstructorCuarto4
         // Los huecos de la cara (cuencas y boca), el pelo y los carteles de cada paso
         mHueco = Mat("C4_Hueco", new Color(0.02f, 0.02f, 0.02f), 0f, 0.05f);
         mPelo = Mat("C4_Pelo", new Color(0.09f, 0.08f, 0.07f), 0f, 0.1f);
+        mCorte = Mat("C4_Corte", new Color(0.28f, 0.07f, 0.06f), 0f, 0.25f);
         mCartel = Mat("C4_Cartel", new Color(0.95f, 0.8f, 0.15f), 0f, 0.4f, new Color(0.45f, 0.35f, 0.04f));
 
         // Lo del laboratorio de especímenes: el líquido de los tanques, las mangueras

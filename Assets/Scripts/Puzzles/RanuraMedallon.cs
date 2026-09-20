@@ -71,8 +71,9 @@ public class RanuraMedallon : MonoBehaviour
     void Tocar(SelectEnterEventArgs args)
     {
         if (usada) return;
-        // inventario (por si el jugador lo soltó en el camino)
-        // Puede venir en la mano o colgado del jugador, que es lo normal para el medallón
+
+        // Vale de las tres formas: colgado del jugador (que es lo normal), en la mano,
+        // o solamente guardado en el inventario si lo soltó en el camino
         var enMano = ObjetoLlevable.DelJugador != null && EsElMedallon(ObjetoLlevable.DelJugador.gameObject)
                      ? ObjetoLlevable.DelJugador
                      : ObjetoLlevable.EnLaMano;
