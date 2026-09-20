@@ -67,6 +67,7 @@ public static class ConstructorCuarto4
                     mBlanco, mVerdeLuz, mRojo, mAmbar, mPantalla, mResaltado, mPapel,
                     mSabana, mPiel, mLuzTecho, mVidrioLab, mQuemadura, mLlama, mMancha,
                     mHaz, mVapor, mRojoLuz, mHueco, mPelo, mCartel,
+                    mLiquido, mVidrioTanque, mManguera, mPantallaVerde, mAmarillo,
                     mFusA, mFusB, mFusC, mFusX, mFusY, mFusZ;
 
     // Cartel de objetivos: cada paso del cuarto le avisa para que cambie el texto
@@ -112,6 +113,7 @@ public static class ConstructorCuarto4
         ArmarPizarra(mobiliario.transform, conEnergia);
         SustoCamilla susto = ArmarCamilla(mobiliario.transform);
         ArmarDecoracion(mobiliario.transform);
+        ArmarTanques(mobiliario.transform);
 
         // Los acertijos, en el orden en que los va a resolver el jugador
         AcertijoSecuencia acertijo = ArmarPalancas(raiz.transform);
@@ -972,15 +974,16 @@ public static class ConstructorCuarto4
         }
         acertijo.haces = haces;
 
-        // Luces de aviso arriba de la puerta de las palancas
+        // Luces de aviso de la secuencia, arriba del cartel para que no se pisen
         var avisos = Grupo("Avisos", g.transform);
-        avisos.transform.localPosition = new Vector3(ANCHO - 0.1f, 2.3f, 4.75f);
-        var ok = Cilindro("Luz_Ok", avisos.transform, new Vector3(0f, 0f, -0.2f),
-                          new Vector3(0.12f, 0.02f, 0.12f), mVerdeLuz);
+        avisos.transform.localPosition = new Vector3(ANCHO - 0.1f, 2.62f, 4.75f);
+        var ok = Cilindro("Luz_Ok", avisos.transform, new Vector3(0f, 0f, -0.22f),
+                          new Vector3(0.14f, 0.02f, 0.14f), mVerdeLuz);
         ok.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
         ok.SetActive(false);
-        var mal = Cilindro("Luz_Error", avisos.transform, new Vector3(0f, 0f, 0.2f),
-                           new Vector3(0.12f, 0.02f, 0.12f), mRojo);
+        // Roja emisiva: la otra no se veía con el cuarto a oscuras
+        var mal = Cilindro("Luz_Error", avisos.transform, new Vector3(0f, 0f, 0.22f),
+                           new Vector3(0.14f, 0.02f, 0.14f), mRojoLuz);
         mal.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
         mal.SetActive(false);
         acertijo.luzOk = ok;
@@ -1156,9 +1159,9 @@ public static class ConstructorCuarto4
         Modelo("industrial_storage_cart", p, new Vector3(4.35f, 0f, 3.3f), 90f, 0.9f, true);
 
         // Tambores y bidones de químicos en el rincón
-        Modelo("barrel_03", p, new Vector3(7.6f, 0f, 7.9f), 0f, 0.85f, true);
-        Modelo("barrel_03", p, new Vector3(7.5f, 0f, 8.7f), 40f, 0.85f, true);
-        Modelo("metal_jerrycan_green", p, new Vector3(7.1f, 0f, 8.4f), 25f, 0.36f, true);
+        Modelo("barrel_03", p, new Vector3(3.0f, 0f, 1.0f), 0f, 0.85f, true);
+        Modelo("barrel_03", p, new Vector3(3.6f, 0f, 1.4f), 40f, 0.85f, true);
+        Modelo("metal_jerrycan_green", p, new Vector3(2.6f, 0f, 1.5f), 25f, 0.36f, true);
 
         // Reflector de obra tirado en el piso, apuntando a la camilla
         var reflector = Modelo("portable_searchlight", p, new Vector3(4.5f, 0f, 5.8f), 210f, 0.4f, true);
@@ -1171,10 +1174,10 @@ public static class ConstructorCuarto4
         Modelo("plastic_bottle_gallon", p, new Vector3(0.65f, 0.9f, 2.65f), -20f, 0.3f, false);
 
         // Cosas que le dan vida al laboratorio sin estorbar el paso
-        Modelo("portable_generator", p, new Vector3(7.3f, 0f, 8.8f), 200f, 0.6f, true);
-        Modelo("cardboard_box_01", p, new Vector3(6.4f, 0f, 8.9f), 25f, 0.4f, true);
+        Modelo("portable_generator", p, new Vector3(2.9f, 0f, 8.9f), 200f, 0.6f, true);
+        Modelo("cardboard_box_01", p, new Vector3(2.2f, 0f, 1.1f), 25f, 0.4f, true);
         Modelo("metal_toolbox", p, new Vector3(1.25f, 0.79f, 6.1f), 20f, 0.16f, false);
-        Modelo("utility_box_01", p, new Vector3(7.88f, 1.9f, 8.4f), -90f, 0.4f, false, false);
+        Modelo("utility_box_01", p, new Vector3(0.12f, 1.9f, 7.2f), 90f, 0.4f, false, false);
         Modelo("industrial_wall_lamp", p, new Vector3(7.88f, 2.4f, 0.9f), -90f, 0.3f, false, false);
         Modelo("WetFloorSign_01", p, new Vector3(2.6f, 0f, 6.6f), 40f, 0.6f, true);
         Modelo("modular_pipes", p, new Vector3(0.12f, 2.75f, 4.75f), 0f, 0.3f, false, false);
@@ -1210,6 +1213,139 @@ public static class ConstructorCuarto4
         var luz = LuzPunto("Luz", g.transform, new Vector3(0f, ALTO - 0.75f, 0f),
                            new Color(0.6f, 1f, 0.72f), quemada ? 1.1f : 0.8f, 4f);
         if (quemada) luz.gameObject.AddComponent<Parpadeo>();
+    }
+
+    // ------------------------------------------------------------------ tanques
+
+    // El rincón de los especímenes: tres tanques de vidrio con líquido verde y algo
+    // flotando adentro, las mangueras que los alimentan y la consola que los controla.
+    // Es puro ambiente, no hay que resolver nada acá, pero es lo que hace que el cuarto
+    // parezca un laboratorio raro y no un depósito.
+    //
+    // Todo brilla por material emisivo, no por luces: el verde se ve igual pero el
+    // cuarto sigue tan oscuro como antes al entrar.
+    static void ArmarTanques(Transform p)
+    {
+        var g = Grupo("Tanques", p);
+
+        float[] zs = { 7.4f, 8.25f, 9.1f };
+        for (int i = 0; i < zs.Length; i++)
+            ArmarTanque(g.transform, i + 1, new Vector3(7.3f, 0f, zs[i]), i);
+
+        // El caño que los alimenta, corriendo por arriba de los tres
+        Cilindro("Caño_Madre", g.transform, new Vector3(7.3f, 2.2f, 8.25f),
+                 new Vector3(0.09f, 1.1f, 0.09f), mManguera)
+            .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+
+        // Mangueras cruzando el techo hasta la columna de gas, como en un laboratorio real
+        Cilindro("Manguera_Techo_1", g.transform, new Vector3(6.4f, 3.1f, 8.25f),
+                 new Vector3(0.07f, 0.95f, 0.07f), mManguera)
+            .transform.localEulerAngles = new Vector3(0f, 0f, 90f);
+        Cilindro("Manguera_Techo_2", g.transform, new Vector3(5.5f, 3.1f, 6.6f),
+                 new Vector3(0.07f, 1.7f, 0.07f), mManguera)
+            .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+        Cilindro("Bajada", g.transform, new Vector3(7.3f, 2.65f, 8.25f),
+                 new Vector3(0.07f, 0.45f, 0.07f), mManguera);
+
+        ArmarConsola(g.transform, new Vector3(6.15f, 0f, 9.05f), 195f);
+        CartelRadiactivo(g.transform, new Vector3(7.88f, 2.15f, 7.4f), -90f);
+        CartelRadiactivo(g.transform, new Vector3(4.0f, 1.9f, 0.06f), 0f);
+    }
+
+    // Un tanque: base de acero, cilindro de líquido verde, vidrio por fuera y un cuerpo
+    // encogido flotando adentro.
+    static void ArmarTanque(Transform p, int numero, Vector3 pos, int variante)
+    {
+        var g = Grupo("Tanque_" + numero, p);
+        g.transform.localPosition = pos;
+
+        Cilindro("Base", g.transform, new Vector3(0f, 0.09f, 0f), new Vector3(0.82f, 0.09f, 0.82f), mAceroOscuro, true);
+        Cilindro("Aro_Bajo", g.transform, new Vector3(0f, 0.2f, 0f), new Vector3(0.78f, 0.03f, 0.78f), mAcero);
+        Cilindro("Liquido", g.transform, new Vector3(0f, 0.86f, 0f), new Vector3(0.6f, 0.62f, 0.6f), mLiquido);
+        Cilindro("Vidrio", g.transform, new Vector3(0f, 0.88f, 0f), new Vector3(0.68f, 0.66f, 0.68f), mVidrioTanque);
+        Cilindro("Aro_Alto", g.transform, new Vector3(0f, 1.54f, 0f), new Vector3(0.78f, 0.03f, 0.78f), mAcero);
+        Cilindro("Tapa", g.transform, new Vector3(0f, 1.62f, 0f), new Vector3(0.84f, 0.06f, 0.84f), mAceroOscuro, true);
+        Cilindro("Boquilla", g.transform, new Vector3(0f, 1.78f, 0f), new Vector3(0.14f, 0.1f, 0.14f), mManguera);
+
+        // El espécimen: una silueta encogida, casi negra contra el verde
+        var cuerpo = Grupo("Especimen", g.transform);
+        cuerpo.transform.localPosition = new Vector3(0f, 0.88f, 0f);
+        cuerpo.transform.localEulerAngles = new Vector3(18f * variante, 40f * variante, 12f);
+        Esfera("Cabeza", cuerpo.transform, new Vector3(0f, 0.16f, 0f), new Vector3(0.17f, 0.2f, 0.19f), mHueco);
+        Esfera("Tronco", cuerpo.transform, new Vector3(0f, -0.02f, 0f), new Vector3(0.26f, 0.3f, 0.24f), mHueco);
+        foreach (float x in new[] { -0.13f, 0.13f })
+        {
+            Cubo("Brazo", cuerpo.transform, new Vector3(x, 0.02f, 0.07f), new Vector3(0.06f, 0.22f, 0.06f), mHueco);
+            Cubo("Pierna", cuerpo.transform, new Vector3(x * 0.6f, -0.2f, 0.05f), new Vector3(0.07f, 0.2f, 0.07f), mHueco);
+        }
+
+        // Burbujas subiendo
+        for (int b = 0; b < 5; b++)
+            Esfera("Burbuja", g.transform,
+                   new Vector3(0.14f - b * 0.06f, 0.45f + b * 0.2f, 0.1f - b * 0.05f),
+                   new Vector3(0.05f, 0.05f, 0.05f), mVidrioTanque);
+
+        // Una luz muy floja: da presencia sin aclarar el cuarto
+        LuzPunto("Luz", g.transform, new Vector3(0f, 0.9f, 0f), new Color(0.4f, 1f, 0.35f), 0.45f, 2.2f);
+
+        // Etiqueta del tanque
+        var chapa = Grupo("Etiqueta", g.transform);
+        chapa.transform.localPosition = new Vector3(-0.42f, 0.55f, 0f);
+        chapa.transform.localEulerAngles = new Vector3(0f, -90f, 0f);
+        Cubo("Chapa", chapa.transform, Vector3.zero, new Vector3(0.3f, 0.12f, 0.01f), mAmarillo);
+        Texto("Texto", chapa.transform, new Vector3(0f, 0f, 0.008f), Vector3.zero,
+              "MUESTRA " + numero, 0.15f, new Color(0.1f, 0.1f, 0.1f), 0.28f, 0.1f);
+    }
+
+    // Consola de control de los tanques, con la pantalla verde encendida
+    static void ArmarConsola(Transform p, Vector3 pos, float giroY)
+    {
+        var g = Grupo("Consola", p);
+        g.transform.localPosition = pos;
+        g.transform.localEulerAngles = new Vector3(0f, giroY, 0f);
+
+        Cubo("Mueble", g.transform, new Vector3(0f, 0.43f, 0f), new Vector3(1.05f, 0.86f, 0.55f), mAceroOscuro, true);
+        Cubo("Tapa", g.transform, new Vector3(0f, 0.88f, 0f), new Vector3(1.1f, 0.05f, 0.6f), mAcero);
+        Cubo("Marco", g.transform, new Vector3(0f, 1.25f, -0.12f), new Vector3(0.92f, 0.62f, 0.07f), mNegro, true);
+        Cubo("Pantalla", g.transform, new Vector3(0f, 1.25f, -0.16f), new Vector3(0.84f, 0.54f, 0.01f), mPantallaVerde);
+
+        var texto = Texto("Texto", g.transform, new Vector3(0f, 1.25f, -0.17f), new Vector3(0f, 180f, 0f),
+                          "ANALISIS EN CURSO\n\n" +
+                          "MUESTRA 1   ESTABLE\n" +
+                          "MUESTRA 2   ESTABLE\n" +
+                          "MUESTRA 3   INESTABLE\n\n" +
+                          "NO ABRIR LOS TANQUES",
+                          0.32f, new Color(0.55f, 1f, 0.6f), 0.8f, 0.5f);
+        texto.lineSpacing = -14f;
+
+        // Botonera de adorno
+        for (int i = 0; i < 4; i++)
+            Cubo("Boton", g.transform, new Vector3(-0.3f + i * 0.2f, 0.9f, -0.15f),
+                 new Vector3(0.09f, 0.02f, 0.09f), i == 2 ? mRojoLuz : mVerdeLuz);
+    }
+
+    // Cartel de radiactivo: la chapa amarilla con las tres aspas negras
+    static void CartelRadiactivo(Transform p, Vector3 pos, float giroY)
+    {
+        var g = Grupo("Cartel_Radiactivo", p);
+        g.transform.localPosition = pos;
+        g.transform.localEulerAngles = new Vector3(0f, giroY, 0f);
+
+        Cubo("Chapa", g.transform, Vector3.zero, new Vector3(0.5f, 0.5f, 0.02f), mAmarillo);
+        Cilindro("Centro", g.transform, new Vector3(0f, 0.05f, -0.015f), new Vector3(0.07f, 0.005f, 0.07f), mNegro)
+            .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+
+        // Las tres aspas, a 120 grados una de otra
+        for (int i = 0; i < 3; i++)
+        {
+            var aspa = Cubo("Aspa_" + (i + 1), g.transform, new Vector3(0f, 0.05f, -0.015f),
+                            new Vector3(0.12f, 0.17f, 0.005f), mNegro);
+            aspa.transform.localEulerAngles = new Vector3(0f, 0f, i * 120f);
+            aspa.transform.localPosition += aspa.transform.up * 0.11f;
+        }
+
+        Texto("Texto", g.transform, new Vector3(0f, -0.18f, -0.016f), new Vector3(0f, 180f, 0f),
+              "RADIACTIVO", 0.22f, new Color(0.1f, 0.1f, 0.1f), 0.46f, 0.1f);
     }
 
     // ------------------------------------------------------------------ luz de emergencia
@@ -1648,6 +1784,13 @@ public static class ConstructorCuarto4
         mPelo = Mat("C4_Pelo", new Color(0.09f, 0.08f, 0.07f), 0f, 0.1f);
         mCartel = Mat("C4_Cartel", new Color(0.95f, 0.8f, 0.15f), 0f, 0.4f, new Color(0.45f, 0.35f, 0.04f));
 
+        // Lo del laboratorio de especímenes: el líquido de los tanques, las mangueras
+        // que lo llevan y las pantallas. Todo esto brilla por material emisivo, no por
+        // luces: así se ve el verde pero el cuarto sigue igual de oscuro al entrar.
+        mManguera = Mat("C4_Manguera", new Color(0.35f, 0.62f, 0.3f), 0f, 0.5f, new Color(0.12f, 0.35f, 0.12f));
+        mPantallaVerde = Mat("C4_PantallaVerde", new Color(0.05f, 0.14f, 0.07f), 0f, 0.7f, new Color(0.1f, 0.5f, 0.18f));
+        mAmarillo = Mat("C4_Amarillo", new Color(0.93f, 0.82f, 0.15f), 0f, 0.4f, new Color(0.3f, 0.25f, 0.02f));
+
         // La piel del cuerpo: gris verdoso, como de formol
         mPiel = Mat("C4_Piel", new Color(0.72f, 0.73f, 0.66f), 0f, 0.12f);
         mPantalla = Mat("C4_Pizarra", new Color(0.09f, 0.16f, 0.13f), 0f, 0.25f);
@@ -1663,6 +1806,9 @@ public static class ConstructorCuarto4
         mLuzTecho = Mat("C4_LuzTecho", new Color(1f, 1f, 0.97f), 0f, 0.5f, new Color(1.5f, 1.6f, 1.5f));
         mResaltado = Mat("C4_Resaltado", new Color(0.55f, 1f, 0.8f), 0f, 0.6f, new Color(0.25f, 0.9f, 0.6f));
         mVidrioLab = Transparente("C4_Vidrio", new Color(0.9f, 1f, 0.95f, 0.12f), default);
+        // El líquido de los tanques: verde fuerte y translúcido, brillando por sí mismo
+        mLiquido = Transparente("C4_Liquido", new Color(0.35f, 1f, 0.25f, 0.75f), new Color(0.2f, 0.9f, 0.15f));
+        mVidrioTanque = Transparente("C4_VidrioTanque", new Color(0.8f, 1f, 0.9f, 0.1f), default);
         // El haz de luz que se ve dentro de la niebla, y el vapor que larga el gas
         mHaz = Transparente("C4_Haz", new Color(0.8f, 1f, 0.88f, 0.14f), new Color(0.35f, 0.7f, 0.5f));
         mVapor = Transparente("C4_Vapor", new Color(0.85f, 0.92f, 0.88f, 0.2f), default);

@@ -38,6 +38,7 @@ public class PanelFusibles : MonoBehaviour
 
     void OnEnable()
     {
+        if (encajes == null) return;
         foreach (var encaje in encajes)
             if (encaje != null) encaje.alCambiar.AddListener(Revisar);
 
@@ -46,6 +47,7 @@ public class PanelFusibles : MonoBehaviour
 
     void OnDisable()
     {
+        if (encajes == null) return;
         foreach (var encaje in encajes)
             if (encaje != null) encaje.alCambiar.RemoveListener(Revisar);
     }
@@ -53,6 +55,8 @@ public class PanelFusibles : MonoBehaviour
     void Revisar()
     {
         if (resuelto) return;
+
+        if (encajes == null) return;
 
         int aciertos = 0;
         for (int i = 0; i < encajes.Length; i++)
@@ -62,8 +66,8 @@ public class PanelFusibles : MonoBehaviour
             if (bien) aciertos++;
 
             // Verde: el fusible que va. Rojo: hay uno puesto pero no es ese.
-            if (i < lucesOk.Length && lucesOk[i] != null) lucesOk[i].SetActive(bien);
-            if (i < lucesMal.Length && lucesMal[i] != null) lucesMal[i].SetActive(ocupado && !bien);
+            if (lucesOk != null && i < lucesOk.Length && lucesOk[i] != null) lucesOk[i].SetActive(bien);
+            if (lucesMal != null && i < lucesMal.Length && lucesMal[i] != null) lucesMal[i].SetActive(ocupado && !bien);
         }
 
         // Un sonidito cada vez que se acierta uno más, para que se note el avance
@@ -81,7 +85,7 @@ public class PanelFusibles : MonoBehaviour
     {
         var encaje = encajes[i];
         if (encaje == null || encaje.Contenido == null) return false;
-        if (i >= amperajesCorrectos.Length) return false;
+        if (amperajesCorrectos == null || i >= amperajesCorrectos.Length) return false;
 
         var fusible = encaje.Contenido.GetComponentInParent<Fusible>();
         return fusible != null && fusible.amperaje == amperajesCorrectos[i];

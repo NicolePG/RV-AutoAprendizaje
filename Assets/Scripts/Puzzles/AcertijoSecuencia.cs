@@ -62,6 +62,7 @@ public class AcertijoSecuencia : MonoBehaviour
         // Sin gas todavía no se ve el orden: accionar palancas no hace nada
         if (!Activo) { Fallo(); return; }
 
+        if (secuencia == null || secuencia.Length == 0) return;
         if (numero != secuencia[paso]) { Fallo(); return; }
 
         paso++;
@@ -120,17 +121,20 @@ public class AcertijoSecuencia : MonoBehaviour
 
     GameObject Haz(int numero)
     {
+        if (haces == null) return null;
         int i = numero - 1;
         return i >= 0 && i < haces.Length ? haces[i] : null;
     }
 
     void PrenderHaces()
     {
+        if (haces == null) return;
         foreach (var haz in haces) if (haz != null) haz.SetActive(true);
     }
 
     void ApagarHaces()
     {
+        if (haces == null) return;
         foreach (var haz in haces) if (haz != null) haz.SetActive(false);
     }
 }
