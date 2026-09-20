@@ -16,42 +16,66 @@ using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
 // Se corre desde el menú: Escape Room > Construir Cuarto 4. Borra lo que había adentro
 // y lo rehace, así siempre queda igual.
 //
-// Mide lo mismo que el Cuarto 1 y el Cuarto 2: 6 x 7 metros y 3.05 de techo.
+// Es el último cuarto, así que es el más grande (8 x 9.5 metros, techo de 3.3), el más
+// oscuro y el que tiene los acertijos más largos.
 //
-// Estilo: laboratorio de colegio. Piso de chapa, azulejo verde hasta la mitad de la
-// pared y verde claro arriba, muebles de acero. Entra a oscuras, con la luz verdosa de
-// emergencia, y recién se ve normal cuando vuelve la corriente. Los modelos vienen de
-// Poly Haven si están en el proyecto (Assets/PolyHaven); si no están, cada mueble tiene
-// su versión simple hecha con cubos.
+// Estilo: laboratorio de colegio abandonado. Piso de chapa, azulejo verde hasta la mitad
+// de la pared, muebles de acero y mucha cosa de laboratorio. Los modelos vienen de Poly
+// Haven si están en el proyecto (Assets/PolyHaven); si no, cada mueble tiene su versión
+// simple hecha con cubos.
 //
-// El cuarto se resuelve en tres pasos, como dice el documento de diseño:
-// 1) ELECTRICIDAD: el panel de la pared del fondo pide tres fusibles (A, B, C). En la
-//    mesa de trabajo hay seis y solo tres tienen el amperaje correcto. Con los tres
-//    puestos vuelve la luz. -> ya funciona (PanelFusibles)
-// 2) GAS: las dos llaves de la línea de gas se abren sosteniéndolas unos segundos.
-//    -> por ahora están puestas en su lugar, sin la lógica
-// 3) PALANCAS: la pizarra dice el orden de las tres palancas y después se habilita la
-//    ranura del medallón que viene del Cuarto 2. -> por ahora están puestas, sin la lógica
+// LOS TRES ACERTIJOS, encadenados (cada uno destraba el siguiente):
+//
+// 1) ELECTRICIDAD. El cuarto entra a oscuras, solo con las luces verdes de emergencia.
+//    El tablero del fondo tiene tres encajes: A, B y C, sin decir cuánto aguanta cada
+//    uno. La hoja de la mesa de trabajo tiene el consumo de cada circuito (A: 2 x 5A,
+//    B: 4 x 5A, C: 3 x 5A), así que hay que multiplicar para saber que van 10, 20 y 15.
+//    Sobre la mesa hay seis fusibles y solo tres sirven. Con los tres puestos vuelve la
+//    luz del cuarto.
+//
+// 2) GAS. Con luz, se ven las dos llaves de la columna del medio. No se abren de un
+//    toque: hay que apuntarles y sostener el gatillo unos segundos mientras el volante
+//    da vueltas. Con las dos abiertas sale el gas: encienden los mecheros, salen chorros
+//    de vapor y el cuarto se llena de niebla.
+//
+// 3) PALANCAS. La niebla hace visibles tres haces de luz que bajan del techo, uno sobre
+//    cada palanca. Los haces se encienden de a uno, en un orden fijo (2, 3, 1, 3), y la
+//    secuencia se repite sola. Hay que accionar las palancas en ese orden. Una palanca
+//    equivocada prende la luz roja y hay que empezar de nuevo.
+//
+// FINAL. Con la secuencia bien, se habilita la ranura de al lado de la puerta. Tocándola
+// con el medallón del Cuarto 2 en el inventario, la puerta de emergencia se abre.
 public static class ConstructorCuarto4
 {
-    const float ANCHO = 6f;    // eje X: pared Oeste (0) a pared Este (6)
-    const float FONDO = 7f;    // eje Z: entrada (0) al fondo (7)
-    const float ALTO = 3.05f;  // altura del techo
-    const float MURO = 0.12f;  // espesor de las paredes
+    const float ANCHO = 8f;      // eje X: pared Oeste (0) a pared Este (8)
+    const float FONDO = 9.5f;    // eje Z: entrada (0) al fondo (9.5)
+    const float ALTO = 3.3f;     // altura del techo
+    const float MURO = 0.12f;    // espesor de las paredes
 
-    const float ENTRADA_X0 = 0.8f, ENTRADA_X1 = 1.9f;  // vano que viene del Cuarto 3
-    const float SALIDA_X0 = 4.4f, SALIDA_X1 = 5.6f;    // vano de la puerta de emergencia
+    // El vano de entrada queda donde termina el pasillo que viene del Cuarto 2
+    const float ENTRADA_X0 = 0.8f, ENTRADA_X1 = 1.9f;
+    const float SALIDA_X0 = 5.9f, SALIDA_X1 = 7.1f;
     const float ALTO_PUERTA = 2.1f;
 
-    const float ALTO_FRISO = 1.45f;   // hasta dónde llega el azulejo verde
+    const float ALTO_FRISO = 1.5f;   // hasta dónde llega el azulejo verde
+
+    // Las tres palancas, a lo largo de la pared Este
+    static readonly float[] Z_PALANCAS = { 3f, 4.75f, 6.5f };
+
+    // El orden en que se encienden los haces de luz, y en el que van las palancas
+    static readonly int[] SECUENCIA = { 2, 3, 1, 3 };
 
     static Material mParedAlta, mFriso, mGuarda, mPiso, mTecho, mAcero, mAceroOscuro, mNegro,
                     mBlanco, mVerdeLuz, mRojo, mAmbar, mPantalla, mResaltado, mPapel,
                     mSabana, mPiel, mLuzTecho, mVidrioLab, mQuemadura, mLlama, mMancha,
-                    mFusA, mFusB, mFusC, mFusX, mFusY, mFusZ;
+                    mHaz, mVapor, mFusA, mFusB, mFusC, mFusX, mFusY, mFusZ;
 
     // Cartel de objetivos: cada paso del cuarto le avisa para que cambie el texto
     static PanelObjetivo panelObjetivo;
+
+    // Todo lo que aparece cuando sale el gas: las llamas de los mecheros y los chorros
+    // de vapor. Se va llenando mientras se arma el cuarto.
+    static readonly List<GameObject> conGas = new List<GameObject>();
 
     [MenuItem("Escape Room/Construir Cuarto 4")]
     public static void Construir()
@@ -68,6 +92,7 @@ public static class ConstructorCuarto4
         for (int i = raiz.transform.childCount - 1; i >= 0; i--)
             Undo.DestroyObjectImmediate(raiz.transform.GetChild(i).gameObject);
 
+        conGas.Clear();
         CrearMateriales();
         ConfigurarNormalesDeModelos();
 
@@ -86,12 +111,14 @@ public static class ConstructorCuarto4
         ArmarMesaTrabajo(mobiliario.transform);
         ArmarPizarra(mobiliario.transform, conEnergia);
         ArmarCamilla(mobiliario.transform);
-        ArmarLineaGas(mobiliario.transform);
-        ArmarPalancas(mobiliario.transform);
         ArmarDecoracion(mobiliario.transform);
 
-        ArmarPuertaSalida(raiz.transform);
-        ArmarRanura(raiz.transform);
+        // Los acertijos, en el orden en que los va a resolver el jugador
+        AcertijoSecuencia acertijo = ArmarPalancas(raiz.transform);
+        ArmarLineaGas(raiz.transform, acertijo);
+
+        Door puerta = ArmarPuertaSalida(raiz.transform);
+        ArmarRanura(raiz.transform, acertijo, puerta);
 
         List<GameObject> sinEnergia = ArmarEmergencia(luces.transform);
         var control = ArmarControlEnergia(raiz.transform, lucesCuarto, conEnergia, sinEnergia);
@@ -135,7 +162,7 @@ public static class ConstructorCuarto4
         while (jugador.parent != null) jugador = jugador.parent;
 
         Undo.RecordObject(jugador, "Llevar jugador al Cuarto 4");
-        jugador.position = raiz.transform.position + new Vector3(1.35f, 0f, 0.9f);
+        jugador.position = raiz.transform.position + new Vector3(1.35f, 0f, 1f);
         Selection.activeGameObject = jugador.gameObject;
     }
 
@@ -157,12 +184,12 @@ public static class ConstructorCuarto4
         Cubo("Pared_Este", paredes.transform, new Vector3(ANCHO + MURO / 2f, ALTO / 2f, FONDO / 2f),
              new Vector3(MURO, ALTO, FONDO), mParedAlta, true);
 
-        // Pared de la entrada (viene del Cuarto 3), partida por el vano
+        // Pared de la entrada (viene del pasillo), partida por el vano
         Muro(paredes.transform, "Pared_Entrada_Izq", -MURO, ENTRADA_X0, -MURO / 2f, 0f, ALTO);
         Muro(paredes.transform, "Pared_Entrada_Der", ENTRADA_X1, ANCHO + MURO, -MURO / 2f, 0f, ALTO);
         Muro(paredes.transform, "Dintel_Entrada", ENTRADA_X0, ENTRADA_X1, -MURO / 2f, ALTO_PUERTA, ALTO);
 
-        // Pared del fondo: ahí van el panel eléctrico y la puerta de emergencia
+        // Pared del fondo: ahí van el tablero, la ranura y la puerta de emergencia
         Muro(paredes.transform, "Pared_Fondo_Izq", -MURO, SALIDA_X0, FONDO + MURO / 2f, 0f, ALTO);
         Muro(paredes.transform, "Pared_Fondo_Der", SALIDA_X1, ANCHO + MURO, FONDO + MURO / 2f, 0f, ALTO);
         Muro(paredes.transform, "Dintel_Salida", SALIDA_X0, SALIDA_X1, FONDO + MURO / 2f, ALTO_PUERTA, ALTO);
@@ -170,8 +197,8 @@ public static class ConstructorCuarto4
         Cubo("Techo", p, new Vector3(ANCHO / 2f, ALTO + MURO / 2f, FONDO / 2f),
              new Vector3(ANCHO + MURO * 2f, MURO, FONDO + MURO * 2f), mTecho, true);
 
-        // El azulejo verde: una chapa finita pegada a la pared, de 0 a 1.45 de alto,
-        // con una guarda oscura arriba. Es lo que le da el aire de laboratorio.
+        // El azulejo verde: una chapa finita pegada a la pared, con una guarda oscura
+        // arriba. Es lo que le da el aire de laboratorio viejo.
         var friso = Grupo("Azulejo", p);
         FrisoLargo(friso.transform, "Friso_Oeste", 0.02f, FONDO / 2f, 0.03f, FONDO);
         FrisoLargo(friso.transform, "Friso_Este", ANCHO - 0.02f, FONDO / 2f, 0.03f, FONDO);
@@ -180,24 +207,24 @@ public static class ConstructorCuarto4
         FrisoAncho(friso.transform, "Friso_Fondo_Izq", SALIDA_X0 / 2f, FONDO - 0.02f, SALIDA_X0);
         FrisoAncho(friso.transform, "Friso_Fondo_Der", (SALIDA_X1 + ANCHO) / 2f, FONDO - 0.02f, ANCHO - SALIDA_X1);
 
-        // Dos luminarias de tubo en el techo: la carcasa se ve siempre, el tubo
+        // Tres luminarias de tubo en el techo: la carcasa se ve siempre, el tubo
         // encendido y la luz solo cuando hay corriente
         int n = 1;
-        foreach (float z in new[] { 2.2f, 4.8f })
+        foreach (float z in new[] { 2.2f, 4.9f, 7.6f })
         {
             var lum = Grupo("Luminaria_" + n, p);
             lum.transform.localPosition = new Vector3(ANCHO / 2f, ALTO - 0.04f, z);
 
             if (Modelo("mounted_fluorescent_lights", lum.transform, Vector3.zero, 90f, 0.12f, false, false) == null)
-                Cubo("Carcasa", lum.transform, Vector3.zero, new Vector3(2.6f, 0.06f, 0.2f), mAceroOscuro);
+                Cubo("Carcasa", lum.transform, Vector3.zero, new Vector3(2.8f, 0.06f, 0.2f), mAceroOscuro);
 
             var tubo = Cubo("Tubo", lum.transform, new Vector3(0f, -0.04f, 0f),
-                            new Vector3(2.4f, 0.012f, 0.09f), mLuzTecho);
+                            new Vector3(2.6f, 0.012f, 0.09f), mLuzTecho);
             tubo.SetActive(false);
             conEnergia.Add(tubo);
 
             lucesCuarto.Add(LuzPunto("Luz", lum.transform, new Vector3(0f, -0.35f, 0f),
-                                     new Color(0.95f, 1f, 0.97f), 3.4f, 10f));
+                                     new Color(0.95f, 1f, 0.97f), 3.6f, 12f));
             n++;
         }
     }
@@ -236,30 +263,30 @@ public static class ConstructorCuarto4
     static void ArmarPanelObjetivo(Transform raiz)
     {
         var g = Grupo("Panel_Objetivo", raiz);
-        g.transform.localPosition = new Vector3(0.06f, 1.75f, 0.85f);
+        g.transform.localPosition = new Vector3(0.06f, 1.75f, 1f);
         g.transform.localEulerAngles = new Vector3(0f, 90f, 0f);
 
-        Cubo("Marco", g.transform, Vector3.zero, new Vector3(1.1f, 0.7f, 0.04f), mAceroOscuro, true);
-        Cubo("Tablero", g.transform, new Vector3(0f, 0f, 0.022f), new Vector3(1.04f, 0.64f, 0.01f), mBlanco);
-        Texto("Titulo", g.transform, new Vector3(0f, 0.25f, 0.03f), Vector3.zero,
-              "LABORATORIO", 0.26f, new Color(0.1f, 0.1f, 0.1f), 0.9f, 0.1f);
-        Cubo("Linea", g.transform, new Vector3(0f, 0.19f, 0.028f), new Vector3(0.9f, 0.004f, 0.002f), mAceroOscuro);
+        Cubo("Marco", g.transform, Vector3.zero, new Vector3(1.15f, 0.72f, 0.04f), mAceroOscuro, true);
+        Cubo("Tablero", g.transform, new Vector3(0f, 0f, 0.022f), new Vector3(1.09f, 0.66f, 0.01f), mBlanco);
+        Texto("Titulo", g.transform, new Vector3(0f, 0.26f, 0.03f), Vector3.zero,
+              "LABORATORIO", 0.26f, new Color(0.1f, 0.1f, 0.1f), 0.95f, 0.1f);
+        Cubo("Linea", g.transform, new Vector3(0f, 0.2f, 0.028f), new Vector3(0.95f, 0.004f, 0.002f), mAceroOscuro);
 
         var texto = Texto("Texto_Objetivo", g.transform, new Vector3(0f, -0.06f, 0.03f), Vector3.zero,
-                          "", 0.27f, new Color(0.15f, 0.15f, 0.15f), 0.98f, 0.46f);
+                          "", 0.26f, new Color(0.15f, 0.15f, 0.15f), 1.03f, 0.48f);
         texto.lineSpacing = -12f;
 
-        LuzPunto("Luz_Panel", g.transform, new Vector3(0f, 0.1f, 0.5f), new Color(1f, 0.95f, 0.85f), 1.4f, 1.6f);
+        LuzPunto("Luz_Panel", g.transform, new Vector3(0f, 0.1f, 0.5f), new Color(1f, 0.95f, 0.85f), 1.4f, 1.8f);
 
         panelObjetivo = g.AddComponent<PanelObjetivo>();
         panelObjetivo.texto = texto;
         panelObjetivo.pasos = new[]
         {
-            "SIN ENERGIA\n\nEl panel de la pared del fondo\npide tres fusibles.\nEstan en la mesa de trabajo.",
-            "VOLVIO LA LUZ\n\nAbri las dos llaves de gas\nde la columna del medio.\nHay que sostenerlas unos segundos.",
-            "GAS ABIERTO\n\nLos mecheros encendieron.\nLa pizarra dice en que orden\nvan las tres palancas.",
-            "SECUENCIA CORRECTA\n\nSe habilito la ranura\nque esta junto a la puerta.\nPone ahi el medallon del Cuarto 2.",
-            "PUERTA ABIERTA\n\nSali del laboratorio."
+            "SIN ENERGIA\n\nEl tablero del fondo pide tres fusibles.\nEstan en la mesa de trabajo, y la hoja\nde al lado dice cuanto aguanta cada circuito.",
+            "VOLVIO LA LUZ\n\nLa linea de gas esta cerrada.\nAbri las dos llaves de la columna del medio:\nhay que sostenerlas hasta el tope.",
+            "SALE EL GAS\n\nLa niebla dejo ver tres haces de luz\nsobre las palancas. Se encienden en un orden:\nmiralo bien y repetilo con las palancas.",
+            "SECUENCIA CORRECTA\n\nSe habilito la ranura de al lado de la puerta.\nTocala llevando el medallon\nque sacaste del cajon del Cuarto 2.",
+            "PUERTA ABIERTA\n\nSali del laboratorio: escapaste."
         };
         texto.text = panelObjetivo.pasos[0];   // así ya se ve en el editor, sin darle Play
         EditorUtility.SetDirty(panelObjetivo);
@@ -271,30 +298,29 @@ public static class ConstructorCuarto4
         UnityEventTools.AddIntPersistentListener(evento, new UnityAction<int>(panelObjetivo.MostrarPaso), paso);
     }
 
-    // ------------------------------------------------------------------ paso 1: panel eléctrico
+    // ------------------------------------------------------------------ paso 1: tablero
 
-    // Panel de la pared del fondo con los tres encajes A, B y C. Al lado de cada encaje
-    // dice el amperaje que pide. Con los tres fusibles correctos vuelve la corriente.
+    // Tablero de la pared del fondo con los tres encajes A, B y C. A propósito NO dice
+    // cuánto aguanta cada uno: eso sale de la hoja de la mesa de trabajo.
     static void ArmarPanelElectrico(Transform raiz, ControlEnergia control)
     {
         var g = Grupo("Panel_Electrico", raiz);
-        g.transform.localPosition = new Vector3(1.9f, 1.25f, FONDO - 0.07f);
+        g.transform.localPosition = new Vector3(2.2f, 1.25f, FONDO - 0.07f);
         // Girado 180 para que su "adelante" (+Z) apunte hacia adentro del cuarto: todo lo
         // que tiene que verse va con z positivo, si no queda metido en la pared
         g.transform.localEulerAngles = new Vector3(0f, 180f, 0f);
 
-        Cubo("Caja", g.transform, Vector3.zero, new Vector3(1.3f, 0.8f, 0.12f), mAceroOscuro, true);
-        Cubo("Fondo_Caja", g.transform, new Vector3(0f, 0f, 0.065f), new Vector3(1.2f, 0.7f, 0.02f), mAcero);
-        Texto("Titulo", g.transform, new Vector3(0f, 0.3f, 0.08f), Vector3.zero,
-              "TABLERO GENERAL", 0.22f, new Color(0.9f, 0.95f, 0.9f), 1.1f, 0.09f);
+        Cubo("Caja", g.transform, Vector3.zero, new Vector3(1.4f, 0.85f, 0.12f), mAceroOscuro, true);
+        Cubo("Fondo_Caja", g.transform, new Vector3(0f, 0f, 0.065f), new Vector3(1.3f, 0.75f, 0.02f), mAcero);
+        Texto("Titulo", g.transform, new Vector3(0f, 0.32f, 0.08f), Vector3.zero,
+              "TABLERO GENERAL", 0.22f, new Color(0.9f, 0.95f, 0.9f), 1.2f, 0.09f);
 
-        // Modelo de Poly Haven al costado, como caja de la instalación
-        Modelo("power_box_01", raiz, new Vector3(0.55f, 1.2f, FONDO - 0.12f), 180f, 0.5f, false, false);
+        Modelo("power_box_01", raiz, new Vector3(0.7f, 1.2f, FONDO - 0.12f), 180f, 0.5f, false, false);
 
         string[] letras = { "A", "B", "C" };
         string[] amperajes = { "10", "20", "15" };
         Material[] colores = { mFusA, mFusB, mFusC };
-        float[] xs = { -0.42f, 0f, 0.42f };
+        float[] xs = { -0.45f, 0f, 0.45f };
 
         var encajes = new XRSocketInteractor[3];
         var lucesOk = new GameObject[3];
@@ -308,14 +334,12 @@ public static class ConstructorCuarto4
             Cilindro("Tubo", hueco.transform, Vector3.zero, new Vector3(0.09f, 0.02f, 0.09f), mAceroOscuro)
                 .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
             Cubo("Borne_Arriba", hueco.transform, new Vector3(0f, 0.07f, 0.01f),
-                 new Vector3(0.07f, 0.02f, 0.03f), colores[i]);
+                 new Vector3(0.07f, 0.02f, 0.03f), mAcero);
             Cubo("Borne_Abajo", hueco.transform, new Vector3(0f, -0.07f, 0.01f),
-                 new Vector3(0.07f, 0.02f, 0.03f), colores[i]);
+                 new Vector3(0.07f, 0.02f, 0.03f), mAcero);
 
-            Texto("Letra", hueco.transform, new Vector3(0f, 0.16f, 0.02f), Vector3.zero,
-                  letras[i], 0.3f, new Color(0.95f, 0.98f, 0.95f), 0.2f, 0.12f);
-            Texto("Amperaje", hueco.transform, new Vector3(0f, -0.16f, 0.02f), Vector3.zero,
-                  amperajes[i] + "A", 0.22f, new Color(1f, 0.85f, 0.35f), 0.24f, 0.09f);
+            Texto("Letra", hueco.transform, new Vector3(0f, 0.17f, 0.02f), Vector3.zero,
+                  letras[i], 0.34f, new Color(0.95f, 0.98f, 0.95f), 0.2f, 0.14f);
 
             // El encaje propiamente dicho: un disparador donde se suelta el fusible
             var ranura = Grupo("Ranura", hueco.transform);
@@ -326,17 +350,17 @@ public static class ConstructorCuarto4
             encajes[i] = ranura.AddComponent<XRSocketInteractor>();
 
             // Lucecita verde: se prende cuando el fusible puesto es el correcto
-            var luz = Cilindro("Luz_Ok", hueco.transform, new Vector3(0f, 0.24f, 0.02f),
+            var luz = Cilindro("Luz_Ok", hueco.transform, new Vector3(0f, 0.27f, 0.02f),
                                new Vector3(0.03f, 0.008f, 0.03f), mVerdeLuz);
             luz.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
             luz.SetActive(false);
             lucesOk[i] = luz;
         }
 
-        // Luz piloto de batería: queda prendida siempre, así el panel se encuentra
+        // Luz piloto de batería: queda prendida siempre, así el tablero se encuentra
         // aunque el cuarto esté a oscuras
-        LuzPunto("Luz_Piloto", g.transform, new Vector3(0f, 0.45f, 0.45f),
-                 new Color(0.65f, 1f, 0.75f), 1.3f, 2.8f);
+        LuzPunto("Luz_Piloto", g.transform, new Vector3(0f, 0.48f, 0.45f),
+                 new Color(0.65f, 1f, 0.75f), 1.2f, 2.8f);
 
         var audio = AudioEn("Audio_Acierto", g.transform);
 
@@ -355,11 +379,11 @@ public static class ConstructorCuarto4
     // ------------------------------------------------------------------ mesa de trabajo
 
     // Mesa contra la pared Oeste con los seis fusibles sueltos: tres sirven y tres no.
-    // Al lado, la hoja de la instalación que dice qué amperaje va en cada encaje.
+    // Al lado, la hoja con el consumo de cada circuito, que es de donde sale el amperaje.
     static void ArmarMesaTrabajo(Transform p)
     {
         var g = Grupo("Mesa_Trabajo", p);
-        g.transform.localPosition = new Vector3(0.95f, 0f, 4.7f);
+        g.transform.localPosition = new Vector3(0.85f, 0f, 6.8f);
 
         // El escritorio de metal mide 0.78 de alto, así que la tapa queda en 0.79
         if (Modelo("metal_office_desk", g.transform, Vector3.zero, 90f, 0.78f, true) == null)
@@ -367,37 +391,43 @@ public static class ConstructorCuarto4
 
         float tapa = 0.79f;
 
-        // Los seis fusibles, en dos filas. Los tres primeros son los correctos.
+        // Los seis fusibles, en dos filas. Los tres primeros son los que sirven.
         string[] amperajes = { "10", "20", "15", "5", "30", "25" };
         Material[] colores = { mFusA, mFusB, mFusC, mFusX, mFusY, mFusZ };
         for (int i = 0; i < 6; i++)
         {
-            float x = (i % 2 == 0) ? -0.16f : 0.1f;
-            float z = -0.55f + (i / 2) * 0.5f;
+            float x = (i % 2 == 0) ? -0.17f : 0.09f;
+            float z = -0.5f + (i / 2) * 0.45f;
             ArmarFusible(g.transform, new Vector3(x, tapa + 0.02f, z), amperajes[i], colores[i]);
         }
 
-        // Hoja de la instalación apoyada en la mesa
-        var hoja = Grupo("Hoja_Instalacion", g.transform);
-        hoja.transform.localPosition = new Vector3(0.14f, tapa + 0.002f, 0.55f);
-        hoja.transform.localEulerAngles = new Vector3(0f, 12f, 0f);
-        Cubo("Papel", hoja.transform, Vector3.zero, new Vector3(0.24f, 0.002f, 0.32f), mPapel);
+        // La hoja del electricista: el consumo de cada circuito. Hay que multiplicar.
+        var hoja = Grupo("Hoja_Circuitos", g.transform);
+        hoja.transform.localPosition = new Vector3(0.13f, tapa + 0.002f, 0.62f);
+        hoja.transform.localEulerAngles = new Vector3(0f, 10f, 0f);
+        Cubo("Papel", hoja.transform, Vector3.zero, new Vector3(0.32f, 0.002f, 0.42f), mPapel);
         var texto = Texto("Texto", hoja.transform, new Vector3(0f, 0.003f, 0f), new Vector3(-90f, 90f, 0f),
-                          "TABLERO\n\nA = 10A\nB = 20A\nC = 15A\n\nLos demas\nno entran.",
-                          0.22f, new Color(0.2f, 0.18f, 0.15f), 0.22f, 0.3f);
-        texto.lineSpacing = -16f;
+                          "CIRCUITOS\n\n" +
+                          "A  campana   2 x 5A\n" +
+                          "B  luces     4 x 5A\n" +
+                          "C  heladera  3 x 5A\n\n" +
+                          "Cada fusible tiene\n" +
+                          "que aguantar justo\n" +
+                          "lo que consume.",
+                          0.26f, new Color(0.2f, 0.18f, 0.15f), 0.3f, 0.4f);
+        texto.lineSpacing = -14f;
 
         // Lámpara de trabajo a pilas sobre la mesa: los fusibles se ven desde la entrada
-        Cubo("Lampara", g.transform, new Vector3(0.24f, tapa + 0.16f, -0.75f),
+        Cubo("Lampara", g.transform, new Vector3(0.24f, tapa + 0.16f, -0.72f),
              new Vector3(0.12f, 0.06f, 0.12f), mAceroOscuro);
         LuzPunto("Luz_Lampara", g.transform, new Vector3(0.1f, tapa + 0.3f, -0.4f),
-                 new Color(0.8f, 1f, 0.85f), 1.5f, 2.6f);
+                 new Color(0.8f, 1f, 0.85f), 1.4f, 2.6f);
 
-        Modelo("metal_stool_02", p, new Vector3(1.8f, 0f, 4.4f), 25f, 0.62f, true);
+        Modelo("metal_stool_02", p, new Vector3(1.85f, 0f, 6.4f), 25f, 0.62f, true);
     }
 
     // Un fusible: cilindro de vidrio con casquillos de metal y el amperaje escrito.
-    // Se agarra con la mano y se encaja en el panel.
+    // Se agarra con la mano y se encaja en el tablero.
     static void ArmarFusible(Transform p, Vector3 pos, string amperaje, Material color)
     {
         var g = Grupo("Fusible_" + amperaje + "A", p);
@@ -419,7 +449,7 @@ public static class ConstructorCuarto4
 
         var agarre = g.AddComponent<XRGrabInteractable>();
         // Al agarrarlo de lejos viene a la mano, si no queda flotando donde estaba y
-        // nunca se lo puede meter en el encaje del panel
+        // nunca se lo puede meter en el encaje del tablero
         agarre.farAttachMode = InteractableFarAttachMode.Near;
         var rb = g.GetComponent<Rigidbody>();
         if (rb != null) { rb.isKinematic = true; rb.useGravity = false; }
@@ -436,26 +466,25 @@ public static class ConstructorCuarto4
 
     // Mesa de las prácticas, con los tubos de ensayo y el microscopio. Es ambientación:
     // no hay que resolver nada acá, pero es lo que hace que el cuarto parezca un
-    // laboratorio de verdad.
+    // laboratorio de verdad. El mechero se enciende cuando llega el gas.
     static void ArmarMesaQuimica(Transform p)
     {
         var g = Grupo("Mesa_Quimica", p);
-        g.transform.localPosition = new Vector3(0.95f, 0f, 2f);
+        g.transform.localPosition = new Vector3(0.85f, 0f, 3.3f);
 
         // La tapa de la mesa queda a 0.9 (alto de mesada de laboratorio)
-        MesaDeAcero(g.transform, Vector3.zero, 0.8f, 1.8f, 0.875f);
+        MesaDeAcero(g.transform, Vector3.zero, 0.8f, 1.9f, 0.875f);
         float tapa = 0.9f;
 
-        Modelo("chemistry_set", g.transform, new Vector3(0f, tapa, -0.45f), 90f, 0.3f, false);
-        Modelo("industrial_microscope", g.transform, new Vector3(0.05f, tapa, 0.55f), 120f, 0.32f, false);
+        Modelo("chemistry_set", g.transform, new Vector3(0f, tapa, -0.5f), 90f, 0.3f, false);
+        Modelo("industrial_microscope", g.transform, new Vector3(0.05f, tapa, 0.6f), 120f, 0.32f, false);
         // La máscara de gas, tirada en la mesada: es de la práctica que quedó a medias
-        Modelo("old_gas_mask", g.transform, new Vector3(-0.1f, tapa, 0.15f), 200f, 0.16f, false);
+        Modelo("old_gas_mask", g.transform, new Vector3(-0.1f, tapa, 0.2f), 200f, 0.16f, false);
 
-        // Un mechero apagado: se enciende cuando haya gas (paso 2)
         ArmarMechero(g.transform, new Vector3(0.12f, tapa, -0.05f));
     }
 
-    // Mechero de laboratorio. La llama arranca apagada.
+    // Mechero de laboratorio. La llama arranca apagada y se enciende con el gas.
     static void ArmarMechero(Transform p, Vector3 pos)
     {
         var g = Grupo("Mechero", p);
@@ -464,10 +493,13 @@ public static class ConstructorCuarto4
         Cilindro("Base", g.transform, new Vector3(0f, 0.01f, 0f), new Vector3(0.11f, 0.01f, 0.11f), mAceroOscuro);
         Cilindro("Tubo", g.transform, new Vector3(0f, 0.08f, 0f), new Vector3(0.035f, 0.07f, 0.035f), mAcero);
 
-        var llama = Cilindro("Llama", g.transform, new Vector3(0f, 0.19f, 0f),
-                             new Vector3(0.03f, 0.04f, 0.03f), mLlama);
-        llama.name = "Llama";
-        llama.SetActive(false);   // se prende en el paso 2, cuando se abre el gas
+        var llama = Grupo("Llama", g.transform);
+        llama.transform.localPosition = new Vector3(0f, 0.19f, 0f);
+        Cilindro("Fuego", llama.transform, Vector3.zero, new Vector3(0.03f, 0.045f, 0.03f), mLlama);
+        LuzPunto("Luz", llama.transform, new Vector3(0f, 0.05f, 0f), new Color(0.45f, 0.75f, 1f), 0.9f, 1.6f);
+        llama.SetActive(false);
+
+        conGas.Add(llama);
     }
 
     // Mesa de acero simple, por si no está el modelo de Poly Haven
@@ -484,37 +516,38 @@ public static class ConstructorCuarto4
 
     // ------------------------------------------------------------------ pizarra
 
-    // Pizarra de la clase que nunca terminó: tiene el orden de las palancas. A oscuras
-    // no se lee; aparece cuando vuelve la corriente.
+    // Pizarra de la clase que nunca terminó. A oscuras no se lee; aparece cuando vuelve
+    // la corriente y explica cómo se abre la línea de gas.
     static void ArmarPizarra(Transform p, List<GameObject> conEnergia)
     {
         var g = Grupo("Pizarra", p);
-        g.transform.localPosition = new Vector3(0.06f, 1.95f, 3.4f);
+        g.transform.localPosition = new Vector3(0.06f, 2f, 5.3f);
         g.transform.localEulerAngles = new Vector3(0f, 90f, 0f);
 
-        Cubo("Marco", g.transform, Vector3.zero, new Vector3(1.5f, 1f, 0.04f), mAceroOscuro, true);
-        Cubo("Tablero", g.transform, new Vector3(0f, 0f, 0.022f), new Vector3(1.42f, 0.92f, 0.01f), mPantalla);
-        Cubo("Bandeja", g.transform, new Vector3(0f, -0.52f, 0.05f), new Vector3(1.4f, 0.03f, 0.07f), mAceroOscuro);
+        Cubo("Marco", g.transform, Vector3.zero, new Vector3(1.6f, 1.05f, 0.04f), mAceroOscuro, true);
+        Cubo("Tablero", g.transform, new Vector3(0f, 0f, 0.022f), new Vector3(1.52f, 0.97f, 0.01f), mPantalla);
+        Cubo("Bandeja", g.transform, new Vector3(0f, -0.55f, 0.05f), new Vector3(1.5f, 0.03f, 0.07f), mAceroOscuro);
 
         var texto = Texto("Texto_Diagrama", g.transform, new Vector3(0f, 0f, 0.03f), Vector3.zero,
                           "PRACTICA 4 - MECHEROS\n\n" +
-                          "Orden de encendido:\n\n" +
-                          "1o   P2        2o   P3        3o   P1",
-                          0.52f, new Color(0.85f, 0.95f, 0.85f), 1.36f, 0.86f);
+                          "1. Abrir las DOS llaves de la columna.\n" +
+                          "    No sueltes: hay que girarlas hasta el tope.\n\n" +
+                          "2. El gas hace visible la luz.\n" +
+                          "    Mira donde cae y en que orden.",
+                          0.4f, new Color(0.85f, 0.95f, 0.85f), 1.46f, 0.9f);
         texto.lineSpacing = -14f;
+        texto.alignment = TextAlignmentOptions.TopLeft;
         texto.gameObject.SetActive(false);
         conEnergia.Add(texto.gameObject);
     }
 
     // ------------------------------------------------------------------ camilla
 
-    // Mesa de disección de biología, con la sábana encima y el cuerpo debajo. Por ahora
-    // es solo ambientación: el susto (la sábana que se cae) se conecta cuando se arme
-    // el paso 2, que es cuando el documento de diseño dice que pasa.
+    // Mesa de disección de biología, con la sábana encima y el cuerpo debajo.
     static void ArmarCamilla(Transform p)
     {
         var g = Grupo("Camilla", p);
-        g.transform.localPosition = new Vector3(2.5f, 0f, 3.2f);
+        g.transform.localPosition = new Vector3(3.3f, 0f, 4.4f);
 
         // La tabla de acero, las patas y las cuatro ruedas
         Cubo("Tabla", g.transform, new Vector3(0f, 0.9f, 0f), new Vector3(0.78f, 0.05f, 1.95f), mAcero, true);
@@ -543,8 +576,7 @@ public static class ConstructorCuarto4
         Cubo("Brazo_Izq", cuerpo.transform, new Vector3(-0.26f, 0.08f, -0.25f),
              new Vector3(0.13f, 0.13f, 0.6f), mPiel);
 
-        // El brazo derecho se salió de la sábana y cuelga por fuera de la camilla:
-        // es lo primero que se ve cuando la linterna del techo parpadea
+        // El brazo derecho se salió de la sábana y cuelga por fuera de la camilla
         Cubo("Hombro", cuerpo.transform, new Vector3(0.3f, 0.09f, -0.45f),
              new Vector3(0.24f, 0.13f, 0.22f), mPiel);
         var brazo = Grupo("Brazo_Der", cuerpo.transform);
@@ -557,7 +589,6 @@ public static class ConstructorCuarto4
 
         // La sábana: lo tapa del cuello a los pies, con las puntas colgando al costado
         var sabana = Grupo("Sabana", g.transform);
-        sabana.transform.localPosition = new Vector3(0f, 0f, 0f);
         Cubo("Manta", sabana.transform, new Vector3(0f, 1.15f, 0.22f), new Vector3(0.84f, 0.03f, 1.62f), mSabana);
         foreach (float x in new[] { -0.42f, 0.42f })
             Cubo("Caida", sabana.transform, new Vector3(x, 1.04f, 0.22f), new Vector3(0.03f, 0.24f, 1.62f), mSabana);
@@ -586,46 +617,77 @@ public static class ConstructorCuarto4
         Cilindro("Bombilla", foco.transform, new Vector3(0f, -0.06f, 0f),
                  new Vector3(0.16f, 0.01f, 0.16f), mVerdeLuz);
         var luzFoco = LuzPunto("Luz", foco.transform, new Vector3(0f, -0.2f, 0f),
-                               new Color(0.55f, 1f, 0.68f), 1.4f, 4.5f);
+                               new Color(0.55f, 1f, 0.68f), 1.2f, 4f);
         luzFoco.gameObject.AddComponent<Parpadeo>();
     }
 
-    // ------------------------------------------------------------------ paso 2: línea de gas
+    // ------------------------------------------------------------------ paso 2: gas
 
-    // La columna de gas en el medio del cuarto, con las dos llaves (V1 abajo y V2 arriba).
-    // Por ahora las llaves están puestas y resaltan al acercar la mano, pero todavía no
-    // abren nada: eso es el paso 2, que se arma después.
-    static void ArmarLineaGas(Transform p)
+    // La columna de gas del medio del cuarto, con las dos llaves. No se abren de un
+    // toque: hay que sostener el gatillo mientras el volante da dos vueltas. Con las dos
+    // abiertas sale el gas, se llena todo de niebla y se ven los haces de luz.
+    static void ArmarLineaGas(Transform raiz, AcertijoSecuencia acertijo)
     {
-        var g = Grupo("Linea_Gas", p);
-        g.transform.localPosition = new Vector3(4.1f, 0f, 3.4f);
+        var g = Grupo("Linea_Gas", raiz);
+        g.transform.localPosition = new Vector3(5.4f, 0f, 4.7f);
 
         // Caño vertical del piso al techo y un tramo que se va por el techo
         Cilindro("Caño_Vertical", g.transform, new Vector3(0f, ALTO / 2f, 0f),
-                 new Vector3(0.1f, ALTO / 2f, 0.1f), mAcero, true);
-        Cilindro("Caño_Techo", g.transform, new Vector3(0f, ALTO - 0.2f, -1.5f),
-                 new Vector3(0.08f, 1.5f, 0.08f), mAcero)
+                 new Vector3(0.12f, ALTO / 2f, 0.12f), mAcero, true);
+        Cilindro("Caño_Techo", g.transform, new Vector3(0f, ALTO - 0.2f, -1.8f),
+                 new Vector3(0.09f, 1.8f, 0.09f), mAcero)
             .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
-        Cubo("Brida", g.transform, new Vector3(0f, 0.06f, 0f), new Vector3(0.24f, 0.03f, 0.24f), mAceroOscuro);
+        Cubo("Brida", g.transform, new Vector3(0f, 0.06f, 0f), new Vector3(0.26f, 0.03f, 0.26f), mAceroOscuro);
+        Cubo("Brida_Media", g.transform, new Vector3(0f, 1.25f, 0f), new Vector3(0.2f, 0.03f, 0.2f), mAceroOscuro);
 
-        // Cartel de gas, mirando al centro del cuarto (hacia el Oeste)
+        // Cartel de gas, mirando al centro del cuarto
         var cartel = Grupo("Cartel_Gas", g.transform);
-        cartel.transform.localPosition = new Vector3(-0.06f, 2.05f, 0f);
+        cartel.transform.localPosition = new Vector3(-0.07f, 2.15f, 0f);
         cartel.transform.localEulerAngles = new Vector3(0f, -90f, 0f);
-        Cubo("Chapa", cartel.transform, Vector3.zero, new Vector3(0.3f, 0.16f, 0.006f), mAmbar);
+        Cubo("Chapa", cartel.transform, Vector3.zero, new Vector3(0.34f, 0.18f, 0.006f), mAmbar);
         Texto("Texto", cartel.transform, new Vector3(0f, 0f, 0.006f), Vector3.zero,
-              "GAS", 0.3f, new Color(0.1f, 0.1f, 0.1f), 0.28f, 0.14f);
+              "GAS", 0.32f, new Color(0.1f, 0.1f, 0.1f), 0.32f, 0.16f);
 
-        ArmarLlaveGas(g.transform, "V1", 1f);
-        ArmarLlaveGas(g.transform, "V2", 1.5f);
+        // El sistema que cuenta las llaves y larga la niebla
+        var gas = Grupo("Gas", raiz);
+        var sistema = gas.AddComponent<SistemaGas>();
+        sistema.llavesNecesarias = 2;
+        sistema.sonido = AudioEn("Audio_Gas", gas.transform);
+
+        // Los chorros de vapor que salen de las juntas cuando llega el gas
+        foreach (float altura in new[] { 0.5f, 1.45f, 2.3f })
+        {
+            var chorro = Grupo("Vapor", g.transform);
+            chorro.transform.localPosition = new Vector3(-0.1f, altura, 0f);
+            chorro.transform.localEulerAngles = new Vector3(0f, 0f, 35f);
+            Cilindro("Chorro", chorro.transform, new Vector3(0f, 0.28f, 0f),
+                     new Vector3(0.13f, 0.28f, 0.13f), mVapor);
+            Cilindro("Punta", chorro.transform, new Vector3(0f, 0.6f, 0f),
+                     new Vector3(0.3f, 0.12f, 0.3f), mVapor);
+            chorro.SetActive(false);
+            conGas.Add(chorro);
+        }
+
+        ArmarLlaveGas(g.transform, sistema, "V1", 0.95f);
+        ArmarLlaveGas(g.transform, sistema, "V2", 1.75f);
+
+        sistema.objetosConGas = conGas.ToArray();
+
+        // Con el gas abierto empieza la secuencia de luces del tercer acertijo
+        if (acertijo != null)
+            UnityEventTools.AddVoidPersistentListener(sistema.alAbrirTodo, new UnityAction(acertijo.Activar));
+        AvisarPanel(sistema.alAbrirTodo, 2);
+        EditorUtility.SetDirty(sistema);
+
+        Modelo("propane_tank", raiz, new Vector3(5.95f, 0f, 5.6f), 0f, 0.62f, true);
     }
 
-    // Volante de la llave de gas: se agarra y se sostiene girando. Mira hacia el centro
-    // del cuarto (hacia el Oeste) para que el jugador quede de costado a la camilla.
-    static void ArmarLlaveGas(Transform p, string nombre, float altura)
+    // Volante de la llave de gas. Mira al Oeste (al centro del cuarto), así el jugador
+    // queda de costado a la camilla mientras la gira.
+    static void ArmarLlaveGas(Transform p, SistemaGas sistema, string nombre, float altura)
     {
         var g = Grupo("Llave_" + nombre, p);
-        g.transform.localPosition = new Vector3(-0.14f, altura, 0f);
+        g.transform.localPosition = new Vector3(-0.16f, altura, 0f);
 
         // El volante va adentro de un grupo girado 90 grados en Z: así su eje (que en los
         // cilindros de Unity es la Y) apunta al Oeste, o sea hacia el centro del cuarto
@@ -633,95 +695,198 @@ public static class ConstructorCuarto4
         volante.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
 
         var aro = Cilindro("Aro", volante.transform, Vector3.zero,
-                           new Vector3(0.24f, 0.012f, 0.24f), mRojo, true);
+                           new Vector3(0.26f, 0.012f, 0.26f), mRojo, true);
         Cilindro("Centro", volante.transform, new Vector3(0f, 0.01f, 0f),
-                 new Vector3(0.07f, 0.02f, 0.07f), mAceroOscuro);
-        Cilindro("Eje", volante.transform, new Vector3(0f, -0.07f, 0f),
-                 new Vector3(0.03f, 0.07f, 0.03f), mAceroOscuro);
+                 new Vector3(0.08f, 0.02f, 0.08f), mAceroOscuro);
+        Cilindro("Eje", volante.transform, new Vector3(0f, -0.08f, 0f),
+                 new Vector3(0.035f, 0.08f, 0.035f), mAceroOscuro);
         foreach (float a in new[] { 0f, 60f, 120f })
         {
             var rayo = Cubo("Rayo", volante.transform, Vector3.zero,
-                            new Vector3(0.22f, 0.014f, 0.035f), mRojo);
+                            new Vector3(0.24f, 0.014f, 0.038f), mRojo);
             rayo.transform.localEulerAngles = new Vector3(0f, a, 0f);
         }
 
-        Texto("Etiqueta", g.transform, new Vector3(-0.02f, -0.17f, 0f), new Vector3(0f, -90f, 0f),
-              nombre, 0.22f, new Color(0.95f, 0.95f, 0.9f), 0.14f, 0.06f);
+        // Manómetro: la aguja se mueve mientras la llave se abre, así se ve el avance
+        var mano = Grupo("Manometro", g.transform);
+        mano.transform.localPosition = new Vector3(0.02f, 0.26f, 0f);
+        mano.transform.localEulerAngles = new Vector3(0f, -90f, 0f);
+        Cilindro("Caja", mano.transform, Vector3.zero, new Vector3(0.14f, 0.015f, 0.14f), mAceroOscuro)
+            .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+        Cilindro("Esfera", mano.transform, new Vector3(0f, 0f, 0.016f), new Vector3(0.12f, 0.003f, 0.12f), mBlanco)
+            .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+        var aguja = Grupo("Aguja", mano.transform);
+        aguja.transform.localPosition = new Vector3(0f, 0f, 0.02f);
+        aguja.transform.localEulerAngles = new Vector3(0f, 0f, 60f);
+        Cubo("Pieza", aguja.transform, new Vector3(0f, 0.025f, 0f), new Vector3(0.008f, 0.05f, 0.004f), mRojo);
+
+        Texto("Etiqueta", g.transform, new Vector3(-0.02f, -0.19f, 0f), new Vector3(0f, -90f, 0f),
+              nombre, 0.24f, new Color(0.95f, 0.95f, 0.9f), 0.16f, 0.07f);
+
+        // Luz que se prende mientras el jugador la está girando
+        var luzGirando = Cilindro("Luz_Girando", g.transform, new Vector3(-0.02f, 0.4f, 0f),
+                                  new Vector3(0.05f, 0.008f, 0.05f), mAmbar);
+        luzGirando.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
+        luzGirando.SetActive(false);
 
         g.AddComponent<XRSimpleInteractable>();
+        var llave = g.AddComponent<LlaveDeGas>();
+        llave.volante = volante.transform;
+        llave.aguja = aguja.transform;
+        llave.segundosParaAbrir = 3f;
+        llave.vueltas = 2f;
+        llave.luzGirando = luzGirando;
+        llave.sonido = AudioEn("Audio_Llave", g.transform);
         Resaltar(g, aro.GetComponent<Renderer>());
+
+        UnityEventTools.AddVoidPersistentListener(llave.alAbrir, new UnityAction(sistema.AbrirUna));
+        EditorUtility.SetDirty(llave);
     }
 
     // ------------------------------------------------------------------ paso 3: palancas
 
-    // Las tres palancas de la pared Este. El orden lo dice la pizarra. Por ahora están
-    // puestas y se pueden tocar, pero la secuencia se arma en el paso 3.
-    static void ArmarPalancas(Transform p)
+    // Las tres palancas de la pared Este y los tres haces de luz que bajan del techo
+    // sobre cada una. Los haces no se ven hasta que hay niebla; ahí empiezan a
+    // encenderse de a uno y muestran el orden.
+    static AcertijoSecuencia ArmarPalancas(Transform raiz)
     {
-        var g = Grupo("Palancas", p);
+        var g = Grupo("Acertijo_Palancas", raiz);
+        var acertijo = g.AddComponent<AcertijoSecuencia>();
+        acertijo.secuencia = SECUENCIA;
+        acertijo.sonidoOk = AudioEn("Audio_Ok", g.transform);
+        acertijo.sonidoError = AudioEn("Audio_Error", g.transform);
 
-        // Marcas de quemado en el piso, debajo de las palancas: la otra pista del orden
-        foreach (float z in new[] { 2f, 3.2f, 4.4f })
-            Cubo("Quemadura", g.transform, new Vector3(5.3f, 0.005f, z),
-                 new Vector3(0.5f, 0.002f, 0.5f), mQuemadura);
+        var haces = new GameObject[3];
+        for (int i = 0; i < 3; i++)
+        {
+            float z = Z_PALANCAS[i];
 
-        ArmarPalanca(g.transform, "P1", 2f);
-        ArmarPalanca(g.transform, "P2", 3.2f);
-        ArmarPalanca(g.transform, "P3", 4.4f);
+            // Marca de quemado en el piso, debajo del haz
+            Cilindro("Quemadura_" + (i + 1), g.transform, new Vector3(7.25f, 0.005f, z),
+                     new Vector3(0.75f, 0.002f, 0.75f), mQuemadura);
+
+            haces[i] = ArmarHaz(g.transform, i + 1, z);
+            ArmarPalanca(g.transform, acertijo, i + 1, z);
+        }
+        acertijo.haces = haces;
+
+        // Luces de aviso arriba de la puerta de las palancas
+        var avisos = Grupo("Avisos", g.transform);
+        avisos.transform.localPosition = new Vector3(ANCHO - 0.1f, 2.3f, 4.75f);
+        var ok = Cilindro("Luz_Ok", avisos.transform, new Vector3(0f, 0f, -0.2f),
+                          new Vector3(0.12f, 0.02f, 0.12f), mVerdeLuz);
+        ok.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
+        ok.SetActive(false);
+        var mal = Cilindro("Luz_Error", avisos.transform, new Vector3(0f, 0f, 0.2f),
+                           new Vector3(0.12f, 0.02f, 0.12f), mRojo);
+        mal.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
+        mal.SetActive(false);
+        acertijo.luzOk = ok;
+        acertijo.luzError = mal;
+
+        EditorUtility.SetDirty(acertijo);
+        return acertijo;
     }
 
-    static void ArmarPalanca(Transform p, string nombre, float z)
+    // Haz de luz que baja del techo. Se ve solo cuando hay niebla en el cuarto.
+    static GameObject ArmarHaz(Transform p, int numero, float z)
     {
-        var g = Grupo("Palanca_" + nombre, p);
-        g.transform.localPosition = new Vector3(ANCHO - 0.06f, 1.1f, z);
+        var g = Grupo("Haz_" + numero, p);
+        g.transform.localPosition = new Vector3(7.25f, 0f, z);
+
+        Cilindro("Cono", g.transform, new Vector3(0f, ALTO / 2f, 0f),
+                 new Vector3(0.62f, ALTO / 2f, 0.62f), mHaz);
+        Cilindro("Charco", g.transform, new Vector3(0f, 0.012f, 0f),
+                 new Vector3(0.9f, 0.004f, 0.9f), mHaz);
+        LuzPunto("Luz", g.transform, new Vector3(0f, 0.7f, 0f), new Color(0.8f, 1f, 0.9f), 2f, 3.5f);
+
+        g.SetActive(false);
+        return g;
+    }
+
+    static void ArmarPalanca(Transform p, AcertijoSecuencia acertijo, int numero, float z)
+    {
+        var g = Grupo("Palanca_P" + numero, p);
+        g.transform.localPosition = new Vector3(ANCHO - 0.06f, 1.15f, z);
         // Girada -90: su "adelante" (+Z) apunta al Oeste, hacia adentro del cuarto
         g.transform.localEulerAngles = new Vector3(0f, -90f, 0f);
 
-        Cubo("Base", g.transform, Vector3.zero, new Vector3(0.22f, 0.4f, 0.06f), mAceroOscuro, true);
-        Cubo("Ranura", g.transform, new Vector3(0f, 0f, 0.035f), new Vector3(0.05f, 0.3f, 0.01f), mNegro);
+        Cubo("Base", g.transform, Vector3.zero, new Vector3(0.26f, 0.46f, 0.06f), mAceroOscuro, true);
+        Cubo("Ranura", g.transform, new Vector3(0f, 0f, 0.035f), new Vector3(0.06f, 0.34f, 0.01f), mNegro);
 
-        // El brazo cuelga desde el eje de arriba: cuando se arme el paso 3 va a girar acá
+        // El brazo cuelga desde el eje de arriba y baja al accionarlo
         var brazo = Grupo("Brazo", g.transform);
-        brazo.transform.localPosition = new Vector3(0f, 0.14f, 0.05f);
-        Cilindro("Barra", brazo.transform, new Vector3(0f, -0.11f, 0.02f),
-                 new Vector3(0.028f, 0.11f, 0.028f), mAcero);
-        var perilla = Esfera("Perilla", brazo.transform, new Vector3(0f, -0.23f, 0.02f),
-                             new Vector3(0.07f, 0.07f, 0.07f), mRojo, true);
+        brazo.transform.localPosition = new Vector3(0f, 0.16f, 0.05f);
+        Cilindro("Barra", brazo.transform, new Vector3(0f, -0.12f, 0.02f),
+                 new Vector3(0.03f, 0.12f, 0.03f), mAcero);
+        var perilla = Esfera("Perilla", brazo.transform, new Vector3(0f, -0.25f, 0.02f),
+                             new Vector3(0.08f, 0.08f, 0.08f), mRojo, true);
 
-        Texto("Etiqueta", g.transform, new Vector3(0f, -0.25f, 0.04f), Vector3.zero,
-              nombre, 0.2f, new Color(0.95f, 0.95f, 0.9f), 0.2f, 0.08f);
+        Texto("Etiqueta", g.transform, new Vector3(0f, -0.29f, 0.04f), Vector3.zero,
+              "P" + numero, 0.22f, new Color(0.95f, 0.95f, 0.9f), 0.22f, 0.09f);
 
         brazo.AddComponent<XRSimpleInteractable>();
+        var palanca = brazo.AddComponent<Palanca>();
+        palanca.numero = numero;
+        palanca.brazo = brazo.transform;
+        palanca.acertijo = acertijo;
+        palanca.sonido = AudioEn("Audio_Palanca", g.transform);
         Resaltar(brazo, perilla.GetComponent<Renderer>());
+        EditorUtility.SetDirty(palanca);
     }
 
-    // ------------------------------------------------------------------ ranura del medallón
+    // ------------------------------------------------------------------ final: la ranura
 
-    // Ranura al lado de la puerta: acá va el medallón que el jugador trae del Cuarto 2.
-    // El socket ya está puesto; falta que el paso 3 lo habilite y que abra la puerta.
-    static void ArmarRanura(Transform raiz)
+    // Ranura al lado de la puerta. Se habilita con la secuencia de palancas y se abre
+    // con el medallón que el jugador trae del Cuarto 2.
+    static void ArmarRanura(Transform raiz, AcertijoSecuencia acertijo, Door puerta)
     {
         var g = Grupo("Ranura_Medallon", raiz);
-        g.transform.localPosition = new Vector3(3.95f, 1.1f, FONDO - 0.07f);
+        g.transform.localPosition = new Vector3(4.7f, 1.15f, FONDO - 0.07f);
         // Girada 180: lo que se tiene que ver va con z positivo
         g.transform.localEulerAngles = new Vector3(0f, 180f, 0f);
 
-        Cubo("Placa", g.transform, Vector3.zero, new Vector3(0.24f, 0.34f, 0.04f), mAcero, true);
-        Cubo("Hueco", g.transform, new Vector3(0f, 0.05f, 0.025f), new Vector3(0.1f, 0.11f, 0.02f), mNegro);
-        Texto("Etiqueta", g.transform, new Vector3(0f, -0.11f, 0.024f), Vector3.zero,
-              "LLAVE\nMAESTRA", 0.14f, new Color(0.9f, 0.93f, 0.9f), 0.22f, 0.1f);
+        Cubo("Placa", g.transform, Vector3.zero, new Vector3(0.3f, 0.42f, 0.05f), mAcero, true);
+        Cilindro("Hueco", g.transform, new Vector3(0f, 0.06f, 0.03f), new Vector3(0.13f, 0.01f, 0.13f), mNegro)
+            .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+        Texto("Etiqueta", g.transform, new Vector3(0f, -0.14f, 0.028f), Vector3.zero,
+              "LLAVE\nMAESTRA", 0.16f, new Color(0.9f, 0.93f, 0.9f), 0.28f, 0.12f);
 
-        var hueco = Grupo("Socket", g.transform);
-        hueco.transform.localPosition = new Vector3(0f, 0.05f, 0.06f);
-        var colision = hueco.AddComponent<SphereCollider>();
-        colision.isTrigger = true;
-        colision.radius = 0.08f;
-        hueco.AddComponent<XRSocketInteractor>();
+        // El medallón encajado: aparece recién cuando el jugador lo pone
+        var medallon = Cilindro("Medallon_Puesto", g.transform, new Vector3(0f, 0.06f, 0.038f),
+                                new Vector3(0.11f, 0.006f, 0.11f), mAmbar);
+        medallon.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+        medallon.SetActive(false);
 
-        var luz = Cilindro("Luz_Lista", g.transform, new Vector3(0f, 0.15f, 0.024f),
-                           new Vector3(0.03f, 0.006f, 0.03f), mVerdeLuz);
-        luz.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
-        luz.SetActive(false);
+        var luzOk = Cilindro("Luz_Lista", g.transform, new Vector3(0f, 0.17f, 0.028f),
+                             new Vector3(0.035f, 0.006f, 0.035f), mVerdeLuz);
+        luzOk.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+        luzOk.SetActive(false);
+
+        var luzMal = Cilindro("Luz_Error", g.transform, new Vector3(0f, -0.04f, 0.028f),
+                              new Vector3(0.035f, 0.006f, 0.035f), mRojo);
+        luzMal.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+        luzMal.SetActive(false);
+
+        g.AddComponent<XRSimpleInteractable>();
+        var ranura = g.AddComponent<RanuraMedallon>();
+        ranura.medallon = BuscarAsset<ItemData>("ItemData_ObjetoEspecial");
+        ranura.medallonPuesto = medallon;
+        ranura.luzLista = luzOk;
+        ranura.luzError = luzMal;
+        ranura.sonidoOk = AudioEn("Audio_Ok", g.transform);
+        ranura.sonidoError = AudioEn("Audio_Error", g.transform);
+        Resaltar(g, g.transform.Find("Placa").GetComponent<Renderer>());
+
+        // La secuencia de palancas habilita la ranura, y la ranura abre la puerta
+        if (acertijo != null)
+            UnityEventTools.AddVoidPersistentListener(acertijo.OnSolved, new UnityAction(ranura.Habilitar));
+        AvisarPanel(acertijo.OnSolved, 3);
+
+        if (puerta != null)
+            UnityEventTools.AddVoidPersistentListener(ranura.alAbrir, new UnityAction(puerta.Abrir));
+        AvisarPanel(ranura.alAbrir, 4);
+        EditorUtility.SetDirty(ranura);
     }
 
     // ------------------------------------------------------------------ puerta de emergencia
@@ -766,50 +931,45 @@ public static class ConstructorCuarto4
 
     static void ArmarDecoracion(Transform p)
     {
-        // Estantería de acero contra la pared de la entrada y rejilla contra la Oeste
-        Modelo("steel_frame_shelves_01", p, new Vector3(4.3f, 0f, 0.45f), 0f, 1.7f, true);
-        Modelo("worn_metal_rack", p, new Vector3(0.55f, 0f, 0.6f), 90f, 1.6f, true);
+        // Estanterías modernas de acero contra la pared de la entrada
+        Modelo("steel_frame_shelves_01", p, new Vector3(3.9f, 0f, 0.5f), 0f, 1.75f, true);
+        Modelo("worn_metal_rack", p, new Vector3(6.6f, 0f, 0.55f), 0f, 1.6f, true);
+        Modelo("drawer_cabinet", p, new Vector3(0.8f, 0f, 8.7f), 0f, 0.9f, true);
 
-        // La silla de ruedas en el medio del cuarto, de frente a la entrada: es lo
-        // primero que aparece cuando el foco de la camilla parpadea
-        Modelo("wheelchair_01", p, new Vector3(2.75f, 0f, 6.15f), 165f, 0.95f, true);
+        // La silla de ruedas en el medio del cuarto, de frente a la entrada
+        Modelo("wheelchair_01", p, new Vector3(2.9f, 0f, 8.3f), 170f, 0.95f, true);
 
         // El carro de instrumental, pegado a la camilla
-        Modelo("industrial_storage_cart", p, new Vector3(3.35f, 0f, 2.45f), 90f, 0.9f, true);
+        Modelo("industrial_storage_cart", p, new Vector3(4.35f, 0f, 3.3f), 90f, 0.9f, true);
 
-        // Cajonera de laboratorio en el rincón
-        Modelo("drawer_cabinet", p, new Vector3(0.7f, 0f, 6.25f), 0f, 0.9f, true);
-
-        // Bidones y tambores de químicos contra la pared Este
-        Modelo("barrel_03", p, new Vector3(5.6f, 0f, 5.2f), 0f, 0.85f, true);
-        Modelo("barrel_03", p, new Vector3(5.55f, 0f, 5.95f), 40f, 0.85f, true);
-        Modelo("metal_jerrycan_green", p, new Vector3(5.2f, 0f, 5.6f), 25f, 0.36f, true);
+        // Tambores y bidones de químicos en el rincón
+        Modelo("barrel_03", p, new Vector3(7.6f, 0f, 7.9f), 0f, 0.85f, true);
+        Modelo("barrel_03", p, new Vector3(7.5f, 0f, 8.7f), 40f, 0.85f, true);
+        Modelo("metal_jerrycan_green", p, new Vector3(7.1f, 0f, 8.4f), 25f, 0.36f, true);
 
         // Reflector de obra tirado en el piso, apuntando a la camilla
-        var reflector = Modelo("portable_searchlight", p, new Vector3(3.6f, 0f, 4.75f), 210f, 0.4f, true);
+        var reflector = Modelo("portable_searchlight", p, new Vector3(4.5f, 0f, 5.8f), 210f, 0.4f, true);
         if (reflector != null)
             LuzPunto("Luz_Reflector", reflector.transform, new Vector3(0f, 0.3f, 0f),
-                     new Color(0.75f, 1f, 0.8f), 1.2f, 3.5f);
+                     new Color(0.75f, 1f, 0.8f), 1.1f, 3.5f);
 
         // Frascos de químicos sobre las mesas
-        Modelo("bleach_bottle", p, new Vector3(1.22f, 0.79f, 4.2f), 30f, 0.26f, false);
-        Modelo("plastic_bottle_gallon", p, new Vector3(0.75f, 0.9f, 1.35f), -20f, 0.3f, false);
+        Modelo("bleach_bottle", p, new Vector3(1.12f, 0.79f, 6.3f), 30f, 0.26f, false);
+        Modelo("plastic_bottle_gallon", p, new Vector3(0.65f, 0.9f, 2.65f), -20f, 0.3f, false);
 
-        // Cosas del laboratorio apoyadas en el piso
-        Modelo("medical_box", p, new Vector3(5.2f, 0f, 0.45f), 15f, 0.26f, true);
-        Modelo("propane_tank", p, new Vector3(4.6f, 0f, 4.1f), 0f, 0.62f, true);
-        Modelo("metal_trash_can", p, new Vector3(2.0f, 0f, 6.5f), 0f, 0.42f, true);
-        Modelo("metal_stool_02", p, new Vector3(3.2f, 0f, 1.4f), 200f, 0.62f, true);
+        Modelo("medical_box", p, new Vector3(5.4f, 0f, 0.5f), 15f, 0.26f, true);
+        Modelo("metal_trash_can", p, new Vector3(2.5f, 0f, 9f), 0f, 0.42f, true);
+        Modelo("metal_stool_02", p, new Vector3(2.4f, 0f, 2.3f), 200f, 0.62f, true);
 
         // Matafuegos colgado de la pared Este
-        Modelo("korean_fire_extinguisher_01", p, new Vector3(5.85f, 0.85f, 1.1f), -90f, 0.42f, false, false);
+        Modelo("korean_fire_extinguisher_01", p, new Vector3(7.85f, 0.85f, 1.2f), -90f, 0.42f, false, false);
 
-        // Dos lámparas enjauladas colgando del techo, una de ellas quemándose
-        ArmarLamparaColgante(p, new Vector3(1.9f, 0f, 1.5f), true);
-        ArmarLamparaColgante(p, new Vector3(4.4f, 0f, 5.7f), false);
+        // Lámparas enjauladas colgando del techo, una de ellas quemándose
+        ArmarLamparaColgante(p, new Vector3(2.2f, 0f, 1.6f), true);
+        ArmarLamparaColgante(p, new Vector3(5.2f, 0f, 8.2f), false);
 
-        // Otro mechero en la mesa de trabajo, para que se vea que la línea alimenta a los dos
-        ArmarMechero(p, new Vector3(1.25f, 0.79f, 5.25f));
+        // El otro mechero, el de la mesa de trabajo
+        ArmarMechero(p, new Vector3(1.15f, 0.79f, 7.3f));
     }
 
     // Lámpara enjaulada colgada del techo por un cable. Si "quemada" es true, parpadea.
@@ -826,19 +986,20 @@ public static class ConstructorCuarto4
                      new Vector3(0.22f, 0.1f, 0.22f), mAceroOscuro);
 
         var luz = LuzPunto("Luz", g.transform, new Vector3(0f, ALTO - 0.75f, 0f),
-                           new Color(0.6f, 1f, 0.72f), quemada ? 1.3f : 0.9f, 4f);
+                           new Color(0.6f, 1f, 0.72f), quemada ? 1.1f : 0.8f, 4f);
         if (quemada) luz.gameObject.AddComponent<Parpadeo>();
     }
 
     // ------------------------------------------------------------------ luz de emergencia
 
     // Lo que se ve mientras no hay corriente: las luces verdosas de emergencia en las
-    // esquinas del techo, dos de ellas parpadeando.
+    // esquinas del techo, casi todas parpadeando.
     static List<GameObject> ArmarEmergencia(Transform p)
     {
         var sinEnergia = new List<GameObject>();
 
-        float[,] esquinas = { { 0.5f, 0.5f }, { ANCHO - 0.5f, 0.5f }, { 0.5f, FONDO - 0.5f }, { ANCHO - 0.5f, FONDO - 0.5f } };
+        float[,] esquinas = { { 0.6f, 0.6f }, { ANCHO - 0.6f, 0.6f },
+                              { 0.6f, FONDO - 0.6f }, { ANCHO - 0.6f, FONDO - 0.6f } };
         for (int i = 0; i < 4; i++)
         {
             var g = Grupo("Emergencia_" + (i + 1), p);
@@ -848,8 +1009,7 @@ public static class ConstructorCuarto4
             Cubo("Foco", g.transform, new Vector3(0f, -0.055f, 0f), new Vector3(0.14f, 0.01f, 0.08f), mVerdeLuz);
 
             var luz = LuzPunto("Luz", g.transform, new Vector3(0f, -0.15f, 0f),
-                               new Color(0.35f, 1f, 0.55f), 1.1f, 5f);
-            // Tres de las cuatro parpadean, como tubos a punto de quemarse
+                               new Color(0.3f, 1f, 0.5f), 0.9f, 4.5f);
             if (i != 1) luz.gameObject.AddComponent<Parpadeo>();
 
             sinEnergia.Add(g);
@@ -885,14 +1045,13 @@ public static class ConstructorCuarto4
         control.objetosSinEnergia = sinEnergia.ToArray();
         control.efectosSinEnergia = raiz.GetComponentsInChildren<Parpadeo>();
 
-        // Este cuarto es el más oscuro y el que da más miedo de los cuatro: el clima a
-        // oscuras es verdoso (no azul como la Dirección), con menos luz ambiental y más
-        // niebla, así casi no se ve más allá de dos metros hasta que vuelve la corriente.
-        control.ambienteSinEnergia = new Color(0.012f, 0.028f, 0.018f);
-        control.ambienteConEnergia = new Color(0.5f, 0.53f, 0.5f);
-        control.nieblaSinEnergia = new Color(0.012f, 0.035f, 0.022f);
-        control.nieblaConEnergia = new Color(0.3f, 0.32f, 0.3f);
-        control.densidadSinEnergia = 0.1f;
+        // Es el cuarto más oscuro de los cuatro: casi no hay luz ambiental y la niebla
+        // cierra la vista a pocos metros hasta que vuelve la corriente
+        control.ambienteSinEnergia = new Color(0.006f, 0.016f, 0.01f);
+        control.ambienteConEnergia = new Color(0.48f, 0.52f, 0.48f);
+        control.nieblaSinEnergia = new Color(0.008f, 0.022f, 0.014f);
+        control.nieblaConEnergia = new Color(0.28f, 0.3f, 0.28f);
+        control.densidadSinEnergia = 0.13f;
         control.densidadConEnergia = 0.008f;
 
         EditorUtility.SetDirty(control);
@@ -1112,6 +1271,14 @@ public static class ConstructorCuarto4
         return null;
     }
 
+    // Busca un asset del proyecto por su nombre (por ejemplo el ItemData del medallón)
+    static T BuscarAsset<T>(string nombre) where T : Object
+    {
+        var guids = AssetDatabase.FindAssets(nombre + " t:" + typeof(T).Name);
+        if (guids.Length == 0) return null;
+        return AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GUIDToAssetPath(guids[0]));
+    }
+
     static void ConfigurarNormalesDeModelos()
     {
         var carpetas = CarpetasPolyHaven();
@@ -1262,7 +1429,10 @@ public static class ConstructorCuarto4
         mLlama = Mat("C4_Llama", new Color(0.4f, 0.7f, 1f), 0f, 0.6f, new Color(0.3f, 0.8f, 1.6f));
         mLuzTecho = Mat("C4_LuzTecho", new Color(1f, 1f, 0.97f), 0f, 0.5f, new Color(1.5f, 1.6f, 1.5f));
         mResaltado = Mat("C4_Resaltado", new Color(0.55f, 1f, 0.8f), 0f, 0.6f, new Color(0.25f, 0.9f, 0.6f));
-        mVidrioLab = MaterialVidrio();
+        mVidrioLab = Transparente("C4_Vidrio", new Color(0.9f, 1f, 0.95f, 0.12f), default);
+        // El haz de luz que se ve dentro de la niebla, y el vapor que larga el gas
+        mHaz = Transparente("C4_Haz", new Color(0.8f, 1f, 0.88f, 0.14f), new Color(0.35f, 0.7f, 0.5f));
+        mVapor = Transparente("C4_Vapor", new Color(0.85f, 0.92f, 0.88f, 0.2f), default);
 
         // Los seis fusibles: los tres primeros son los que sirven
         mFusA = Mat("C4_Fusible10", new Color(0.85f, 0.2f, 0.15f), 0.1f, 0.6f);
@@ -1273,10 +1443,11 @@ public static class ConstructorCuarto4
         mFusZ = Mat("C4_Fusible25", new Color(0.55f, 0.35f, 0.75f), 0.1f, 0.6f);
     }
 
-    // Vidrio de laboratorio: casi transparente
-    static Material MaterialVidrio()
+    // Material que deja ver a través: el vidrio del laboratorio, el vapor del gas y los
+    // haces de luz. El alpha va en el color; si se le pasa emisión, además brilla.
+    static Material Transparente(string nombre, Color color, Color emision)
     {
-        var m = Mat("C4_Vidrio", new Color(0.9f, 1f, 0.95f, 0.12f), 0f, 0.95f);
+        var m = Mat(nombre, color, 0f, 0.9f, emision);
         m.SetFloat("_Surface", 1f);
         m.SetFloat("_Blend", 0f);
         m.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);

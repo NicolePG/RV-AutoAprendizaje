@@ -7,8 +7,8 @@ using UnityEngine.Events;
 // 1) el teclado acepta el código (alguien llama a Habilitar()),
 // 2) la llave queda encajada en la ranura (LlaveAutomatica llama a PonerLlave()).
 //
-// Cuando se cumplen las dos, la llave gira sola y la puerta se abre. Si el jugador
-// prefiere, también puede girar la perilla a mano: la perilla llama a Girar().
+// Cuando se cumplen las dos, el jugador gira la llave: tocando la propia llave o
+// apretando la perilla. Las dos cosas llaman a Girar(), y ahí la puerta se abre.
 //
 // En la escena: va en la cerradura de la puerta, con "ranura" apuntando al objeto
 // vacío donde entra la llave (ese objeto es el que gira, y la llave cuelga de él).
@@ -43,8 +43,6 @@ public class CerraduraLlave : MonoBehaviour
         CodigoAceptado = true;
         if (luzLista != null) luzLista.enabled = true;
 
-        // Si la llave ya estaba puesta, no hace falta que el jugador haga nada más
-        if (LlavePuesta) StartCoroutine(GirarDespues(0.6f));
     }
 
     // Lo llama la llave cuando termina de encajarse en la ranura
@@ -53,8 +51,7 @@ public class CerraduraLlave : MonoBehaviour
         if (LlavePuesta) return;
         LlavePuesta = true;
 
-        // Con el código ya aceptado, la llave gira sola: entra y abre
-        if (CodigoAceptado) StartCoroutine(GirarDespues(0.6f));
+        // No gira sola: el jugador tiene que tocar la llave o la perilla para girarla
     }
 
     // Lo llama la perilla al presionarla
@@ -65,12 +62,6 @@ public class CerraduraLlave : MonoBehaviour
         abierta = true;
         if (sonidoGiro != null) AudioSource.PlayClipAtPoint(sonidoGiro, transform.position);
         StartCoroutine(GirarLlave());
-    }
-
-    IEnumerator GirarDespues(float espera)
-    {
-        yield return new WaitForSeconds(espera);
-        Girar();
     }
 
     // La llave está colgada de la ranura, así que girando la ranura gira la llave

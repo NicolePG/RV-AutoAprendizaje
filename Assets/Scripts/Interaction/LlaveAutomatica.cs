@@ -31,6 +31,9 @@ public class LlaveAutomatica : MonoBehaviour
     [Tooltip("Qué pasa cuando la llave queda encajada")]
     public UnityEvent alEncajar = new UnityEvent();
 
+    [Tooltip("Qué pasa cuando el jugador toca la llave ya encajada, para girarla")]
+    public UnityEvent alGirar = new UnityEvent();
+
     public bool EnMano { get; private set; }
     public bool Encajada { get; private set; }
 
@@ -44,11 +47,23 @@ public class LlaveAutomatica : MonoBehaviour
 
     void Agarrar(SelectEnterEventArgs args)
     {
-        if (Encajada || EnMano) return;
+        // Ya puesta en la cerradura: este toque es el jugador girándola
+        if (Encajada)
+        {
+            alGirar.Invoke();
+            return;
+        }
+
+        if (EnMano) return;
         EnMano = true;
 
         // Mientras la lleva no tiene que molestar al rayo del control
-        foreach (var col in GetComponentsInChildren<Collider>()) col.enabled = false;
+        Colisiones(false);
+    }
+
+    void Colisiones(bool prendidas)
+    {
+        foreach (var col in GetComponentsInChildren<Collider>()) col.enabled = prendidas;
     }
 
     void Update()
@@ -81,7 +96,8 @@ public class LlaveAutomatica : MonoBehaviour
 
                 Encajada = true;
                 EnMano = false;
-                interactable.enabled = false;
+                // Se le devuelven los colliders: ahora hay que tocarla para girarla
+                Colisiones(true);
                 alEncajar.Invoke();
                 return;
             }

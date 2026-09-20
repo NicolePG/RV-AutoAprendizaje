@@ -225,7 +225,7 @@ public static class ConstructorCuarto2
             "VOLVIO LA LUZ\n\nLos cinco relojes quedaron parados\na las 4:40, la hora del apagon.\nBusca la bitacora sobre el aparador.",
             "HAY QUE PONERLOS EN HORA\n\nLa bitacora dice a que hora suena\ncada campana. La placa del cuadro dice\nque reloj es cada una. Gira las manecillas.",
             "BIEN\n\nCada reloj en hora muestra su numero.\nSegui con los demas y marca el codigo\nen el orden que dice la bitacora.",
-            "CODIGO ACEPTADO\n\nAhora falta la llave.\nEl cuaderno del estante dice donde esta.\nTocala una vez y llevala hasta la puerta.",
+            "CODIGO ACEPTADO\n\nFalta la llave: el cuaderno del\nestante dice donde esta.\nTocala, traela y girala en la cerradura.",
             "PUERTA ABIERTA\n\nLlevate el medallon del cajon del escritorio\ny sali: la puerta se cierra sola."
         };
         texto.text = panelObjetivo.pasos[0];   // así ya se ve en el editor, sin darle Play
@@ -999,6 +999,8 @@ public static class ConstructorCuarto2
 
         llave.ranura = cerradura.ranura;
         UnityEventTools.AddVoidPersistentListener(llave.alEncajar, new UnityAction(cerradura.PonerLlave));
+        // Tocar la llave ya puesta es girarla: eso lo hace el jugador, no se abre sola
+        UnityEventTools.AddVoidPersistentListener(llave.alGirar, new UnityAction(cerradura.Girar));
         EditorUtility.SetDirty(llave);
     }
 
