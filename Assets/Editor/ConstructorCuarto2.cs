@@ -345,6 +345,11 @@ public static class ConstructorCuarto2
         var llevable = medallon.AddComponent<ObjetoLlevable>();
         // Se queda con el jugador hasta el Cuarto 4: agarrar un fusible no lo suelta
         llevable.quedaConElJugador = true;
+        // Bien adelante y apenas a la izquierda: si va muy al costado, en la pantalla
+        // del simulador queda fuera de cuadro y parece que se perdió
+        llevable.distancia = 0.5f;
+        llevable.bajar = 0.14f;
+        EditorUtility.SetDirty(llevable);
         var pick = medallon.AddComponent<PickableItem>();
         pick.datos = BuscarAsset<ItemData>("ItemData_ObjetoEspecial");
         pick.ocultarAlAgarrar = false;   // no desaparece: el jugador lo lleva en la mano

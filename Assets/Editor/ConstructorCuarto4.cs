@@ -624,6 +624,42 @@ public static class ConstructorCuarto4
         conGas.Add(llama);
     }
 
+    // Pone el modelo del cuerpo acostado en la camilla.
+    //
+    // No se usa el helper Modelo() porque ese centra el modelo ANTES de girarlo: al
+    // acostarlo después, el desplazamiento que había quedado adentro lo mandaba lejos
+    // de la camilla, y por eso el cuerpo no se veía. Acá se gira primero y se recoloca
+    // después, midiendo los límites ya girados.
+    static GameObject ArmarCuerpoModelo(Transform padre)
+    {
+        var fuente = BuscarModelo("cuerpo_camilla");
+        if (fuente == null) return null;
+
+        var contenedor = Grupo("Cuerpo_Modelo", padre);
+        // Acostado boca arriba y con la cabeza hacia la entrada. Si quedara boca abajo,
+        // se le cambia el 180 de la Y por 0 en el Inspector.
+        contenedor.transform.localEulerAngles = new Vector3(90f, 180f, 0f);
+
+        var modelo = (GameObject)PrefabUtility.InstantiatePrefab(fuente, contenedor.transform);
+        modelo.transform.localPosition = Vector3.zero;
+        modelo.transform.localRotation = Quaternion.identity;
+
+        if (!Limites(modelo, out Bounds b)) return contenedor;
+
+        // El modelo viene parado, así que su alto es lo que mide de pies a cabeza
+        float alto = Mathf.Max(b.size.x, b.size.y, b.size.z);
+        if (alto > 0.0001f) modelo.transform.localScale *= 1.72f / alto;
+
+        // Recién ahora, ya girado y escalado, se lo corre para que el centro del cuerpo
+        // caiga sobre la tabla de la camilla
+        Limites(modelo, out b);
+        Vector3 destino = padre.TransformPoint(new Vector3(0f, 0.13f, 0.05f));
+        modelo.transform.position += destino - b.center;
+
+        PintarCuerpo(modelo);
+        return contenedor;
+    }
+
     // Unity no siempre engancha la textura que viene al lado de un FBX, y el cuerpo
     // queda gris. Se le pone un material armado acá con esa misma textura.
     static void PintarCuerpo(GameObject modelo)
@@ -749,16 +785,7 @@ public static class ConstructorCuarto4
         // El cuerpo de verdad: el modelo "cuerpo_camilla" que está en Assets/Modelos
         // (un zombi CC0 de OpenGameArt). Si por lo que sea no estuviera, se arma el
         // cuerpo con cubos como antes, así el cuarto nunca queda vacío.
-        var modeloCuerpo = Modelo("cuerpo_camilla", torso.transform, Vector3.zero, 0f, 1.75f, false, false);
-        if (modeloCuerpo != null)
-        {
-            // El modelo viene parado: se lo acuesta boca arriba (los -90 en X) con la
-            // cabeza hacia la entrada, y se lo sube hasta apoyarlo en la tabla.
-            // Si quedara boca abajo, en el Inspector se le cambia el -90 por 90.
-            modeloCuerpo.transform.localEulerAngles = new Vector3(-90f, 0f, 0f);
-            modeloCuerpo.transform.localPosition = new Vector3(0f, 0.12f, 0.05f);
-            PintarCuerpo(modeloCuerpo);
-        }
+        var modeloCuerpo = ArmarCuerpoModelo(torso.transform);
 
         if (modeloCuerpo == null)
         {

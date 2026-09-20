@@ -136,7 +136,7 @@ public class ObjetoLlevable : MonoBehaviour
         // Lo que se lleva encima va a un costado, para no taparle la vista ni confundirse
         // con lo que tiene en la mano
         Vector3 destino = camara.position + camara.forward * distancia - camara.up * bajar;
-        if (quedaConElJugador) destino -= camara.right * 0.28f;
+        if (quedaConElJugador) destino -= camara.right * 0.16f;
         Quaternion giro = Quaternion.LookRotation(camara.forward, Vector3.up);
 
         float t = 1f - Mathf.Exp(-velocidad * Time.deltaTime);
