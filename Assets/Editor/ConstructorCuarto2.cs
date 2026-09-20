@@ -386,8 +386,9 @@ public static class ConstructorCuarto2
         // El botón de las pistas: va en el teclado, mucho más grande que las teclas
         var boton = Cilindro("Boton_Pistas", teclado.transform, new Vector3(0.14f, 0.014f, 0.055f),
                              new Vector3(0.08f, 0.012f, 0.08f), mVerde, true);
-        // Acostada sobre el teclado y mirando para arriba (-90 en X), si no se lee desde abajo
-        Texto("Etiqueta", teclado.transform, new Vector3(-0.02f, 0.012f, 0.055f), new Vector3(-90f, 0f, 0f),
+        // Acostada sobre el teclado: -90 en X la deja mirando para arriba y los 180 en Y
+        // hacen que los renglones queden derechos para el que está parado frente al escritorio
+        Texto("Etiqueta", teclado.transform, new Vector3(-0.02f, 0.012f, 0.055f), new Vector3(-90f, 180f, 0f),
               "PISTAS >", 0.12f, new Color(0.85f, 0.9f, 0.9f), 0.22f, 0.03f);
 
         boton.AddComponent<XRSimpleInteractable>();
@@ -593,11 +594,19 @@ public static class ConstructorCuarto2
         var llave = Grupo("Llave_Salida", p);
         llave.transform.localPosition = new Vector3(5.45f, 0.44f, 4.95f);
         llave.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
-        Cilindro("Cabeza", llave.transform, new Vector3(0f, 0.055f, 0f), new Vector3(0.05f, 0.006f, 0.05f), mOro, true)
+        // Más grande que una llave de verdad, para que se note y sea fácil de agarrar
+        Cilindro("Cabeza", llave.transform, new Vector3(0f, 0.075f, 0f), new Vector3(0.075f, 0.008f, 0.075f), mOro)
             .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
-        Cubo("Vastago", llave.transform, Vector3.zero, new Vector3(0.012f, 0.11f, 0.012f), mOro);
-        Cubo("Diente_1", llave.transform, new Vector3(0.018f, -0.04f, 0f), new Vector3(0.024f, 0.012f, 0.01f), mOro);
-        Cubo("Diente_2", llave.transform, new Vector3(0.016f, -0.062f, 0f), new Vector3(0.02f, 0.012f, 0.01f), mOro);
+        Cubo("Vastago", llave.transform, Vector3.zero, new Vector3(0.016f, 0.15f, 0.016f), mOro);
+        Cubo("Diente_1", llave.transform, new Vector3(0.026f, -0.055f, 0f), new Vector3(0.034f, 0.016f, 0.014f), mOro);
+        Cubo("Diente_2", llave.transform, new Vector3(0.024f, -0.085f, 0f), new Vector3(0.03f, 0.016f, 0.014f), mOro);
+
+        // Un solo collider que envuelve toda la llave. Antes el único collider era el
+        // borde de la cabeza, de dos centímetros: había que apuntarle justo con el rayo
+        // y por eso no se la podía agarrar.
+        var colisionLlave = llave.AddComponent<BoxCollider>();
+        colisionLlave.center = new Vector3(0.008f, 0.005f, 0f);
+        colisionLlave.size = new Vector3(0.11f, 0.23f, 0.08f);
 
         var grabLlave = llave.AddComponent<XRGrabInteractable>();
         var rbLlave = llave.GetComponent<Rigidbody>();
@@ -878,8 +887,8 @@ public static class ConstructorCuarto2
         // z positivo. Con z negativo el papel y el texto quedaban detras del marco y no se veian.
         Cubo("Papel", aviso.transform, new Vector3(0f, 0f, 0.018f), new Vector3(0.76f, 0.44f, 0.005f), mPapel);
         var textoAviso = Texto("Texto_Aviso", aviso.transform, new Vector3(0f, 0f, 0.024f), Vector3.zero,
-                               "FALTA LA LLAVE\n\nVe al estante\ny agarra el cuaderno.",
-                               0.42f, new Color(0.2f, 0.17f, 0.15f), 0.72f, 0.4f);
+                               "FALTA LA LLAVE\n\nVe al estante",
+                               0.52f, new Color(0.2f, 0.17f, 0.15f), 0.72f, 0.4f);
         textoAviso.lineSpacing = -12f;
 
         var bisagra = Grupo("Bisagra", g.transform);

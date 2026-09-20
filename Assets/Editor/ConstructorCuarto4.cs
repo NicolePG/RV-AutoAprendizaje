@@ -46,7 +46,7 @@ public static class ConstructorCuarto4
 
     static Material mParedAlta, mFriso, mGuarda, mPiso, mTecho, mAcero, mAceroOscuro, mNegro,
                     mBlanco, mVerdeLuz, mRojo, mAmbar, mPantalla, mResaltado, mPapel,
-                    mSabana, mPiel, mLuzTecho, mVidrioLab, mQuemadura, mLlama,
+                    mSabana, mPiel, mLuzTecho, mVidrioLab, mQuemadura, mLlama, mMancha,
                     mFusA, mFusB, mFusC, mFusX, mFusY, mFusZ;
 
     // Cartel de objetivos: cada paso del cuarto le avisa para que cambie el texto
@@ -381,7 +381,7 @@ public static class ConstructorCuarto4
         hoja.transform.localPosition = new Vector3(0.14f, tapa + 0.002f, 0.55f);
         hoja.transform.localEulerAngles = new Vector3(0f, 12f, 0f);
         Cubo("Papel", hoja.transform, Vector3.zero, new Vector3(0.24f, 0.002f, 0.32f), mPapel);
-        var texto = Texto("Texto", hoja.transform, new Vector3(0f, 0.003f, 0f), new Vector3(-90f, 0f, 0f),
+        var texto = Texto("Texto", hoja.transform, new Vector3(0f, 0.003f, 0f), new Vector3(-90f, 90f, 0f),
                           "TABLERO\n\nA = 10A\nB = 20A\nC = 15A\n\nLos demas\nno entran.",
                           0.22f, new Color(0.2f, 0.18f, 0.15f), 0.22f, 0.3f);
         texto.lineSpacing = -16f;
@@ -413,7 +413,7 @@ public static class ConstructorCuarto4
                  new Vector3(0.038f, 0.012f, 0.038f), mAcero)
             .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
         // El amperaje escrito arriba del fusible, para leerlo desde la mesa
-        Texto("Numero", g.transform, new Vector3(0f, 0.019f, 0f), new Vector3(-90f, 0f, 0f),
+        Texto("Numero", g.transform, new Vector3(0f, 0.019f, 0f), new Vector3(-90f, 90f, 0f),
               amperaje, 0.17f, new Color(0.1f, 0.1f, 0.1f), 0.08f, 0.05f);
 
         var agarre = g.AddComponent<XRGrabInteractable>();
@@ -536,8 +536,20 @@ public static class ConstructorCuarto4
             Cubo("Pierna", cuerpo.transform, new Vector3(x, 0.08f, 0.58f), new Vector3(0.15f, 0.17f, 0.72f), mPiel);
         foreach (float x in new[] { -0.09f, 0.09f })
             Cubo("Pie", cuerpo.transform, new Vector3(x, 0.09f, 1f), new Vector3(0.12f, 0.2f, 0.14f), mPiel);
-        foreach (float x in new[] { -0.26f, 0.26f })
-            Cubo("Brazo", cuerpo.transform, new Vector3(x, 0.08f, -0.25f), new Vector3(0.13f, 0.13f, 0.6f), mPiel);
+        Cubo("Brazo_Izq", cuerpo.transform, new Vector3(-0.26f, 0.08f, -0.25f),
+             new Vector3(0.13f, 0.13f, 0.6f), mPiel);
+
+        // El brazo derecho se salió de la sábana y cuelga por fuera de la camilla:
+        // es lo primero que se ve cuando la linterna del techo parpadea
+        Cubo("Hombro", cuerpo.transform, new Vector3(0.3f, 0.09f, -0.45f),
+             new Vector3(0.24f, 0.13f, 0.22f), mPiel);
+        var brazo = Grupo("Brazo_Der", cuerpo.transform);
+        brazo.transform.localPosition = new Vector3(0.42f, 0.04f, -0.25f);
+        brazo.transform.localEulerAngles = new Vector3(0f, 0f, -20f);
+        Cubo("Antebrazo", brazo.transform, new Vector3(0.03f, -0.16f, 0f),
+             new Vector3(0.11f, 0.34f, 0.12f), mPiel);
+        Cubo("Mano", brazo.transform, new Vector3(0.06f, -0.34f, 0f),
+             new Vector3(0.1f, 0.14f, 0.11f), mPiel);
 
         // La sábana: lo tapa del cuello a los pies, con las puntas colgando al costado
         var sabana = Grupo("Sabana", g.transform);
@@ -553,6 +565,25 @@ public static class ConstructorCuarto4
         Cubo("Carton", ficha.transform, Vector3.zero, new Vector3(0.3f, 0.2f, 0.006f), mPapel);
         Texto("Texto", ficha.transform, new Vector3(0f, 0f, -0.006f), new Vector3(0f, 180f, 0f),
               "PRACTICA\nSUSPENDIDA", 0.16f, new Color(0.35f, 0.1f, 0.1f), 0.28f, 0.18f);
+
+        // Manchas secas en el piso, debajo y al costado de la camilla
+        Cilindro("Mancha_1", g.transform, new Vector3(0.45f, 0.004f, -0.3f),
+                 new Vector3(0.55f, 0.001f, 0.42f), mMancha);
+        Cilindro("Mancha_2", g.transform, new Vector3(0.62f, 0.004f, 0.1f),
+                 new Vector3(0.26f, 0.001f, 0.22f), mMancha);
+        Cilindro("Mancha_3", g.transform, new Vector3(-0.3f, 0.004f, 0.55f),
+                 new Vector3(0.34f, 0.001f, 0.3f), mMancha);
+
+        // Foco de batería justo encima de la camilla: parpadea aunque no haya corriente,
+        // así el cuerpo aparece y desaparece mientras el jugador cruza el cuarto
+        var foco = Grupo("Foco_Camilla", g.transform);
+        foco.transform.localPosition = new Vector3(0f, ALTO - 0.3f, 0f);
+        Cilindro("Pantalla", foco.transform, Vector3.zero, new Vector3(0.32f, 0.05f, 0.32f), mAceroOscuro);
+        Cilindro("Bombilla", foco.transform, new Vector3(0f, -0.06f, 0f),
+                 new Vector3(0.16f, 0.01f, 0.16f), mVerdeLuz);
+        var luzFoco = LuzPunto("Luz", foco.transform, new Vector3(0f, -0.2f, 0f),
+                               new Color(0.55f, 1f, 0.68f), 1.4f, 4.5f);
+        luzFoco.gameObject.AddComponent<Parpadeo>();
     }
 
     // ------------------------------------------------------------------ paso 2: línea de gas
@@ -731,20 +762,68 @@ public static class ConstructorCuarto4
 
     static void ArmarDecoracion(Transform p)
     {
-        // Estantería de acero contra la pared de la entrada
+        // Estantería de acero contra la pared de la entrada y rejilla contra la Oeste
         Modelo("steel_frame_shelves_01", p, new Vector3(4.3f, 0f, 0.45f), 0f, 1.7f, true);
+        Modelo("worn_metal_rack", p, new Vector3(0.55f, 0f, 0.6f), 90f, 1.6f, true);
 
-        // Cosas del laboratorio apoyadas en el piso, junto a la estantería
+        // La silla de ruedas en el medio del cuarto, de frente a la entrada: es lo
+        // primero que aparece cuando el foco de la camilla parpadea
+        Modelo("wheelchair_01", p, new Vector3(2.75f, 0f, 6.15f), 165f, 0.95f, true);
+
+        // El carro de instrumental, pegado a la camilla
+        Modelo("industrial_storage_cart", p, new Vector3(3.35f, 0f, 2.45f), 90f, 0.9f, true);
+
+        // Cajonera de laboratorio en el rincón
+        Modelo("drawer_cabinet", p, new Vector3(0.7f, 0f, 6.25f), 0f, 0.9f, true);
+
+        // Bidones y tambores de químicos contra la pared Este
+        Modelo("barrel_03", p, new Vector3(5.6f, 0f, 5.2f), 0f, 0.85f, true);
+        Modelo("barrel_03", p, new Vector3(5.55f, 0f, 5.95f), 40f, 0.85f, true);
+        Modelo("metal_jerrycan_green", p, new Vector3(5.2f, 0f, 5.6f), 25f, 0.36f, true);
+
+        // Reflector de obra tirado en el piso, apuntando a la camilla
+        var reflector = Modelo("portable_searchlight", p, new Vector3(3.6f, 0f, 4.75f), 210f, 0.4f, true);
+        if (reflector != null)
+            LuzPunto("Luz_Reflector", reflector.transform, new Vector3(0f, 0.3f, 0f),
+                     new Color(0.75f, 1f, 0.8f), 1.2f, 3.5f);
+
+        // Frascos de químicos sobre las mesas
+        Modelo("bleach_bottle", p, new Vector3(1.22f, 0.79f, 4.2f), 30f, 0.26f, false);
+        Modelo("plastic_bottle_gallon", p, new Vector3(0.75f, 0.9f, 1.35f), -20f, 0.3f, false);
+
+        // Cosas del laboratorio apoyadas en el piso
         Modelo("medical_box", p, new Vector3(5.2f, 0f, 0.45f), 15f, 0.26f, true);
         Modelo("propane_tank", p, new Vector3(4.6f, 0f, 4.1f), 0f, 0.62f, true);
-        Modelo("metal_trash_can", p, new Vector3(0.4f, 0f, 6.4f), 0f, 0.42f, true);
+        Modelo("metal_trash_can", p, new Vector3(2.0f, 0f, 6.5f), 0f, 0.42f, true);
         Modelo("metal_stool_02", p, new Vector3(3.2f, 0f, 1.4f), 200f, 0.62f, true);
 
         // Matafuegos colgado de la pared Este
         Modelo("korean_fire_extinguisher_01", p, new Vector3(5.85f, 0.85f, 1.1f), -90f, 0.42f, false, false);
 
+        // Dos lámparas enjauladas colgando del techo, una de ellas quemándose
+        ArmarLamparaColgante(p, new Vector3(1.9f, 0f, 1.5f), true);
+        ArmarLamparaColgante(p, new Vector3(4.4f, 0f, 5.7f), false);
+
         // Otro mechero en la mesa de trabajo, para que se vea que la línea alimenta a los dos
         ArmarMechero(p, new Vector3(1.25f, 0.79f, 5.25f));
+    }
+
+    // Lámpara enjaulada colgada del techo por un cable. Si "quemada" es true, parpadea.
+    static void ArmarLamparaColgante(Transform p, Vector3 pos, bool quemada)
+    {
+        var g = Grupo("Lampara_Colgante", p);
+        g.transform.localPosition = pos;
+
+        Cilindro("Cable", g.transform, new Vector3(0f, ALTO - 0.3f, 0f),
+                 new Vector3(0.012f, 0.3f, 0.012f), mNegro);
+
+        if (Modelo("caged_hanging_light", g.transform, new Vector3(0f, ALTO - 0.72f, 0f), 0f, 0.36f, false, false) == null)
+            Cilindro("Pantalla", g.transform, new Vector3(0f, ALTO - 0.72f, 0f),
+                     new Vector3(0.22f, 0.1f, 0.22f), mAceroOscuro);
+
+        var luz = LuzPunto("Luz", g.transform, new Vector3(0f, ALTO - 0.75f, 0f),
+                           new Color(0.6f, 1f, 0.72f), quemada ? 1.3f : 0.9f, 4f);
+        if (quemada) luz.gameObject.AddComponent<Parpadeo>();
     }
 
     // ------------------------------------------------------------------ luz de emergencia
@@ -765,9 +844,9 @@ public static class ConstructorCuarto4
             Cubo("Foco", g.transform, new Vector3(0f, -0.055f, 0f), new Vector3(0.14f, 0.01f, 0.08f), mVerdeLuz);
 
             var luz = LuzPunto("Luz", g.transform, new Vector3(0f, -0.15f, 0f),
-                               new Color(0.35f, 1f, 0.55f), 1.6f, 6f);
-            // Dos de las cuatro parpadean, como un tubo a punto de quemarse
-            if (i % 2 == 0) luz.gameObject.AddComponent<Parpadeo>();
+                               new Color(0.35f, 1f, 0.55f), 1.1f, 5f);
+            // Tres de las cuatro parpadean, como tubos a punto de quemarse
+            if (i != 1) luz.gameObject.AddComponent<Parpadeo>();
 
             sinEnergia.Add(g);
         }
@@ -802,12 +881,14 @@ public static class ConstructorCuarto4
         control.objetosSinEnergia = sinEnergia.ToArray();
         control.efectosSinEnergia = raiz.GetComponentsInChildren<Parpadeo>();
 
-        // En este cuarto el clima a oscuras es verdoso, no azul como en la Dirección
-        control.ambienteSinEnergia = new Color(0.02f, 0.045f, 0.03f);
+        // Este cuarto es el más oscuro y el que da más miedo de los cuatro: el clima a
+        // oscuras es verdoso (no azul como la Dirección), con menos luz ambiental y más
+        // niebla, así casi no se ve más allá de dos metros hasta que vuelve la corriente.
+        control.ambienteSinEnergia = new Color(0.012f, 0.028f, 0.018f);
         control.ambienteConEnergia = new Color(0.5f, 0.53f, 0.5f);
-        control.nieblaSinEnergia = new Color(0.02f, 0.05f, 0.035f);
+        control.nieblaSinEnergia = new Color(0.012f, 0.035f, 0.022f);
         control.nieblaConEnergia = new Color(0.3f, 0.32f, 0.3f);
-        control.densidadSinEnergia = 0.07f;
+        control.densidadSinEnergia = 0.1f;
         control.densidadConEnergia = 0.008f;
 
         EditorUtility.SetDirty(control);
@@ -1168,6 +1249,8 @@ public static class ConstructorCuarto4
         mPiel = Mat("C4_Piel", new Color(0.72f, 0.73f, 0.66f), 0f, 0.12f);
         mPantalla = Mat("C4_Pizarra", new Color(0.09f, 0.16f, 0.13f), 0f, 0.25f);
         mQuemadura = Mat("C4_Quemadura", new Color(0.1f, 0.1f, 0.09f), 0f, 0.05f);
+        // Manchas secas alrededor de la camilla
+        mMancha = Mat("C4_Mancha", new Color(0.16f, 0.07f, 0.06f), 0f, 0.15f);
 
         mVerdeLuz = Mat("C4_VerdeLuz", new Color(0.3f, 0.95f, 0.45f), 0f, 0.5f, new Color(0.2f, 1.1f, 0.35f));
         mRojo = Mat("C4_Rojo", new Color(0.65f, 0.14f, 0.12f), 0.2f, 0.4f);
