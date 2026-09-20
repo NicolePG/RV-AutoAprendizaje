@@ -36,7 +36,19 @@ public class ObjetoLlevable : MonoBehaviour
     Transform camara;
     bool enMano;
 
-    void Awake() => interactable = GetComponent<XRSimpleInteractable>();
+    // Dónde estaba al empezar: si el jugador agarra otra cosa, este vuelve acá en vez
+    // de quedarse flotando en el aire, así nunca se pierde nada
+    Transform padreOriginal;
+    Vector3 posicionOriginal;
+    Quaternion rotacionOriginal;
+
+    void Awake()
+    {
+        interactable = GetComponent<XRSimpleInteractable>();
+        padreOriginal = transform.parent;
+        posicionOriginal = transform.position;
+        rotacionOriginal = transform.rotation;
+    }
 
     void OnEnable() => interactable.selectEntered.AddListener(Tocar);
 
@@ -72,22 +84,32 @@ public class ObjetoLlevable : MonoBehaviour
         Colisiones(false);
     }
 
+    // Deja de llevarlo y lo devuelve a donde estaba
     public void Soltar()
     {
-        enMano = false;
-        if (EnLaMano == this) EnLaMano = null;
-        Colisiones(true);
+        DejarDeLlevar();
+
+        transform.SetParent(padreOriginal, true);
+        transform.position = posicionOriginal;
+        transform.rotation = rotacionOriginal;
     }
 
     // Lo llama el encaje: el objeto queda acomodado ahí y deja de seguir al jugador
     public void Colocar(Transform destino)
     {
-        Soltar();
+        DejarDeLlevar();
         Colocado = true;
 
         transform.SetParent(destino, true);
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.identity;
+    }
+
+    void DejarDeLlevar()
+    {
+        enMano = false;
+        if (EnLaMano == this) EnLaMano = null;
+        Colisiones(true);
     }
 
     void Update()
