@@ -55,9 +55,10 @@ public static class ConstructorCuarto2
         if (raiz == null)
         {
             raiz = new GameObject("Cuarto2_Oficina");
-            raiz.transform.position = new Vector3(0f, 0f, 4f);
             Undo.RegisterCreatedObjectUndo(raiz, "Construir Cuarto 2");
         }
+        // Siempre en su lugar, empalmado con la salida del Cuarto 1 (ver DisposicionCuartos)
+        raiz.transform.SetPositionAndRotation(DisposicionCuartos.Cuarto2, DisposicionCuartos.Giro);
 
         // Se borra lo que haya adentro para reconstruir el cuarto desde cero
         for (int i = raiz.transform.childCount - 1; i >= 0; i--)
@@ -92,6 +93,8 @@ public static class ConstructorCuarto2
 
         var control = ArmarControlEnergia(raiz.transform, lucesCuarto, conEnergia, sinEnergia);
         ArmarTablero(raiz.transform, control);
+        ArmarZonaClima(raiz.transform, control);
+        AbrirPasilloDelCuarto1();
 
         AjustarAmbienteEditor();
         AsegurarInventario();
@@ -1062,6 +1065,48 @@ public static class ConstructorCuarto2
         EditorUtility.SetDirty(botonGirar);
         EditorUtility.SetDirty(cerraduraLlave);
         return cerraduraLlave;
+    }
+
+    // Zona invisible apenas pasando la entrada. Cuando el jugador la pisa, el cuarto pone
+    // su clima: oscuro y con niebla hasta que se sube el tablero. Se hace acá y no al darle
+    // Play porque la luz ambiental y la niebla son de toda la escena, y al arrancar el
+    // jugador está en el Cuarto 1.
+    static void ArmarZonaClima(Transform raiz, ControlEnergia control)
+    {
+        var zona = Grupo("Zona_Clima", raiz);
+        zona.transform.localPosition = new Vector3((ENTRADA_X0 + ENTRADA_X1) / 2f, 1f, 0.45f);
+
+        var colision = zona.AddComponent<BoxCollider>();
+        colision.isTrigger = true;
+        colision.size = new Vector3(ENTRADA_X1 - ENTRADA_X0 + 0.8f, 2f, 0.7f);
+
+        var disparador = zona.AddComponent<DisparadorJugador>();
+        UnityEventTools.AddVoidPersistentListener(disparador.alEntrar, new UnityAction(control.Reaplicar));
+        EditorUtility.SetDirty(disparador);
+    }
+
+    // El Cuarto 1 tiene detrás de su puerta un pasillo corto que termina en una pared,
+    // porque cuando se armó todavía no había Cuarto 2. Ahora ese pasillo desemboca en la
+    // entrada de este cuarto, así que la pared del fondo sobra: tapaba la entrada.
+    //
+    // Solo se apaga esa pared, sin tocar nada más del Cuarto 1. Si se vuelve a construir
+    // el Cuarto 1, la pared vuelve a aparecer: por eso conviene construir el 1 antes que el 2.
+    static void AbrirPasilloDelCuarto1()
+    {
+        var cuarto1 = GameObject.Find("Cuarto1_Recepcion");
+        if (cuarto1 == null) return;
+
+        // El pasillo no cuelga directo del cuarto sino de uno de sus grupos: se lo busca
+        // entre todos los hijos
+        Transform pared = null;
+        foreach (var t in cuarto1.GetComponentsInChildren<Transform>(true))
+            if (t.name == "Pared_Sur" && t.parent != null && t.parent.name == "Pasillo_Temporal")
+                pared = t;
+        if (pared == null) return;
+
+        Undo.RecordObject(pared.gameObject, "Abrir pasillo del Cuarto 1");
+        pared.gameObject.SetActive(false);
+        EditorUtility.SetDirty(pared.gameObject);
     }
 
     // La llave y la cerradura se arman por separado (una en el sofá y la otra en la

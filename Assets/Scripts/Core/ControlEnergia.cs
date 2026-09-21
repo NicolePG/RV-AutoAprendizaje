@@ -39,23 +39,25 @@ public class ControlEnergia : MonoBehaviour
 
     public bool HayEnergia { get; private set; }
 
-    void Start() => Aplicar(false);
+    // Al arrancar solo se apagan las cosas de ESTE cuarto. El clima (luz ambiental y
+    // niebla) es de toda la escena: si se aplicara acá, llenaría de niebla también el
+    // Cuarto 1, que es donde empieza el jugador. El clima se pone al entrar al cuarto,
+    // cuando la zona de la entrada llama a Reaplicar().
+    void Start() => AplicarObjetos(false);
 
     public void Encender()
     {
         if (HayEnergia) return;
-        Aplicar(true);
+        AplicarObjetos(true);
+        AplicarClima(true);
     }
 
-    // Vuelve a poner el clima de este cuarto. Hace falta porque la luz ambiental y la
-    // niebla son de toda la escena: el cuarto anterior las dejó como estaban allá, así
-    // que al entrar a este cuarto hay que volver a aplicar las suyas.
-    public void Reaplicar() => Aplicar(HayEnergia);
+    // Pone el clima de este cuarto. Lo llama la zona de la entrada cuando el jugador
+    // llega: el cuarto anterior dejó la luz ambiental y la niebla como estaban allá.
+    public void Reaplicar() => AplicarClima(HayEnergia);
 
-    void Aplicar(bool energia)
+    void AplicarClima(bool energia)
     {
-        HayEnergia = energia;
-
         RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
         RenderSettings.ambientLight = energia ? ambienteConEnergia : ambienteSinEnergia;
         RenderSettings.reflectionIntensity = energia ? reflejosConEnergia : reflejosSinEnergia;
@@ -65,6 +67,13 @@ public class ControlEnergia : MonoBehaviour
         RenderSettings.fogMode = FogMode.Exponential;
         RenderSettings.fogColor = energia ? nieblaConEnergia : nieblaSinEnergia;
         RenderSettings.fogDensity = energia ? densidadConEnergia : densidadSinEnergia;
+    }
+
+    // Lo que es de este cuarto nada más: sus luces, lo que se enciende con la energía y
+    // lo que solo existe a oscuras
+    void AplicarObjetos(bool energia)
+    {
+        HayEnergia = energia;
 
         foreach (var luz in lucesDelCuarto)
             if (luz != null) luz.enabled = energia;

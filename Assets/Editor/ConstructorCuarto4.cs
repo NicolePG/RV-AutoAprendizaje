@@ -86,10 +86,10 @@ public static class ConstructorCuarto4
         if (raiz == null)
         {
             raiz = new GameObject("Cuarto4_Laboratorio");
-            // Queda después del Cuarto 2, dejando lugar en el medio para el Cuarto 3
-            raiz.transform.position = new Vector3(0f, 0f, 19f);
             Undo.RegisterCreatedObjectUndo(raiz, "Construir Cuarto 4");
         }
+        // Después del Cuarto 2, dejando lugar en el medio para el Cuarto 3 (ver DisposicionCuartos)
+        raiz.transform.SetPositionAndRotation(DisposicionCuartos.Cuarto4, DisposicionCuartos.Giro);
 
         for (int i = raiz.transform.childCount - 1; i >= 0; i--)
             Undo.DestroyObjectImmediate(raiz.transform.GetChild(i).gameObject);
@@ -166,7 +166,9 @@ public static class ConstructorCuarto4
         while (jugador.parent != null) jugador = jugador.parent;
 
         Undo.RecordObject(jugador, "Llevar jugador al Cuarto 4");
-        jugador.position = raiz.transform.position + new Vector3(1.35f, 0f, 1f);
+        // TransformPoint y no una suma, porque el cuarto está girado (ver DisposicionCuartos)
+        jugador.position = raiz.transform.TransformPoint(new Vector3(1.35f, 0f, 1f));
+        jugador.rotation = raiz.transform.rotation;
         Selection.activeGameObject = jugador.gameObject;
     }
 

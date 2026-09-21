@@ -38,7 +38,9 @@ public static class ConstructorPasillo
             raiz = new GameObject("Pasillo_Provisional");
             Undo.RegisterCreatedObjectUndo(raiz, "Construir pasillo");
         }
-        raiz.transform.position = Vector3.zero;
+        // Con el mismo giro y corrimiento que los Cuartos 2 y 4, así sigue uniéndolos
+        // (ver DisposicionCuartos). Las medidas de abajo quedan igual que antes.
+        raiz.transform.SetPositionAndRotation(DisposicionCuartos.Pasillo, DisposicionCuartos.Giro);
 
         for (int i = raiz.transform.childCount - 1; i >= 0; i--)
             Undo.DestroyObjectImmediate(raiz.transform.GetChild(i).gameObject);
