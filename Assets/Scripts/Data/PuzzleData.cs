@@ -1,24 +1,34 @@
 using UnityEngine;
 
-// Se agregan más valores acá a medida que se arman los acertijos de los otros cuartos
-public enum TipoAcertijo { Codigo }
+// Qué tipo de acertijo es. Sirve para describirlo; el comportamiento lo pone cada script de acertijo.
+public enum TipoAcertijo { Llave, Codigo, Computadoras, Laboratorio }
 
-// Datos de un acertijo, como asset reusable sin tocar código.
-// Un asset por acertijo (por ejemplo "PuzzleData_Cuarto2"), con su solución y sus mensajes.
-[CreateAssetMenu(fileName = "PuzzleData_", menuName = "EscapeRoom/Puzzle Data")]
+// Datos de un acertijo guardados como asset (ScriptableObject).
+//
+// Por qué un ScriptableObject: los textos y la solución de cada acertijo viven en un archivo que se edita
+// en el Inspector, sin tocar código. Cada acertijo del juego es un asset en Assets/ScriptableObjects/Puzzles,
+// y el sistema de guardado usará su "id" para recordar cuáles se resolvieron.
+//
+// Crear uno a mano: clic derecho en Project > Create > Escape Room > Datos de acertijo.
+[CreateAssetMenu(fileName = "NuevoAcertijo", menuName = "Escape Room/Datos de acertijo")]
 public class PuzzleData : ScriptableObject
 {
+    [Tooltip("Identificador único, sin espacios (lo usa el guardado)")]
     public string id;
+
     public string nombreCuarto;
 
-    [TextArea]
-    public string pista;
+    [Tooltip("Qué tiene que descubrir el jugador (para el equipo, no se muestra en el juego)")]
+    [TextArea] public string pista;
 
     public TipoAcertijo tipo;
 
-    [Tooltip("La respuesta correcta. Para el Cuarto 2: los 4 dígitos del teclado")]
+    [Tooltip("La respuesta: un código, el nombre de un objeto, un orden de palancas...")]
     public string solucion;
 
-    public string mensajeAcierto;
-    public string mensajeError;
+    [Tooltip("Texto que se muestra al resolverlo")]
+    public string mensajeAcierto = "ABIERTO";
+
+    [Tooltip("Texto que se muestra mientras no está resuelto o al equivocarse")]
+    public string mensajeError = "BLOQUEADO";
 }

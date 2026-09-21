@@ -14,7 +14,7 @@ public class ScrewedPanel : MonoBehaviour
     public int tornillosRestantes = 2;
 
     [Tooltip("Qué pasa cuando la tapa se suelta")]
-    public UnityEvent alSoltarse = new UnityEvent();
+    public UnityEvent alSoltarse = new UnityEvent(); // se crea aquí para que nunca sea null
 
     public void QuitarTornillo()
     {

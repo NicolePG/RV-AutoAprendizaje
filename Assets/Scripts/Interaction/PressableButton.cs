@@ -3,7 +3,7 @@ using UnityEngine.Events;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
-// Botón que se presiona con la mano (con el dedo o con el gatillo).
+// Botón que se presiona con la mano: tocándolo con el dedo (poke) o apuntándolo y apretando el grip.
 // Al presionarlo: la parte móvil baja, suena un clic y se dispara el evento "alPresionar".
 // Lo que hace el botón NO está en este script: se conecta en el evento desde el Inspector
 // (por ejemplo, mostrar el mensaje del contestador). Así sirve para cualquier botón del juego.
@@ -22,6 +22,8 @@ public class PressableButton : MonoBehaviour
     public AudioClip sonido;
 
     [Tooltip("Qué pasa al presionar el botón")]
+    // Se crea aquí: si un script de editor agrega el componente, el evento todavía no existe
+    // y conectarle acciones (como hace Cuarto1Builder) daría NullReferenceException.
     public UnityEvent alPresionar = new UnityEvent();
 
     XRSimpleInteractable interactable;

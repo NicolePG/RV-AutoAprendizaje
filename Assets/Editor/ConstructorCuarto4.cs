@@ -1248,7 +1248,7 @@ public static class ConstructorCuarto4
 
         var bisagra = Grupo("Bisagra", g.transform);
         var puerta = bisagra.AddComponent<Door>();
-        puerta.anguloApertura = -95f;   // se abre hacia afuera del cuarto
+        puerta.anguloAbierto = -95f;   // se abre hacia afuera del cuarto
         puerta.duracion = 1.4f;
 
         // Hoja de chapa con la barra antipánico

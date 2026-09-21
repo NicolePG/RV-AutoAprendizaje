@@ -5,7 +5,7 @@ using UnityEngine.Events;
 // Acertijo del teclado numérico del Cuarto 2.
 // Los botones (PressableButton, uno por dígito 0-9) llaman a IngresarDigito() desde
 // su evento "alPresionar" en el Inspector. Al completar tantos dígitos como tiene
-// datos.solucion: si coincide, llama a Resolver() (evento OnSolved, heredado de
+// datos.solucion: si coincide, llama a Resolver() (evento alResolverse, heredado de
 // PuzzleBase) y con eso se abre la puerta; si no coincide, dispara "alError"
 // (luz roja + sonido, se conecta en el Inspector) y reinicia lo ingresado.
 public class KeypadPuzzle : PuzzleBase

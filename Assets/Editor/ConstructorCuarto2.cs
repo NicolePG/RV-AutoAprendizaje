@@ -939,13 +939,13 @@ public static class ConstructorCuarto2
         }
 
         // Qué pasa al acertar y al errar
-        UnityEventTools.AddBoolPersistentListener(keypad.OnSolved, new UnityAction<bool>(luzOk.SetActive), true);
-        UnityEventTools.AddBoolPersistentListener(keypad.OnSolved, new UnityAction<bool>(luzMal.SetActive), false);
-        UnityEventTools.AddVoidPersistentListener(keypad.OnSolved, new UnityAction(audioOk.Play));
+        UnityEventTools.AddBoolPersistentListener(keypad.alResolverse, new UnityAction<bool>(luzOk.SetActive), true);
+        UnityEventTools.AddBoolPersistentListener(keypad.alResolverse, new UnityAction<bool>(luzMal.SetActive), false);
+        UnityEventTools.AddVoidPersistentListener(keypad.alResolverse, new UnityAction(audioOk.Play));
         // El código ya no abre la puerta: habilita la cerradura, que además pide la llave
         if (cerradura != null)
-            UnityEventTools.AddVoidPersistentListener(keypad.OnSolved, new UnityAction(cerradura.Habilitar));
-        AvisarPanel(keypad.OnSolved, 4);
+            UnityEventTools.AddVoidPersistentListener(keypad.alResolverse, new UnityAction(cerradura.Habilitar));
+        AvisarPanel(keypad.alResolverse, 4);
 
         UnityEventTools.AddBoolPersistentListener(keypad.alError, new UnityAction<bool>(luzMal.SetActive), true);
         UnityEventTools.AddVoidPersistentListener(keypad.alError, new UnityAction(audioMal.Play));
@@ -991,7 +991,7 @@ public static class ConstructorCuarto2
         var bisagra = Grupo("Bisagra", g.transform);
         var puerta = bisagra.AddComponent<Door>();
         // Ángulo negativo: la hoja gira hacia +Z, o sea hacia afuera del cuarto
-        puerta.anguloApertura = -95f;
+        puerta.anguloAbierto = -95f;
         puerta.duracion = 1.4f;
         puerta.segundosParaCerrar = 30f;   // red de seguridad si el jugador no sale
         puerta.esperaAlPasar = 3f;         // no le cierra la puerta encima al jugador

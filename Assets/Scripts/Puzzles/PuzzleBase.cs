@@ -1,27 +1,35 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-// Base común para todos los acertijos del juego (teclado, llave, fusibles, palancas).
-// Cada acertijo concreto (por ejemplo KeypadPuzzle) hereda de esta clase y decide
-// CUÁNDO llamar a Resolver(); esta clase solo se encarga de qué pasa una vez resuelto:
-// avisa una sola vez (por si se llama de nuevo por error) y dispara el evento OnSolved,
-// del que escucha la puerta del cuarto (Door.cs).
+// Base de todos los acertijos. Guarda lo que todos tienen en común:
+// sus datos (PuzzleData), si ya se resolvió, el sonido de acierto y el evento "alResolverse".
+//
+// Cada acertijo concreto (KeyPuzzle, KeypadPuzzle...) hereda de esta clase y solo decide CUÁNDO
+// está resuelto: en ese momento llama a Resolver(). Así agregar un acertijo nuevo no cambia esta clase.
 public abstract class PuzzleBase : MonoBehaviour
 {
-    [Tooltip("El asset de datos de este acertijo (pista, solución, mensajes)")]
+    [Tooltip("Datos del acertijo (asset en ScriptableObjects/Puzzles)")]
     public PuzzleData datos;
 
-    [Tooltip("Se dispara una sola vez, cuando el acertijo se resuelve")]
-    public UnityEvent OnSolved = new UnityEvent();
+    [Tooltip("Sonido corto al resolverlo")]
+    public AudioClip sonidoAcierto;
+
+    [Tooltip("Qué pasa al resolverlo (por ejemplo, abrir la puerta)")]
+    public UnityEvent alResolverse = new UnityEvent();
 
     public bool Resuelto { get; private set; }
 
+    // Lo llama cada acertijo cuando el jugador lo resuelve. Solo tiene efecto la primera vez.
     protected void Resolver()
     {
         if (Resuelto) return;
         Resuelto = true;
 
-        if (datos != null) Debug.Log(datos.mensajeAcierto);
-        OnSolved.Invoke();
+        if (sonidoAcierto != null) AudioSource.PlayClipAtPoint(sonidoAcierto, transform.position);
+        MostrarAcierto();
+        alResolverse.Invoke();
     }
+
+    // Cada acertijo muestra su propio feedback (luces, textos). Por defecto no hace nada.
+    protected virtual void MostrarAcierto() { }
 }
