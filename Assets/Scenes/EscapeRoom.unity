@@ -88260,7 +88260,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5fc9b700a9670647af171b67bbb4444, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::KeypadPuzzle
-  datos: {fileID: 0}
+  datos: {fileID: 11400000, guid: c0b00d970b8761445ad8f1dcc06cdc97, type: 2}
   sonidoAcierto: {fileID: 0}
   alResolverse:
     m_PersistentCalls:

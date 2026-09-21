@@ -98,7 +98,6 @@ public static class ConstructorCuarto2
 
         AjustarAmbienteEditor();
         AsegurarInventario();
-        ActualizarPuzzleData();
 
         // Para que Ctrl+Z deshaga la construcción entera
         foreach (Transform hijo in raiz.transform)
@@ -912,7 +911,7 @@ public static class ConstructorCuarto2
         var audioMal = AudioEn("Audio_Error", activo.transform);
 
         var keypad = g.AddComponent<KeypadPuzzle>();
-        keypad.datos = BuscarAsset<PuzzleData>("PuzzleData_Cuarto2");
+        keypad.datos = DatosDelTeclado();
         keypad.pantalla = pantalla;
 
         // Teclas 1-9 en tres columnas y el 0 abajo.
@@ -1226,15 +1225,28 @@ public static class ConstructorCuarto2
         Undo.RegisterCreatedObjectUndo(go, "Construir Cuarto 2");
     }
 
-    static void ActualizarPuzzleData()
+    // Los datos del acertijo del teclado (el asset PuzzleData_Cuarto2), siempre al día.
+    //
+    // Si el asset no está o Unity no lo puede leer, se crea de nuevo en vez de dejar el
+    // teclado sin código. Pasó una vez al unir las ramas: el asset quedó apuntando a una
+    // versión de PuzzleData.cs que ya no existía, el teclado se quedó sin datos y
+    // rechazaba el 3719 aunque estuviera bien puesto.
+    static PuzzleData DatosDelTeclado()
     {
+        const string RUTA = "Assets/ScriptableObjects/Puzzles/PuzzleData_Cuarto2.asset";
+
         var datos = BuscarAsset<PuzzleData>("PuzzleData_Cuarto2");
         if (datos == null)
         {
-            Debug.LogWarning("No se encontro PuzzleData_Cuarto2: el teclado va a quedar sin datos.");
-            return;
+            Debug.LogWarning("PuzzleData_Cuarto2 no se pudo leer: se crea de nuevo.");
+            AssetDatabase.DeleteAsset(RUTA);   // por si quedó un archivo roto en esa ruta
+            datos = ScriptableObject.CreateInstance<PuzzleData>();
+            AssetDatabase.CreateAsset(datos, RUTA);
         }
 
+        datos.id = "cuarto2_codigo";
+        datos.nombreCuarto = "Dirección";
+        datos.tipo = TipoAcertijo.Codigo;
         datos.solucion = "3719";
         datos.pista = "Primero hay que devolver la energia desde el tablero. La bitacora sobre el " +
                       "aparador da la hora de cada campana y el orden; la placa del cuadro dice que " +
@@ -1242,6 +1254,7 @@ public static class ConstructorCuarto2
         datos.mensajeAcierto = "La cerradura del teclado hace clic y la puerta se abre";
         datos.mensajeError = "El teclado parpadea en rojo: codigo incorrecto";
         EditorUtility.SetDirty(datos);
+        return datos;
     }
 
     // Pone un modelo de Poly Haven si está descargado en el proyecto y devuelve el

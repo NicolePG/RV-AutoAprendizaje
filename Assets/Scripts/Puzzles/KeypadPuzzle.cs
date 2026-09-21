@@ -24,6 +24,15 @@ public class KeypadPuzzle : PuzzleBase
     {
         if (Resuelto) return;
 
+        // Sin datos no sabe cuál es el código: antes fallaba sin decir nada y parecía
+        // que el 3719 estaba mal
+        if (datos == null)
+        {
+            Debug.LogError("El teclado no tiene PuzzleData asignado y no sabe cuál es el código. " +
+                           "Hay que reconstruir el Cuarto 2 (Escape Room > Construir Cuarto 2).", this);
+            return;
+        }
+
         ingresado += digito;
         MostrarEnPantalla();
 
