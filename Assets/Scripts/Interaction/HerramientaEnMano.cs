@@ -24,6 +24,10 @@ public class HerramientaEnMano : MonoBehaviour
     [Tooltip("Qué tan rápido se endereza al agarrarla y al girar la vista (más alto = más rápido)")]
     public float velocidadEnderezar = 15f;
 
+    [Tooltip("Si está marcado, apunta exactamente hacia donde se mira, también hacia arriba o abajo " +
+             "(para la linterna). Si no, queda derecha y en horizontal (llave, destornillador, fichas de red).")]
+    public bool seguirMirada;
+
     XRGrabInteractable agarre;
     XRBaseInputInteractor mano;              // mano del PC que la tiene agarrada (null si nadie)
     XRBaseInputInteractor manoPorRestaurar;  // mano que la soltó y espera que se suelte el botón
@@ -88,15 +92,16 @@ public class HerramientaEnMano : MonoBehaviour
         manoPorRestaurar = null;
     }
 
-    // Gira la herramienta para que su punto de agarre mire hacia donde mira el jugador (solo en horizontal)
-    // con el "arriba" hacia arriba. La posición la sigue poniendo XRGrabInteractable en la mano.
+    // Gira la herramienta para que su punto de agarre mire hacia donde mira el jugador (en horizontal,
+    // o del todo si "seguirMirada") con el "arriba" hacia arriba. La posición la sigue poniendo
+    // XRGrabInteractable en la mano.
     void MirarAlFrente()
     {
         Camera camara = Camera.main;
         Transform punto = agarre.attachTransform;
         if (camara == null || punto == null) return;
 
-        Vector3 frente = Vector3.ProjectOnPlane(camara.transform.forward, Vector3.up);
+        Vector3 frente = seguirMirada ? camara.transform.forward : Vector3.ProjectOnPlane(camara.transform.forward, Vector3.up);
         if (frente.sqrMagnitude < 0.001f) frente = Vector3.ProjectOnPlane(camara.transform.up, Vector3.up); // mirando justo abajo
         Quaternion puntoDeseado = Quaternion.LookRotation(frente, Vector3.up);
 

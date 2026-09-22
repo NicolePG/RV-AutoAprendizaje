@@ -1513,10 +1513,11 @@ public static class ConstructorCuarto4
     // que si no, el laboratorio se vería con la luz que dejó prendida el cuarto anterior.
     static void ArmarEntrada(Transform raiz, ControlEnergia control)
     {
-        // Va del lado de afuera, en el pasillo: así el laboratorio ya se ve oscuro desde
-        // el vano, antes de entrar, y no se pierde el efecto
+        // Va apenas pasando el vano, ya adentro del laboratorio. Antes estaba del lado de
+        // afuera, en el pasillo provisional, pero ahora ahí está el Cuarto 3: quedaba justo al
+        // lado de su consola y su puerta, y oscurecía el Cuarto 3 antes de tiempo.
         var zona = Grupo("Zona_Entrada", raiz);
-        zona.transform.localPosition = new Vector3((ENTRADA_X0 + ENTRADA_X1) / 2f, 1f, -0.9f);
+        zona.transform.localPosition = new Vector3((ENTRADA_X0 + ENTRADA_X1) / 2f, 1f, 0.75f);
 
         var colision = zona.AddComponent<BoxCollider>();
         colision.isTrigger = true;

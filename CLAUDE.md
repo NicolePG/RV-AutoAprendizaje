@@ -106,6 +106,33 @@ El cuarto 1 funciona como tutorial: enseña a agarrar sin decirlo.
    pestillo y frenando al final; se enciende la luz del pasillo
    (`KeyPuzzle` + `PuzzleData` + `Door`).
 
+**Cuarto 3 — Sala de Computación (en construcción):** lo arma
+`Assets/Editor/ConstructorCuarto3.cs` (menú **Escape Room › Construir Cuarto 3**, y
+**Llevar jugador al Cuarto 3** para probarlo). Mide 8 × 7,52 m con techo de 3,2 m y
+ocupa el lugar del pasillo provisional, que el constructor apaga. La sala la arma
+`ConstructorCuarto3.cs` y la noche con los acertijos `ConstructorCuarto3Acertijos.cs`.
+Es **de noche**: entra a oscuras (luna por la persiana, cartel de salida y una linterna
+prendida sobre las cajas, cuyo haz cae sobre el tablero). La linterna se agarra como las
+herramientas del Cuarto 1 (`HerramientaEnMano` con `seguirMirada`) y alumbra hacia donde
+se apunta. Cuatro acertijos en cadena, cada uno con su pista en la sala:
+1. **Luces** (`TableroLuces`, `Interruptor`): 4 interruptores que cambian varias lámparas
+   a la vez; hay que dejar las 6 prendidas. El tablero manda a leer el **registro de
+   mantenimiento** (hoja sobre el escritorio del profesor): "el 2 quedó cruzado, no usarlo".
+   Solución única: 1 + 3 + 4.
+2. **Red** (`RedSala`, `TomaDeRed`, `FichaRed`, `CableVisual`): de la torre de C2, C3 y C5
+   sale su cable, con la ficha sobre la mesada. Cada ficha se agarra y se suelta cerca de su
+   toma del panel de red (pared izquierda, al final de la mesada), según el "Mapa de la red"
+   colgado al lado: C3 = R1, C2 = R4, C5 = R6. Luz verde o roja en cada toma.
+3. **Computadoras** (`ComputadoraSala`, `ControlComputadoras`): C1 (pantalla azul) y C4
+   (sin señal) son señuelos. Con su cable conectado, C2, C3 y C5 muestran su IP y un
+   fragmento de la clave.
+4. **Consola** (`ConsolaAcceso`): teclado hexadecimal; pide los fragmentos ordenados por IP
+   de menor a mayor: C5 (.11) = 7, C3 (.14) = E, C2 (.27) = 4 → clave `7E4` (asset
+   `Cuarto3_Consola`). Luces en cascada y se abre la puerta al Laboratorio.
+Susto (`SustoSillas`, versión segura): tocar o pasar junto a S1, S2 o S3. Su luz
+ambiental la pone `ClimaCuarto` (noche → luz a medida que se prenden lámparas).
+Orden para armar la escena: Cuarto 1 → Cuarto 2 → Cuarto 4 → Cuarto 3.
+
 **Objetos agarrables** (regla para todos los cuartos): agarre firme, como una mano
 que toma bien una herramienta. `XRGrabInteractable` con **punto de agarre fijo**
 (`PuntoDeAgarre` en el builder: mango, cabeza de la llave...), movimiento
@@ -143,11 +170,23 @@ de altura.
   Los carga el builder del cuarto (`Assets/Editor/Cuarto1Builder.cs`): si un
   modelo falta, el builder usa la versión gray box. Nunca colocar arte a mano en
   un cuarto que tiene builder, porque se borra al reconstruirlo.
+- **Modelos de Sketchfab** para lo que Poly Haven no tiene (PC modernas, rack,
+  sillas de oficina, proyector, impresora, pizarra del Cuarto 3): en
+  `Assets/Sketchfab`, formato GLB con texturas de 1k. Son **CC BY**: hay que dar
+  crédito al autor. Cada modelo nuevo se anota en `Assets/Sketchfab/CREDITOS.txt`
+  y esos créditos se muestran en la presentación.
 - **Iluminación horneada.** El builder marca como estático lo que nunca se mueve
   y hornea la luz al final (hay que esperar la barra antes de dar Play). Lo que
   se mueve o cambia (cajones, agarrables, botones, tornillos, puerta) **no** debe
   ser estático: se ilumina con las sondas de luz. Las luces que cambian durante
   el juego (como la de la cerradura) van en tiempo real, no horneadas.
+- **Rendimiento en el Quest.** Presupuesto aproximado: 250 mil triángulos por cuarto y
+  pocas luces en tiempo real. `GestorDeCuartos` (objeto "Optimizacion", menú
+  **Escape Room › Optimizar escena**; lo agrega también el constructor del Cuarto 3) dibuja
+  solo el cuarto del jugador, los de al lado y los que se ven por puertas abiertas. Los FBX
+  de Poly Haven se importan con Mesh LOD (`MallasLivianas`). Antes de sumar un modelo, mirar
+  cuántos triángulos tiene: lo decorativo pesado (plantas, cajas, lámparas de techo) va en
+  versión liviana o armado con piezas.
 - **Sin menús de ayuda.** Las pistas están en el propio cuarto.
 - **Tres sustos que suben de intensidad** (GDD, sección 6): reloj falso, silla y
   mesa de disección. Van en **versión segura**: nunca se activan por chocar con
