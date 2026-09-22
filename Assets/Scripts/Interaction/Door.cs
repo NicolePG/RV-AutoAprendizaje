@@ -43,6 +43,10 @@ public class Door : MonoBehaviour
 
     public bool Abierta { get; private set; }
 
+    // true si la hoja está en su lugar, cerrada del todo (no se ve a través de la puerta).
+    // Mientras se abre o se cierra da false. Lo usa GestorDeCuartos.
+    public bool CerradaDelTodo => Quaternion.Angle(transform.localRotation, rotacionCerrada) < 1f;
+
     Quaternion rotacionCerrada;
 
     void Awake()
