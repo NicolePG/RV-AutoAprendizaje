@@ -1,0 +1,16 @@
+MODELOS 3D DE SKETCHFAB USADOS EN EL JUEGO (Cuarto 3 - Sala de Computación)
+
+Todos tienen licencia Creative Commons Attribution 4.0 (CC BY 4.0):
+se pueden usar gratis, también en proyectos comerciales, siempre que se nombre al autor.
+Licencia: https://creativecommons.org/licenses/by/4.0/
+
+Archivo                  Modelo                  Autor                      Enlace
+desktop_pc.glb           "Desktop PC"            R-LAB (@rakshaan)          https://sketchfab.com/3d-models/desktop-pc-7030da42a907455ea98fabedca0a5192
+server_rack.glb          "Server Rack"           Spellkaze                  https://sketchfab.com/3d-models/server-rack-62f6779cb7e448b19aaf58544c3c7218
+office_chair_modern.glb  "Office Chair Modern"   thethieme                  https://sketchfab.com/3d-models/office-chair-modern-675f34f7304e4d92812a41e9750539aa
+projector.glb            "Projector"             bimadwiananto              https://sketchfab.com/3d-models/projector-ed5e83bc3bf543f599db1ecb4c26cba0
+printer_low_poly.glb     "Printer- Low Poly"     CG Buzz (@Tapan_S)         https://sketchfab.com/3d-models/printer-low-poly-8a3a68f84f4d4a34973b527875a7314b
+whiteboard.glb           "Whiteboard"            tboiston                   https://sketchfab.com/3d-models/whiteboard-d0b05bd140734a799666f0a29e1fe1bb
+
+Se descargaron en formato GLB con texturas de 1k (livianas para el Quest).
+Los modelos y texturas de Poly Haven (Assets/PolyHaven) son CC0: no necesitan crédito.

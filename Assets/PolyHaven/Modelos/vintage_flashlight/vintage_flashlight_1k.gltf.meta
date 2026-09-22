@@ -1,0 +1,47 @@
+fileFormatVersion: 2
+guid: 3218ddee70c6284408a435780bd813a9
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 715df9372183c47e389bb6e19fbc3b52, type: 3}
+  editorImportSettings:
+    generateSecondaryUVSet: 0
+  importSettings:
+    nodeNameMethod: 1
+    animationMethod: 2
+    generateMipMaps: 1
+    texturesReadable: 0
+    defaultMinFilterMode: 9729
+    defaultMagFilterMode: 9729
+    anisotropicFilterLevel: 1
+  instantiationSettings:
+    mask: -1
+    layer: 0
+    skinUpdateWhenOffscreen: 1
+    lightIntensityFactor: 1
+    sceneObjectCreation: 2
+  assetDependencies:
+  - type: 0
+    originalUri: Assets\PolyHaven\Modelos\vintage_flashlight\vintage_flashlight.bin
+    assetPath: Assets\PolyHaven\Modelos\vintage_flashlight\vintage_flashlight.bin
+  - type: 0
+    originalUri: Assets\PolyHaven\Modelos\vintage_flashlight\textures\vintage_flashlight_nor_gl_1k.jpg
+    assetPath: Assets\PolyHaven\Modelos\vintage_flashlight\textures\vintage_flashlight_nor_gl_1k.jpg
+  - type: 0
+    originalUri: Assets\PolyHaven\Modelos\vintage_flashlight\textures\vintage_flashlight_diff_1k.jpg
+    assetPath: Assets\PolyHaven\Modelos\vintage_flashlight\textures\vintage_flashlight_diff_1k.jpg
+  - type: 0
+    originalUri: Assets\PolyHaven\Modelos\vintage_flashlight\textures\vintage_flashlight_arm_1k.jpg
+    assetPath: Assets\PolyHaven\Modelos\vintage_flashlight\textures\vintage_flashlight_arm_1k.jpg
+  - type: 0
+    originalUri: Assets\PolyHaven\Modelos\vintage_flashlight\textures\vintage_flashlight_diff_1k.jpg
+    assetPath: Assets\PolyHaven\Modelos\vintage_flashlight\textures\vintage_flashlight_diff_1k.jpg
+  reportItems:
+  - type: 2
+    code: 20
+    messages:
+    - KHR_materials_specular
