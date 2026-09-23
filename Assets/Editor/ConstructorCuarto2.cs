@@ -772,19 +772,20 @@ public static class ConstructorCuarto2
         // Cuadros. Los de la pared Este miran hacia adentro (-X, o sea giro -90) y el de
         // la pared Sur mira hacia adentro del cuarto (-Z, giro 180).
         //
-        // Los dos primeros usan cuadros de Sketchfab si están bajados (ver
-        // Assets/Sketchfab/PARA_DESCARGAR.txt); si no están, quedan los marcos de
-        // Poly Haven, que es lo que se ve hoy. Poner los archivos y volver a construir
-        // el cuarto alcanza para que aparezcan.
-        if (ModeloSketchfab("cuadro_oleo", p, new Vector3(5.92f, 1.78f, 3.15f), -90f, 0.62f, false) == null)
-            Modelo("hanging_picture_frame_02", p, new Vector3(5.92f, 1.78f, 3.15f), -90f, 0.62f, false);
+        // El cuadro grande es el óleo de Sketchfab (Assets/Sketchfab/cuadro_oleo). Mide
+        // 1,14 x 0,84 m y viene parado, con el frente hacia su +Z, igual que los de Poly
+        // Haven. Va con apoyar en false para que el 1,72 sea el CENTRO del cuadro y no su
+        // borde de abajo: si no, queda colgado casi contra el techo. Si el modelo no está,
+        // queda el marco de Poly Haven de siempre.
+        if (ModeloSketchfab("cuadro_oleo", p, new Vector3(5.92f, 1.72f, 3.15f), -90f, 0.62f, false, false) == null)
+            Modelo("hanging_picture_frame_02", p, new Vector3(5.92f, 1.72f, 3.15f), -90f, 0.62f, false, false);
 
-        if (ModeloSketchfab("cuadro_oleo", p, new Vector3(1.15f, 1.75f, 6.88f), 180f, 0.5f, false) == null)
-            Modelo("hanging_picture_frame_02", p, new Vector3(1.15f, 1.75f, 6.88f), 180f, 0.55f, false);
+        // Los otros dos son marcos de Poly Haven. A propósito no se repite el mismo óleo
+        // tres veces: quedaría de mala calidad que los tres cuadros sean idénticos.
+        Modelo("hanging_picture_frame_02", p, new Vector3(1.15f, 1.7f, 6.88f), 180f, 0.55f, false, false);
+        Modelo("hanging_picture_frame_01", p, new Vector3(5.92f, 1.7f, 6.1f), -90f, 0.5f, false, false);
 
-        Modelo("hanging_picture_frame_01", p, new Vector3(5.92f, 1.72f, 6.1f), -90f, 0.5f, false);
-
-        // Globo terráqueo en el estante, ese toque de oficina de director (opcional)
+        // Globo terráqueo en el estante, ese toque de oficina de director
         ModeloSketchfab("globo_terraqueo", p, new Vector3(5.62f, 1.03f, 1.72f), 0f, 0.3f, false);
 
         // Papelera al lado del escritorio y plantas en las esquinas vacías
