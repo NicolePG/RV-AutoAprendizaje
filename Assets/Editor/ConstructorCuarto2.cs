@@ -20,14 +20,22 @@ using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
 // negro). Los muebles y texturas vienen de Poly Haven si están en el proyecto
 // (carpeta Assets/PolyHaven); si no están, cada mueble tiene una versión simple.
 //
-// El acertijo:
+// El acertijo, paso a paso:
 // 1) El cuarto entra sin energía, a oscuras y con clima de terror. Hay que subir la
-//    llave del tablero eléctrico, junto a la entrada. Ahí se prende todo.
-// 2) Los cinco relojes están parados a las 4:40. La bitácora (sobre el aparador) da
+//    llave del tablero eléctrico, junto a la entrada. Ahí se prende todo, incluido el
+//    televisor de la pared, que muestra el paso siguiente: "VE AL ESCRITORIO".
+// 2) El escritorio está dado vuelta, con la computadora mirando al sillón del director.
+//    En el teclado hay una tecla verde, igual de grande que las demás: al apretarla se
+//    ilumina y recién ahí se prende el monitor con las instrucciones de los relojes.
+// 3) Los cinco relojes están parados a las 4:40. La bitácora (sobre el aparador) da
 //    la hora de cada campana y el orden; la placa del cuadro dice qué reloj es cada
 //    campana. Se gira la manecilla de cada reloj hasta su hora y muestra su dígito.
 //    El reloj D no figura en ninguna lista: es el señuelo y dispara el susto.
-// 3) Los dígitos en el orden de la bitácora dan 3719, que abre la puerta.
+// 4) Con los cuatro relojes en hora, el televisor muestra el código: 3719.
+// 5) El código destraba la cerradura, pero falta la llave: está debajo de uno de los dos
+//    almohadones del sofá, que se corren de costado con un clic. Se la agarra con un clic
+//    (queda en el mando, como en la mano), se va hasta la puerta, aparece la sombra de la
+//    llave en la cerradura, se le hace clic y la llave entra. Girándola se abre la puerta.
 public static class ConstructorCuarto2
 {
     const float ANCHO = 6f;    // eje X: pared Oeste (0) a pared Este (6)
@@ -43,10 +51,15 @@ public static class ConstructorCuarto2
 
     static Material mPared, mParedRelojes, mParedPuerta, mMaderaClara, mPantallaPC, mOro, mTecho, mPiso, mMadera, mNegro, mBlanco, mMetal, mBronce,
                     mEsfera, mVerde, mRojo, mPantalla, mResaltado, mGrieta, mAlfombra,
-                    mPapel, mTela, mLuzTecho, mDigito, mLibroA, mLibroB, mLibroC;
+                    mPapel, mTela, mLuzTecho, mDigito, mLibroA, mLibroB, mLibroC,
+                    mAluminio, mRojoMate, mVidrioApagado, mPantallaTV, mTecla, mTeclaVerde,
+                    mTeclaVerdeOk, mFantasma;
 
-    // Cartel de objetivos: cada paso del acertijo le avisa para que cambie el texto
+    // Televisor del cuarto: cada paso del acertijo le avisa para que cambie el mensaje
     static PanelObjetivo panelObjetivo;
+
+    // Sombra de la llave, que se arma con la puerta y se conecta con la llave del sofa
+    static GameObject fantasmaLlave;
 
     [MenuItem("Escape Room/Construir Cuarto 2")]
     public static void Construir()
@@ -77,10 +90,11 @@ public static class ConstructorCuarto2
         var conEnergia = new List<GameObject>();
 
         ArmarEstructura(estructura.transform, lucesCuarto, conEnergia);
-        ArmarPanelObjetivo(raiz.transform);
+        ArmarTelevisor(raiz.transform, conEnergia);
         ArmarEscritorio(mobiliario.transform, lucesCuarto);
         ArmarAparador(mobiliario.transform);
         ArmarEstanteria(mobiliario.transform);
+        ArmarDecoracion(mobiliario.transform);
         LlaveAutomatica llave = ArmarSala(mobiliario.transform);
 
         conEnergia.AddRange(ArmarRelojes(relojes.transform));
@@ -107,9 +121,12 @@ public static class ConstructorCuarto2
         EditorSceneManager.MarkSceneDirty(raiz.scene);
         Selection.activeGameObject = raiz;
 
-        Debug.Log("Cuarto 2 construido. Primero se sube la llave del tablero, despues se ponen " +
-                  "en hora los relojes A=7, B=1, C=3 y E=9 (el D es el senuelo). " +
-                  "Leidos en el orden de la bitacora (C-A-B-E) dan la clave 3719.");
+        Debug.Log("Cuarto 2 construido. Se sube la llave del tablero (se prende la luz y el " +
+                  "televisor), se aprieta la tecla verde del teclado de la PC (se prende el " +
+                  "monitor), se ponen en hora los relojes A=7, B=1, C=3 y E=9 (el D es el " +
+                  "senuelo) y el televisor muestra la clave 3719. La llave esta debajo del " +
+                  "segundo almohadon del sofa: se la lleva en el mando hasta la puerta y se le " +
+                  "hace clic a la sombra de la llave para encajarla.");
     }
 
     // ------------------------------------------------------------------ estructura
@@ -196,41 +213,60 @@ public static class ConstructorCuarto2
         go.AddComponent<BoxCollider>().size = tamano;
     }
 
-    // ------------------------------------------------------------------ panel de objetivos
+    // ------------------------------------------------------------------ televisor
 
-    // Cartel colgado al lado de la entrada: dice qué hay que hacer ahora y se va
-    // actualizando solo. Es lo primero que se ve al entrar al cuarto.
-    static void ArmarPanelObjetivo(Transform raiz)
+    // Televisor de pantalla plana colgado en la pared, al lado del tablero eléctrico
+    // (antes ahí había un cartel de corcho). Arranca apagado: se prende junto con la luz
+    // del cuarto y desde ahí va diciendo qué hacer. Cuando los cuatro relojes quedan en
+    // hora, muestra el código de la puerta.
+    static void ArmarTelevisor(Transform raiz, List<GameObject> conEnergia)
     {
-        var g = Grupo("Panel_Objetivo", raiz);
-        g.transform.localPosition = new Vector3(0.1f, 1.55f, 1.15f);
-        g.transform.localEulerAngles = new Vector3(0f, 90f, 0f);
+        var g = Grupo("Televisor", raiz);
+        g.transform.localPosition = new Vector3(0.1f, 1.62f, 1.15f);
+        g.transform.localEulerAngles = new Vector3(0f, 90f, 0f);   // colgado en la pared Oeste
 
-        Cubo("Marco", g.transform, Vector3.zero, new Vector3(1.1f, 0.7f, 0.04f), mNegro, true);
-        Cubo("Tablero", g.transform, new Vector3(0f, 0f, 0.022f), new Vector3(1.04f, 0.64f, 0.01f), mBlanco);
-        Texto("Titulo", g.transform, new Vector3(0f, 0.25f, 0.03f), Vector3.zero,
-              "DIRECCION", 0.26f, new Color(0.1f, 0.1f, 0.1f), 0.9f, 0.1f);
-        Cubo("Linea", g.transform, new Vector3(0f, 0.19f, 0.028f), new Vector3(0.9f, 0.004f, 0.002f), mNegro);
+        // Cuerpo: caja negra fina y marco de aluminio, como una pantalla plana de ahora
+        Cubo("Caja", g.transform, new Vector3(0f, 0f, -0.03f), new Vector3(0.94f, 0.54f, 0.05f), mNegro, true);
+        Cubo("Marco", g.transform, Vector3.zero, new Vector3(1.04f, 0.63f, 0.025f), mAluminio, true);
+        Cubo("Soporte_Pared", g.transform, new Vector3(0f, 0f, -0.055f), new Vector3(0.3f, 0.3f, 0.02f), mNegro);
+        // Vidrio apagado: se ve la pantalla negra aunque no haya energía
+        Cubo("Vidrio_Apagado", g.transform, new Vector3(0f, 0f, 0.014f), new Vector3(0.99f, 0.58f, 0.006f), mVidrioApagado);
+        // Piloto de encendido: rojo mientras el televisor está apagado
+        Esfera("Piloto", g.transform, new Vector3(0.47f, -0.29f, 0.016f),
+                              new Vector3(0.014f, 0.014f, 0.014f), mRojo);
 
-        var texto = Texto("Texto_Objetivo", g.transform, new Vector3(0f, -0.06f, 0.03f), Vector3.zero,
-                          "", 0.27f, new Color(0.15f, 0.15f, 0.15f), 0.98f, 0.46f);
+        // Todo lo que se prende cuando vuelve la energía
+        var encendida = Grupo("Encendida", g.transform);
+        Cubo("Pantalla", encendida.transform, new Vector3(0f, 0f, 0.018f), new Vector3(0.97f, 0.57f, 0.006f), mPantallaTV);
+        Cubo("Barra", encendida.transform, new Vector3(0f, 0.2f, 0.023f), new Vector3(0.9f, 0.008f, 0.002f), mVerde);
+        Texto("Titulo", encendida.transform, new Vector3(0f, 0.24f, 0.023f), Vector3.zero,
+              "DIRECCION", 0.28f, new Color(0.5f, 0.92f, 1f), 0.9f, 0.07f);
+        // El piloto verde se ve por encima del rojo cuando el televisor está prendido
+        Esfera("Piloto_Ok", encendida.transform, new Vector3(0.47f, -0.29f, 0.014f),
+               new Vector3(0.016f, 0.016f, 0.016f), mVerde);
+
+        var texto = Texto("Texto_TV", encendida.transform, new Vector3(0f, -0.05f, 0.023f), Vector3.zero,
+                          "", 0.55f, new Color(0.88f, 0.97f, 1f), 0.94f, 0.4f);
         texto.lineSpacing = -12f;
 
-        // Una luz chica para que el cartel se lea aunque el cuarto esté a oscuras
-        LuzPunto("Luz_Panel", g.transform, new Vector3(0f, 0.1f, 0.5f), new Color(1f, 0.95f, 0.85f), 1.4f, 1.6f);
+        // Un poco de luz propia, como la que tira un televisor encendido
+        LuzPunto("Luz_TV", encendida.transform, new Vector3(0f, 0f, 0.45f),
+                 new Color(0.6f, 0.85f, 1f), 1.5f, 2.4f);
+
+        encendida.SetActive(false);
+        conEnergia.Add(encendida);
 
         panelObjetivo = g.AddComponent<PanelObjetivo>();
         panelObjetivo.texto = texto;
         panelObjetivo.pasos = new[]
         {
-            "SIN ENERGIA\n\nSube la llave del tablero, junto a la puerta.\nEn el escritorio hay una computadora:\nel boton verde muestra que hay que hacer.",
-            "VOLVIO LA LUZ\n\nLos cinco relojes quedaron parados\na las 4:40, la hora del apagon.\nBusca la bitacora sobre el aparador.",
-            "HAY QUE PONERLOS EN HORA\n\nLa bitacora dice a que hora suena\ncada campana. La placa del cuadro dice\nque reloj es cada una. Gira las manecillas.",
-            "BIEN\n\nCada reloj en hora muestra su numero.\nSegui con los demas y marca el codigo\nen el orden que dice la bitacora.",
-            "CODIGO ACEPTADO\n\nFalta la llave: el cuaderno del\nestante dice donde esta.\nTocala, traela y girala en la cerradura.",
-            "PUERTA ABIERTA\n\nAntes de salir: el cajon del escritorio\nesta tapado por una chapa con tres tornillos.\nSacalos, abri el cajon y llevate el medallon."
+            "",
+            "VE AL ESCRITORIO\n\nPrende la computadora\ncon la tecla verde.",
+            "<size=70%>CODIGO DE LA PUERTA</size>\n\n<size=210%>3 7 1 9</size>",
+            "CODIGO ACEPTADO\n\nFalta la llave. El cuaderno\ndel estante dice donde esta.",
+            "PUERTA ABIERTA\n\nSacale los tornillos a la chapa\ndel cajon y llevate el medallon."
         };
-        texto.text = panelObjetivo.pasos[0];   // así ya se ve en el editor, sin darle Play
+        texto.text = panelObjetivo.pasos[1];   // así se ve algo en el editor, sin darle Play
         EditorUtility.SetDirty(panelObjetivo);
     }
 
@@ -244,27 +280,50 @@ public static class ConstructorCuarto2
     // ------------------------------------------------------------------ tablero eléctrico
 
     // El primer paso del cuarto: sin esta llave no hay luz, ni relojes, ni teclado.
+    // Es un tablero moderno: gabinete embutido de chapa blanca, frente de aluminio, la
+    // fila de térmicas y abajo la llave general grande, que es la que hay que subir.
     static void ArmarTablero(Transform raiz, ControlEnergia control)
     {
         var g = Grupo("Tablero_Electrico", raiz);
-        g.transform.localPosition = new Vector3(0.42f, 1.35f, 0.07f);
+        g.transform.localPosition = new Vector3(0.42f, 1.33f, 0.07f);
 
-        Cubo("Caja", g.transform, Vector3.zero, new Vector3(0.34f, 0.44f, 0.1f), mBlanco, true);
-        Cubo("Frente", g.transform, new Vector3(0f, 0f, 0.052f), new Vector3(0.29f, 0.39f, 0.01f), mNegro);
-        Texto("Titulo", g.transform, new Vector3(0f, 0.15f, 0.06f), Vector3.zero,
-              "TABLERO", 0.16f, new Color(0.85f, 0.85f, 0.8f), 0.28f, 0.08f);
+        Cubo("Gabinete", g.transform, Vector3.zero, new Vector3(0.44f, 0.56f, 0.1f), mBlanco, true);
+        Cubo("Frente", g.transform, new Vector3(0f, 0f, 0.052f), new Vector3(0.4f, 0.52f, 0.008f), mAluminio);
 
-        // El piloto rojo es emisivo, así se lo ve aunque el cuarto esté a oscuras
-        var pilotoRojo = Esfera("Piloto_Sin_Energia", g.transform, new Vector3(0.09f, 0.04f, 0.055f),
-                                new Vector3(0.045f, 0.045f, 0.045f), mRojo);
-        var pilotoVerde = Esfera("Piloto_Con_Energia", g.transform, new Vector3(-0.09f, 0.04f, 0.055f),
-                                 new Vector3(0.045f, 0.045f, 0.045f), mVerde);
+        // Franja con el nombre, arriba de todo
+        Cubo("Franja", g.transform, new Vector3(0f, 0.22f, 0.057f), new Vector3(0.4f, 0.05f, 0.003f), mNegro);
+        Texto("Titulo", g.transform, new Vector3(0f, 0.22f, 0.06f), Vector3.zero,
+              "TABLERO GENERAL", 0.13f, new Color(0.88f, 0.88f, 0.86f), 0.38f, 0.045f);
+
+        // Fila de térmicas sobre su riel: solo decoran, le dan el aspecto de uno de verdad
+        Cubo("Riel", g.transform, new Vector3(0f, 0.1f, 0.056f), new Vector3(0.34f, 0.15f, 0.004f), mNegro);
+        for (int i = 0; i < 6; i++)
+        {
+            Cubo("Termica_" + (i + 1), g.transform, new Vector3(-0.125f + i * 0.05f, 0.1f, 0.062f),
+                 new Vector3(0.042f, 0.13f, 0.014f), mMetal);
+            Cubo("Palanquita_" + (i + 1), g.transform, new Vector3(-0.125f + i * 0.05f, 0.135f, 0.07f),
+                 new Vector3(0.022f, 0.035f, 0.012f), mNegro);
+        }
+
+        // Cartel del cuarto. Con el televisor apagado es lo único que se lee a oscuras,
+        // así que va en ámbar emisivo: se ve solo, sin que le pegue ninguna luz.
+        Cubo("Aviso", g.transform, new Vector3(0f, -0.02f, 0.056f), new Vector3(0.36f, 0.055f, 0.003f), mNegro);
+        Texto("Texto_Aviso", g.transform, new Vector3(0f, -0.02f, 0.059f), Vector3.zero,
+              "SIN ENERGIA - SUBE LA LLAVE", 0.085f, new Color(1f, 0.72f, 0.15f), 0.36f, 0.05f);
+
+        // Los pilotos son emisivos, así se los ve aunque el cuarto esté a oscuras
+        var pilotoRojo = Esfera("Piloto_Sin_Energia", g.transform, new Vector3(0.15f, -0.15f, 0.058f),
+                                new Vector3(0.036f, 0.036f, 0.036f), mRojo);
+        var pilotoVerde = Esfera("Piloto_Con_Energia", g.transform, new Vector3(-0.15f, -0.15f, 0.058f),
+                                 new Vector3(0.036f, 0.036f, 0.036f), mVerde);
         pilotoVerde.SetActive(false);
 
         var audio = AudioEn("Audio_Llave", g.transform);
 
-        var llave = Cubo("Llave_General", g.transform, new Vector3(0f, -0.1f, 0.075f),
-                         new Vector3(0.08f, 0.15f, 0.06f), mBronce, true);
+        // La llave general: cuerpo negro fijo y palanca roja, que es la parte que se mueve
+        Cubo("Base_Llave", g.transform, new Vector3(0f, -0.15f, 0.058f), new Vector3(0.17f, 0.17f, 0.012f), mNegro);
+        var llave = Cubo("Llave_General", g.transform, new Vector3(0f, -0.14f, 0.082f),
+                         new Vector3(0.085f, 0.13f, 0.05f), mRojoMate, true);
         llave.AddComponent<XRSimpleInteractable>();
         var boton = llave.AddComponent<PressableButton>();
         boton.parteMovil = llave.transform;
@@ -276,6 +335,7 @@ public static class ConstructorCuarto2
         UnityEventTools.AddBoolPersistentListener(boton.alPresionar, new UnityAction<bool>(pilotoVerde.SetActive), true);
         UnityEventTools.AddBoolPersistentListener(boton.alPresionar, new UnityAction<bool>(pilotoRojo.SetActive), false);
         UnityEventTools.AddVoidPersistentListener(boton.alPresionar, new UnityAction(audio.Play));
+        // El televisor se prende con la energía y muestra el primer mensaje
         AvisarPanel(boton.alPresionar, 1);
         EditorUtility.SetDirty(boton);
     }
@@ -286,6 +346,10 @@ public static class ConstructorCuarto2
     {
         var g = Grupo("Escritorio", p);
         g.transform.localPosition = new Vector3(1.5f, 0f, 2.6f);
+        // Dado vuelta: la computadora, el teclado y el cajon quedan del lado del sillon
+        // del director, como en una oficina de verdad. El jugador tiene que pasar detras
+        // del escritorio para usarlos. Todo lo que cuelga del grupo se da vuelta con el.
+        g.transform.localEulerAngles = new Vector3(0f, 180f, 0f);
 
         // Tablero de nogal sobre patas de acero negro en forma de U
         Cubo("Tablero", g.transform, new Vector3(0f, 0.74f, 0f), new Vector3(1.8f, 0.04f, 0.85f), mMadera, true);
@@ -364,9 +428,13 @@ public static class ConstructorCuarto2
         Modelo("desk_lamp_arm_01", g.transform, new Vector3(0.6f, 0.76f, 0.22f), 200f, 0.88f, false);
         Modelo("potted_plant_04", g.transform, new Vector3(-0.78f, 0.76f, 0.28f), 0f, 0.27f, false);
 
-        // Sillón del director, detrás del escritorio
-        if (Modelo("mid_century_lounge_chair", p, new Vector3(1.5f, 0f, 3.6f), 180f, 1.17f, true) == null)
-            SillaSimple(p, new Vector3(1.5f, 0f, 3.5f));
+        // Sillon del director, detras del escritorio y mirandolo. Se corrio un poco mas
+        // atras que antes para que quede lugar donde pararse entre el escritorio y el.
+        // Primero la silla de oficina con rueditas de Sketchfab (la que trajo el Cuarto 3),
+        // que es la que mejor pega en una direccion; si no esta, la butaca de Poly Haven.
+        if (ModeloSketchfab("office_chair_modern", p, new Vector3(1.5f, 0f, 4.05f), 180f, 1.1f, true) == null &&
+            Modelo("mid_century_lounge_chair", p, new Vector3(1.5f, 0f, 4.05f), 180f, 1.17f, true) == null)
+            SillaSimple(p, new Vector3(1.5f, 0f, 4.05f));
 
         // Lámpara colgante sobre el escritorio: su luz es una de las del cuarto
         if (Modelo("modern_ceiling_lamp_01", p, new Vector3(1.5f, ALTO - 0.95f, 2.6f), 0f, 0.95f, false) == null)
@@ -380,65 +448,109 @@ public static class ConstructorCuarto2
                                  new Color(1f, 0.85f, 0.65f), 2.2f, 5f));
     }
 
-    // Computadora del escritorio. El botón verde, más grande que el resto de los
-    // botones del cuarto, cambia la pantalla entre el aviso y las instrucciones.
+    // Computadora del escritorio, mirando al sillon del director.
+    //
+    // La pantalla arranca APAGADA: hay que encontrar la tecla verde del teclado, que es
+    // igual de grande que todas las demas, y apretarla. Ahi la tecla queda iluminada de
+    // verde y recien entonces se prende el monitor con las instrucciones de los relojes.
     static void ArmarComputadora(Transform escritorio)
     {
         var pc = Grupo("Computadora", escritorio);
         pc.transform.localPosition = new Vector3(0.28f, 0.768f, 0.16f);
-        pc.transform.localEulerAngles = new Vector3(-6f, 0f, 0f);
+        pc.transform.localEulerAngles = new Vector3(6f, 0f, 0f);   // apenas echada hacia atras
 
-        Cubo("Base", pc.transform, new Vector3(0f, 0.008f, 0f), new Vector3(0.24f, 0.016f, 0.15f), mNegro, true);
-        Cubo("Cuello", pc.transform, new Vector3(0f, 0.09f, 0.01f), new Vector3(0.05f, 0.18f, 0.03f), mNegro);
-        Cubo("Marco", pc.transform, new Vector3(0f, 0.34f, 0.005f), new Vector3(0.72f, 0.44f, 0.02f), mNegro, true);
-        Cubo("Pantalla", pc.transform, new Vector3(0f, 0.34f, -0.007f), new Vector3(0.68f, 0.4f, 0.004f), mPantallaPC);
+        // Monitor de marco finito sobre pie de aluminio, como los de ahora
+        Cubo("Pie", pc.transform, new Vector3(0f, 0.008f, 0f), new Vector3(0.26f, 0.016f, 0.16f), mAluminio, true);
+        Cubo("Cuello", pc.transform, new Vector3(0f, 0.09f, 0.012f), new Vector3(0.045f, 0.18f, 0.025f), mAluminio);
+        Cubo("Marco", pc.transform, new Vector3(0f, 0.34f, 0.006f), new Vector3(0.72f, 0.44f, 0.018f), mNegro, true);
+        // Vidrio apagado: se ve el monitor negro hasta que alguien lo prende
+        Cubo("Vidrio_Apagado", pc.transform, new Vector3(0f, 0.34f, -0.005f), new Vector3(0.69f, 0.41f, 0.004f), mVidrioApagado);
 
-        // Mensaje de espera, corto y grande para que se lea desde el escritorio
-        var espera = Texto("Texto_Espera", pc.transform, new Vector3(0f, 0.34f, -0.012f), new Vector3(0f, 180f, 0f),
-                           "DIRECCION\n\nPULSA EL BOTON VERDE",
-                           0.42f, new Color(0.55f, 0.95f, 1f), 0.66f, 0.38f);
-        espera.lineSpacing = -14f;
+        // Todo lo que se ve con la computadora prendida
+        var encendida = Grupo("Encendida", pc.transform);
+        Cubo("Pantalla", encendida.transform, new Vector3(0f, 0.34f, -0.008f), new Vector3(0.68f, 0.4f, 0.004f), mPantallaPC);
 
-        // Las pistas: pocas líneas y letra grande, en la misma pantalla
-        var pistas = Texto("Texto_Pistas", pc.transform, new Vector3(0f, 0.34f, -0.012f), new Vector3(0f, 180f, 0f),
-                           "RELOJES DETENIDOS 4:40\n\n" +
+        // Las instrucciones de los relojes: pocas lineas y letra grande. Ya no dice a que
+        // hora quedaron parados; eso se ve en los relojes mismos.
+        var pistas = Texto("Texto_Pistas", encendida.transform, new Vector3(0f, 0.34f, -0.012f), new Vector3(0f, 180f, 0f),
                            "Move la aguja corta de\n" +
                            "cada reloj hasta su hora.\n\n" +
                            "Los numeros que salen son\n" +
                            "el codigo de la puerta.",
-                           0.34f, new Color(0.8f, 0.97f, 1f), 0.66f, 0.38f);
+                           0.36f, new Color(0.8f, 0.97f, 1f), 0.66f, 0.38f);
         pistas.lineSpacing = -16f;
-        pistas.gameObject.SetActive(false);
 
-        // Teclado de la computadora, con sus teclas chiquitas
+        // Luz de la pantalla prendida, para que se note desde lejos que algo cambio
+        LuzPunto("Luz_Pantalla", encendida.transform, new Vector3(0f, 0.34f, -0.3f),
+                 new Color(0.6f, 0.85f, 1f), 1.1f, 1.6f);
+        encendida.SetActive(false);
+
+        ArmarTecladoPC(escritorio, encendida);
+    }
+
+    // Teclado de la computadora: bandeja de aluminio y teclas chatas separadas, como los
+    // teclados de ahora. Una de las teclas es verde y es la que prende el monitor: mide
+    // exactamente lo mismo que las demas, asi que hay que buscarla con la vista.
+    static void ArmarTecladoPC(Transform escritorio, GameObject pantallaEncendida)
+    {
+        const int FILAS = 5, COLUMNAS = 14;
+        const float PASO_X = 0.0315f, PASO_Z = 0.026f;
+        const float TECLA_X = 0.026f, TECLA_Z = 0.021f, TECLA_Y = 0.007f;
+
         var teclado = Grupo("Teclado_PC", escritorio);
-        teclado.transform.localPosition = new Vector3(0.28f, 0.772f, -0.12f);
-        Cubo("Base", teclado.transform, Vector3.zero, new Vector3(0.44f, 0.015f, 0.18f), mNegro);
-        for (int fila = 0; fila < 3; fila++)
-            for (int col = 0; col < 12; col++)
-                Cubo("Tecla", teclado.transform,
-                     new Vector3(-0.19f + col * 0.0345f, 0.011f, -0.05f + fila * 0.032f),
-                     new Vector3(0.028f, 0.006f, 0.026f), mMetal);
+        teclado.transform.localPosition = new Vector3(0.28f, 0.772f, -0.14f);
+        teclado.transform.localEulerAngles = new Vector3(-3f, 0f, 0f);   // apenas levantado atras
 
-        // El botón de las pistas: va en el teclado, mucho más grande que las teclas
-        var boton = Cilindro("Boton_Pistas", teclado.transform, new Vector3(0.14f, 0.014f, 0.055f),
-                             new Vector3(0.08f, 0.012f, 0.08f), mVerde, true);
-        // Acostada sobre el teclado: -90 en X la deja mirando para arriba y los 180 en Y
-        // hacen que los renglones queden derechos para el que está parado frente al escritorio
-        Texto("Etiqueta", teclado.transform, new Vector3(-0.02f, 0.012f, 0.055f), new Vector3(-90f, 180f, 0f),
-              "PISTAS >", 0.12f, new Color(0.85f, 0.9f, 0.9f), 0.22f, 0.03f);
+        Cubo("Bandeja", teclado.transform, Vector3.zero, new Vector3(0.47f, 0.014f, 0.17f), mAluminio, true);
+        Cubo("Canto", teclado.transform, new Vector3(0f, -0.006f, 0f), new Vector3(0.48f, 0.008f, 0.18f), mNegro);
+        Cubo("Hueco", teclado.transform, new Vector3(0f, 0.0075f, -0.004f), new Vector3(0.45f, 0.002f, 0.145f), mNegro);
 
-        boton.AddComponent<XRSimpleInteractable>();
-        var pulsador = boton.AddComponent<PressableButton>();
-        pulsador.parteMovil = boton.transform;
-        pulsador.recorrido = 0.008f;
-        Resaltar(boton, boton.GetComponent<Renderer>());
+        // La tecla verde va arriba a la derecha del que escribe. El jugador mira el
+        // escritorio desde el lado del sillon, asi que su derecha es el +X del teclado.
+        const int FILA_VERDE = 4, COLUMNA_VERDE = 13;
 
-        var alternar = pc.AddComponent<AlternarObjetos>();
-        alternar.objetos = new[] { espera.gameObject, pistas.gameObject };
-        UnityEventTools.AddVoidPersistentListener(pulsador.alPresionar, new UnityAction(alternar.Alternar));
-        EditorUtility.SetDirty(pulsador);
-        EditorUtility.SetDirty(alternar);
+        float x0 = -(COLUMNAS - 1) * PASO_X / 2f;
+        float z0 = -(FILAS - 1) * PASO_Z / 2f;
+        GameObject teclaVerde = null;
+
+        for (int fila = 0; fila < FILAS; fila++)
+            for (int col = 0; col < COLUMNAS; col++)
+            {
+                bool esLaVerde = fila == FILA_VERDE && col == COLUMNA_VERDE;
+                var tecla = Cubo(esLaVerde ? "Tecla_Verde" : "Tecla", teclado.transform,
+                                 new Vector3(x0 + col * PASO_X, 0.0105f, z0 + fila * PASO_Z),
+                                 new Vector3(TECLA_X, TECLA_Y, TECLA_Z),
+                                 esLaVerde ? mTeclaVerde : mTecla, esLaVerde);
+                if (esLaVerde) teclaVerde = tecla;
+            }
+
+        // Barra espaciadora, para que se vea como un teclado y no como una grilla
+        Cubo("Barra_Espacio", teclado.transform, new Vector3(-0.01f, 0.0105f, z0 - PASO_Z),
+             new Vector3(PASO_X * 5f, TECLA_Y, TECLA_Z), mTecla);
+
+        // La misma tecla pero iluminada: arranca escondida y aparece al apretarla
+        var teclaEncendida = Cubo("Tecla_Verde_Encendida", teclado.transform,
+                                  teclaVerde.transform.localPosition,
+                                  new Vector3(TECLA_X, TECLA_Y, TECLA_Z), mTeclaVerdeOk);
+        teclaEncendida.SetActive(false);
+        var luzTecla = LuzApagada("Luz_Tecla", teclado.transform,
+                                  teclaVerde.transform.localPosition + new Vector3(0f, 0.05f, 0f),
+                                  new Color(0.35f, 1f, 0.45f), 1.2f, 0.35f);
+
+        var audio = AudioEn("Audio_Tecla", teclado.transform);
+
+        teclaVerde.AddComponent<XRSimpleInteractable>();
+        var boton = teclaVerde.AddComponent<PressableButton>();
+        boton.parteMovil = teclaVerde.transform;
+        boton.recorrido = 0.004f;
+        Resaltar(teclaVerde, teclaVerde.GetComponent<Renderer>());
+
+        // Apretar la tecla correcta: se ilumina de verde y se prende el monitor
+        UnityEventTools.AddBoolPersistentListener(boton.alPresionar, new UnityAction<bool>(teclaEncendida.SetActive), true);
+        UnityEventTools.AddBoolPersistentListener(boton.alPresionar, new UnityAction<bool>(luzTecla.SetActive), true);
+        UnityEventTools.AddBoolPersistentListener(boton.alPresionar, new UnityAction<bool>(pantallaEncendida.SetActive), true);
+        UnityEventTools.AddVoidPersistentListener(boton.alPresionar, new UnityAction(audio.Play));
+        EditorUtility.SetDirty(boton);
     }
 
     // Chapa atornillada que tapa el cajón del escritorio. Cada tornillo se saca con un
@@ -545,10 +657,10 @@ public static class ConstructorCuarto2
                         0.155f, new Color(0.15f, 0.12f, 0.1f), 0.35f, 0.28f);
         txt.lineSpacing = -12f;
 
-        // Tocar la bitácora cuenta como haberla leído: el cartel pasa al paso siguiente
+        // Se la puede tocar para que se resalte, pero ya no cambia el televisor: el
+        // televisor pasa al codigo recien cuando los cuatro relojes estan en hora
         var interBitacora = bitacora.AddComponent<XRSimpleInteractable>();
         Resaltar(bitacora, bitacora.transform.Find("Tapa").GetComponent<Renderer>());
-        AvisarPanel(interBitacora.selectEntered, 2);
         EditorUtility.SetDirty(interBitacora);
 
         // El cuadro colgado sobre el aparador, y debajo la placa con la otra pista
@@ -646,6 +758,39 @@ public static class ConstructorCuarto2
         Resaltar(g, g.transform.Find("Tapa").GetComponent<Renderer>());
     }
 
+    // ------------------------------------------------------------------ decoración
+
+    // Lo que termina de darle cara de oficina de director: cuadros en las paredes, una
+    // alfombra bajo el escritorio, la papelera, plantas y las cosas de seguridad del
+    // colegio. Nada de esto se toca ni entra en el acertijo, solo decora.
+    static void ArmarDecoracion(Transform p)
+    {
+        // Alfombra grande debajo del escritorio y del sillón
+        Cubo("Alfombra_Escritorio", p, new Vector3(1.85f, 0.005f, 3.1f),
+             new Vector3(2.5f, 0.01f, 2.4f), mAlfombra);
+
+        // Cuadros. Los de la pared Este miran hacia adentro (-X, o sea giro -90) y el de
+        // la pared Sur mira hacia adentro del cuarto (-Z, giro 180).
+        Modelo("hanging_picture_frame_02", p, new Vector3(5.92f, 1.78f, 3.15f), -90f, 0.62f, false);
+        Modelo("hanging_picture_frame_01", p, new Vector3(5.92f, 1.72f, 6.1f), -90f, 0.5f, false);
+        Modelo("hanging_picture_frame_02", p, new Vector3(1.15f, 1.75f, 6.88f), 180f, 0.55f, false);
+
+        // Papelera al lado del escritorio y plantas en las esquinas vacías
+        Modelo("metal_trash_can", p, new Vector3(2.75f, 0f, 3.25f), 20f, 0.42f, false);
+        Modelo("potted_plant_02", p, new Vector3(5.4f, 0f, 0.75f), 0f, 0.95f, true);
+        Modelo("ceramic_vase_01", p, new Vector3(4.3f, 0.37f, 4.6f), 0f, 0.26f, false);
+
+        // Cosas de seguridad del colegio: extintor y alarma cerca de la salida, y la
+        // cámara en la esquina de arriba, mirando al cuarto
+        Modelo("korean_fire_extinguisher_01", p, new Vector3(2.15f, 0f, 6.72f), 180f, 0.55f, false);
+        // Al otro extremo de la pared Norte: en el medio están los cinco relojes
+        Modelo("fire_alarm", p, new Vector3(5.55f, 1.85f, 0.09f), 0f, 0.17f, false);
+        Modelo("security_camera_01", p, new Vector3(5.75f, 2.78f, 0.35f), 215f, 0.18f, false);
+
+        // Impresora sobre el aparador, en el hueco que queda entre la bitácora y la ballena
+        ModeloSketchfab("printer_low_poly", p, new Vector3(0.32f, 0.68f, 4.8f), 90f, 0.26f, false);
+    }
+
     // ------------------------------------------------------------------ sala de estar
 
     // Rincón con sofá y mesa ratona, del lado Este: le da vida al cuarto
@@ -687,7 +832,7 @@ public static class ConstructorCuarto2
         // Va apenas por encima del collider del sofá, así el rayo del control la toca
         // a ella y no al mueble: ese era el motivo por el que no se la podía agarrar.
         var llave = Grupo("Llave_Salida", p);
-        llave.transform.localPosition = new Vector3(5.45f, 0.45f, 4.95f);
+        llave.transform.localPosition = new Vector3(5.45f, 0.44f, 4.95f);
         llave.transform.localEulerAngles = new Vector3(0f, 25f, 0f);
 
         // Acostada: la cabeza es un disco plano y el vástago va a lo largo de la Z
@@ -710,21 +855,27 @@ public static class ConstructorCuarto2
         Resaltar(llave, llave.transform.Find("Cabeza").GetComponent<Renderer>());
         EditorUtility.SetDirty(llaveAutomatica);
 
-        // Dos almohadones que se pueden levantar: debajo del segundo está la llave.
-        // Son esferas achatadas, que quedan con forma de almohadón y no de cubo.
-        float[] zAlmohadones = { 4.25f, 4.95f };
+        // Dos almohadones grandes, uno al lado del otro: debajo del segundo esta la llave.
+        // Al hacerles clic se DESLIZAN de costado sobre el asiento, cada uno hacia su punta
+        // del sofa. Antes eran agarrables y volaban hacia el jugador, que no era la idea.
+        // El primero no tapa nada: la gracia es que haya que probar los dos.
+        float[] zAlmohadones = { 4.35f, 4.95f };
         for (int i = 0; i < zAlmohadones.Length; i++)
         {
-            var almohadon = Esfera("Almohadon_" + (i + 1), p, new Vector3(5.45f, 0.54f, zAlmohadones[i]),
-                                   new Vector3(0.46f, 0.18f, 0.44f), mTela, true);
+            // Sin collider automatico: el de la esfera es una bola del tamano del lado mas
+            // largo y se comia media llave. Se le pone una caja a medida.
+            var almohadon = Esfera("Almohadon_" + (i + 1), p, new Vector3(5.45f, 0.53f, zAlmohadones[i]),
+                                   new Vector3(0.56f, 0.24f, 0.5f), mTela);
             almohadon.transform.localEulerAngles = new Vector3(0f, 0f, i == 0 ? 4f : -5f);
+            almohadon.AddComponent<BoxCollider>().size = Vector3.one;
 
-            var grabCojin = almohadon.AddComponent<XRGrabInteractable>();
-            grabCojin.farAttachMode = InteractableFarAttachMode.Near;
-            var rbCojin = almohadon.GetComponent<Rigidbody>();
-            if (rbCojin != null) { rbCojin.isKinematic = true; rbCojin.useGravity = false; }
+            almohadon.AddComponent<XRSimpleInteractable>();
+            var deslizar = almohadon.AddComponent<CojinDeslizante>();
+            // Se corren a lo largo del sofa, cada uno para su lado, sin caerse del asiento
+            deslizar.direccion = new Vector3(0f, 0f, i == 0 ? -1f : 1f);
+            deslizar.distancia = 0.42f;
             Resaltar(almohadon, almohadon.GetComponent<Renderer>());
-            EditorUtility.SetDirty(grabCojin);
+            EditorUtility.SetDirty(deslizar);
         }
 
         return llaveAutomatica;
@@ -746,18 +897,25 @@ public static class ConstructorCuarto2
         // y el jugador los mira desde adentro del cuarto, o sea mirando hacia -Z.
         // Desde ahí su derecha es -X, así que el reloj con la X más grande es el que
         // se ve más a la izquierda. Puestos así, se leen A B C D E de izquierda a derecha.
-        caras.Add(Reloj(p, "Reloj_A", 4.8f, "A", 7, false));
-        caras.Add(Reloj(p, "Reloj_B", 4.2f, "B", 1, false));
-        caras.Add(Reloj(p, "Reloj_C", 3.6f, "C", 3, false));
-        caras.Add(Reloj(p, "Reloj_D", 3.0f, "D", 0, true));
-        caras.Add(Reloj(p, "Reloj_E", 2.4f, "E", 9, false));
+        // Cuenta los cuatro relojes buenos. Recien cuando estan los cuatro en hora el
+        // televisor muestra el codigo: si avisara con el primero, se saltearia el acertijo.
+        var contador = p.gameObject.AddComponent<ContadorPasos>();
+        contador.total = 4;
+        AvisarPanel(contador.alCompletar, 2);
+        EditorUtility.SetDirty(contador);
+
+        caras.Add(Reloj(p, "Reloj_A", 4.8f, "A", 7, false, contador));
+        caras.Add(Reloj(p, "Reloj_B", 4.2f, "B", 1, false, contador));
+        caras.Add(Reloj(p, "Reloj_C", 3.6f, "C", 3, false, contador));
+        caras.Add(Reloj(p, "Reloj_D", 3.0f, "D", 0, true, null));
+        caras.Add(Reloj(p, "Reloj_E", 2.4f, "E", 9, false, contador));
         return caras;
     }
 
     // horaObjetivo es la hora a la que hay que dejarlo (y también el dígito que entrega).
     // En el señuelo va 0: ese no se resuelve, solo dispara el susto.
     static GameObject Reloj(Transform p, string nombre, float x, string letra,
-                            int horaObjetivo, bool senuelo)
+                            int horaObjetivo, bool senuelo, ContadorPasos contador)
     {
         const float HORA_APAGON = 4.67f;   // todos arrancan parados a las 4:40
         const float MINUTOS_APAGON = 40f;
@@ -872,7 +1030,9 @@ public static class ConstructorCuarto2
 
             UnityEventTools.AddBoolPersistentListener(manecilla.alPonerEnHora, new UnityAction<bool>(luzOk.SetActive), true);
             UnityEventTools.AddBoolPersistentListener(manecilla.alPonerEnHora, new UnityAction<bool>(chapa.SetActive), true);
-            AvisarPanel(manecilla.alPonerEnHora, 3);
+            // Le avisa al contador: cuando esten los cuatro, el televisor muestra el codigo
+            if (contador != null)
+                UnityEventTools.AddVoidPersistentListener(manecilla.alPonerEnHora, new UnityAction(contador.Contar));
         }
 
         cara.SetActive(false);
@@ -947,7 +1107,7 @@ public static class ConstructorCuarto2
         // El código ya no abre la puerta: habilita la cerradura, que además pide la llave
         if (cerradura != null)
             UnityEventTools.AddVoidPersistentListener(keypad.alResolverse, new UnityAction(cerradura.Habilitar));
-        AvisarPanel(keypad.alResolverse, 4);
+        AvisarPanel(keypad.alResolverse, 3);
 
         UnityEventTools.AddBoolPersistentListener(keypad.alError, new UnityAction<bool>(luzMal.SetActive), true);
         UnityEventTools.AddVoidPersistentListener(keypad.alError, new UnityAction(audioMal.Play));
@@ -977,17 +1137,19 @@ public static class ConstructorCuarto2
         Texto("Texto_Cartel", g.transform, new Vector3(ancho / 2f, ALTO_PUERTA + 0.26f, -0.12f),
               new Vector3(0f, 180f, 0f), "SALIDA", 0.14f, new Color(0.4f, 1f, 0.5f), 0.5f, 0.15f);
 
-        // Aviso al costado de la puerta: avisa que ademas del codigo hace falta la llave
+        // Aviso al costado de la puerta: avisa que ademas del codigo hace falta la llave.
+        // Es un cuadrito chico y corrido hacia la esquina: el teclado del codigo esta del
+        // otro lado del vano y antes se chocaban. Ahora quedan a mas de medio metro.
         var aviso = Grupo("Aviso_Llave", g.transform);
-        aviso.transform.localPosition = new Vector3(-1.05f, 1.55f, -0.08f);
+        aviso.transform.localPosition = new Vector3(-1.55f, 1.42f, -0.08f);
         aviso.transform.localEulerAngles = new Vector3(0f, 180f, 0f);
-        Cubo("Marco", aviso.transform, Vector3.zero, new Vector3(0.82f, 0.5f, 0.03f), mNegro, true);
+        Cubo("Marco", aviso.transform, Vector3.zero, new Vector3(0.46f, 0.29f, 0.025f), mNegro, true);
         // El cartel esta girado 180, asi que lo que va "adelante" (hacia el cuarto) lleva
         // z positivo. Con z negativo el papel y el texto quedaban detras del marco y no se veian.
-        Cubo("Papel", aviso.transform, new Vector3(0f, 0f, 0.018f), new Vector3(0.76f, 0.44f, 0.005f), mPapel);
-        var textoAviso = Texto("Texto_Aviso", aviso.transform, new Vector3(0f, 0f, 0.024f), Vector3.zero,
+        Cubo("Papel", aviso.transform, new Vector3(0f, 0f, 0.015f), new Vector3(0.42f, 0.25f, 0.004f), mPapel);
+        var textoAviso = Texto("Texto_Aviso", aviso.transform, new Vector3(0f, 0f, 0.02f), Vector3.zero,
                                "FALTA LA LLAVE\n\nVe al estante",
-                               0.52f, new Color(0.2f, 0.17f, 0.15f), 0.72f, 0.4f);
+                               0.29f, new Color(0.2f, 0.17f, 0.15f), 0.42f, 0.24f);
         textoAviso.lineSpacing = -12f;
 
         var bisagra = Grupo("Bisagra", g.transform);
@@ -1034,6 +1196,23 @@ public static class ConstructorCuarto2
         var ranura = Grupo("Ranura_Llave", cerradura.transform);
         ranura.transform.localPosition = new Vector3(0f, 0.02f, -0.06f);
 
+        // Sombra de la llave: una copia transparente, en el lugar exacto donde va la llave.
+        // Arranca escondida y aparece sola cuando el jugador llega con la llave en el mando.
+        // Al hacerle clic, la llave entra. Las medidas son las mismas que las de la llave
+        // de verdad (ver ArmarSala), asi que la sombra calza justo con ella.
+        fantasmaLlave = Grupo("Llave_Fantasma", ranura.transform);
+        Cilindro("Cabeza", fantasmaLlave.transform, new Vector3(0f, 0f, -0.075f),
+                 new Vector3(0.08f, 0.005f, 0.08f), mFantasma);
+        Cubo("Vastago", fantasmaLlave.transform, Vector3.zero, new Vector3(0.016f, 0.01f, 0.17f), mFantasma);
+        Cubo("Diente_1", fantasmaLlave.transform, new Vector3(0.026f, 0f, 0.05f), new Vector3(0.036f, 0.01f, 0.016f), mFantasma);
+        Cubo("Diente_2", fantasmaLlave.transform, new Vector3(0.024f, 0f, 0.082f), new Vector3(0.03f, 0.01f, 0.016f), mFantasma);
+
+        var colisionFantasma = fantasmaLlave.AddComponent<BoxCollider>();
+        colisionFantasma.size = new Vector3(0.14f, 0.12f, 0.3f);
+        fantasmaLlave.AddComponent<XRSimpleInteractable>();
+        Resaltar(fantasmaLlave, fantasmaLlave.transform.Find("Vastago").GetComponent<Renderer>());
+        fantasmaLlave.SetActive(false);
+
         var luzLista = LuzPunto("Luz_Lista", cerradura.transform, new Vector3(0f, 0.08f, -0.06f),
                                 new Color(0.4f, 1f, 0.5f), 1.2f, 0.5f);
         luzLista.enabled = false;
@@ -1058,7 +1237,7 @@ public static class ConstructorCuarto2
 
         // Al ceder la cerradura, la puerta se abre
         UnityEventTools.AddVoidPersistentListener(cerraduraLlave.alAbrir, new UnityAction(puerta.Abrir));
-        AvisarPanel(cerraduraLlave.alAbrir, 5);
+        AvisarPanel(cerraduraLlave.alAbrir, 4);
 
         EditorUtility.SetDirty(puerta);
         EditorUtility.SetDirty(botonGirar);
@@ -1116,6 +1295,16 @@ public static class ConstructorCuarto2
         if (llave == null || cerradura == null) return;
 
         llave.ranura = cerradura.ranura;
+        llave.fantasma = fantasmaLlave;
+
+        // Hacerle clic a la sombra es lo que mete la llave en la cerradura
+        if (fantasmaLlave != null)
+        {
+            var tocarFantasma = fantasmaLlave.GetComponent<XRSimpleInteractable>();
+            UnityEventTools.AddVoidPersistentListener(tocarFantasma.selectEntered, new UnityAction(llave.Encajar));
+            EditorUtility.SetDirty(tocarFantasma);
+        }
+
         UnityEventTools.AddVoidPersistentListener(llave.alEncajar, new UnityAction(cerradura.PonerLlave));
         // Tocar la llave ya puesta es girarla: eso lo hace el jugador, no se abre sola
         UnityEventTools.AddVoidPersistentListener(llave.alGirar, new UnityAction(cerradura.Girar));
@@ -1268,10 +1457,26 @@ public static class ConstructorCuarto2
     {
         var fuente = BuscarModelo(nombrePolyHaven);
         if (fuente == null) return null;
+        return ColocarModelo(fuente, nombrePolyHaven, padre, pos, giroY, altoReal, colisiona, apoyar);
+    }
 
+    // Igual que Modelo, pero con un modelo de Sketchfab (Assets/Sketchfab/<archivo>.glb).
+    // Los trajo el Cuarto 3: tienen licencia CC BY y sus autores están anotados en
+    // Assets/Sketchfab/CREDITOS.txt. Si falta el archivo devuelve null, igual que Modelo.
+    static GameObject ModeloSketchfab(string archivo, Transform padre, Vector3 pos, float giroY,
+                                      float altoReal, bool colisiona, bool apoyar = true)
+    {
+        var fuente = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Sketchfab/" + archivo + ".glb");
+        if (fuente == null) return null;
+        return ColocarModelo(fuente, archivo, padre, pos, giroY, altoReal, colisiona, apoyar);
+    }
+
+    static GameObject ColocarModelo(GameObject fuente, string nombre, Transform padre, Vector3 pos,
+                                    float giroY, float altoReal, bool colisiona, bool apoyar)
+    {
         // El giro va en un objeto contenedor: así no se pisa la rotación que trae el
         // archivo (los FBX que vienen de Blender suelen traer una corrección en X)
-        var contenedor = Grupo(nombrePolyHaven, padre);
+        var contenedor = Grupo(nombre, padre);
         contenedor.transform.localPosition = pos;
         contenedor.transform.localEulerAngles = new Vector3(0f, giroY, 0f);
 
@@ -1637,6 +1842,23 @@ public static class ConstructorCuarto2
         // Pantalla de la computadora: encendida, se lee aunque el cuarto esté oscuro
         mPantallaPC = Mat("C2_PantallaPC", new Color(0.04f, 0.09f, 0.13f), 0f, 0.7f,
                           new Color(0.05f, 0.16f, 0.22f));
+        // Pantalla del televisor: igual que la de la PC pero un poco más viva
+        mPantallaTV = Mat("C2_PantallaTV", new Color(0.03f, 0.08f, 0.12f), 0f, 0.8f,
+                          new Color(0.06f, 0.2f, 0.3f));
+        // Vidrio de una pantalla apagada: negro espejado, no se lee nada
+        mVidrioApagado = Mat("C2_VidrioApagado", new Color(0.02f, 0.02f, 0.025f), 0.2f, 0.92f);
+        // Aluminio cepillado: frente del tablero, marco del televisor y bandeja del teclado
+        mAluminio = Mat("C2_Aluminio", new Color(0.62f, 0.63f, 0.65f), 0.7f, 0.65f);
+        // Rojo mate para la llave general del tablero (el otro rojo es un piloto y brilla)
+        mRojoMate = Mat("C2_RojoMate", new Color(0.68f, 0.13f, 0.1f), 0f, 0.35f);
+        // Teclas de la computadora: las comunes, la verde apagada y la verde encendida
+        mTecla = Mat("C2_Tecla", new Color(0.13f, 0.13f, 0.14f), 0.1f, 0.25f);
+        mTeclaVerde = Mat("C2_TeclaVerde", new Color(0.13f, 0.45f, 0.2f), 0f, 0.3f);
+        mTeclaVerdeOk = Mat("C2_TeclaVerdeOk", new Color(0.25f, 0.95f, 0.4f), 0f, 0.5f,
+                            new Color(0.2f, 1.1f, 0.35f));
+        // Llave de sombra: se ve a través de ella, así se entiende que todavía no está puesta
+        mFantasma = MatFantasma("C2_Fantasma", new Color(1f, 0.82f, 0.25f, 0.4f),
+                                new Color(0.55f, 0.4f, 0.06f));
         mTecho = Mat("C2_Techo", new Color(0.94f, 0.94f, 0.93f), 0f, 0.05f);
         mPiso = Mat("C2_Piso", new Color(0.55f, 0.4f, 0.26f), 0f, 0.35f,
                     default, "herringbone_parquet", 4f, 4.7f);
@@ -1670,6 +1892,28 @@ public static class ConstructorCuarto2
     // "tenir": si es true, la textura se tiñe con el color; si es false se ve tal cual.
     // "soloRelieve": usa solo el normal map (el relieve) y deja el color liso, como una
     // pared pintada: sirve cuando la textura es más oscura que el color que se quiere.
+    // Material que se ve a través: lo usa la llave de sombra de la cerradura.
+    // En URP la transparencia no alcanza con bajarle el alfa al color: hay que pasar el
+    // material a modo Transparent a mano, que es lo que hacen estas líneas.
+    static Material MatFantasma(string nombre, Color color, Color emision)
+    {
+        var m = Mat(nombre, color, 0f, 0.6f, emision);
+        m.SetFloat("_Surface", 1f);                 // 1 = Transparent
+        m.SetFloat("_Blend", 0f);                   // mezcla por alfa
+        m.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        m.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        m.SetFloat("_ZWrite", 0f);
+        m.SetFloat("_AlphaClip", 0f);
+        m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        m.DisableKeyword("_ALPHATEST_ON");
+        m.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+        // Mat() pisa el color con el del Mat, pero sin alfa: se lo vuelve a poner
+        if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", color);
+        if (m.HasProperty("_Color")) m.SetColor("_Color", color);
+        EditorUtility.SetDirty(m);
+        return m;
+    }
+
     static Material Mat(string nombre, Color color, float metalico, float suavidad, Color emision = default,
                         string polyHaven = null, float tileX = 1f, float tileY = 1f,
                         bool tenir = false, bool soloRelieve = false)
