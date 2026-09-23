@@ -866,7 +866,7 @@ public static class ConstructorCuarto2
         // Va apenas por encima del collider del sofá, así el rayo del control la toca
         // a ella y no al mueble: ese era el motivo por el que no se la podía agarrar.
         var llave = Grupo("Llave_Salida", p);
-        llave.transform.localPosition = new Vector3(5.45f, 0.44f, 4.85f);
+        llave.transform.localPosition = new Vector3(5.45f, 0.44f, 4.8f);
         // Cruzada al sofá (y no a lo largo): así ocupa 16 cm de fondo en vez de 28 y el
         // almohadón la tapa entera, pero con correrse un poco ya queda destapada
         llave.transform.localEulerAngles = new Vector3(0f, 100f, 0f);
@@ -895,13 +895,16 @@ public static class ConstructorCuarto2
         // Al hacerles clic se DESLIZAN de costado sobre el asiento, cada uno hacia su punta
         // del sofa. Antes eran agarrables y volaban hacia el jugador, que no era la idea.
         // El primero no tapa nada: la gracia es que haya que probar los dos.
-        // Las medidas están calculadas para que, corrido y todo, el almohadón nunca se
-        // pase del asiento. Tomando el caso peor (un sofá de 1,50 m, o sea de z 3.85 a
-        // 5.35): el almohadón mide 34 cm de fondo y se corre 24 cm, así que el de atrás
-        // termina en 5.31 y el de adelante en 3.94, los dos adentro del asiento.
-        // La llave, cruzada, ocupa de 4.77 a 4.93: el segundo almohadón la tapa entera
-        // (4.73 a 5.07) y al correrse queda de 4.97 para allá, o sea destapada del todo.
-        float[] zAlmohadones = { 4.35f, 4.9f };
+        // El segundo almohadón va CENTRADO sobre la llave (los dos en z 4.8), no al lado:
+        // así la tapa parejo y no se le asoma una punta. La llave, cruzada, ocupa de 4.72
+        // a 4.88, y el almohadón de 4.63 a 4.97.
+        //
+        // Las corridas están calculadas con el caso peor (un sofá de 1,50 m, o sea de z
+        // 3.85 a 5.35) para que ninguno se pase del asiento: el de atrás se corre 30 cm y
+        // termina en 5.27, dejando la llave destapada del todo; el de adelante se corre
+        // 26 cm y termina en 3.87. Por eso cada uno tiene su propia distancia.
+        float[] zAlmohadones = { 4.3f, 4.8f };
+        float[] corridas = { 0.26f, 0.3f };
         for (int i = 0; i < zAlmohadones.Length; i++)
         {
             // Sin collider automatico: el de la esfera es una bola del tamano del lado mas
@@ -918,7 +921,7 @@ public static class ConstructorCuarto2
             var deslizar = almohadon.AddComponent<CojinDeslizante>();
             // Se corren a lo largo del sofa, cada uno para su lado, sin caerse del asiento
             deslizar.direccion = new Vector3(0f, 0f, i == 0 ? -1f : 1f);
-            deslizar.distancia = 0.24f;
+            deslizar.distancia = corridas[i];
             Resaltar(almohadon, almohadon.GetComponent<Renderer>());
             EditorUtility.SetDirty(deslizar);
         }
@@ -992,8 +995,14 @@ public static class ConstructorCuarto2
         // Marcas de las horas: doce rayitas finas pegadas al borde. Solo las doce y no
         // las sesenta de los minutos: son cinco relojes, y trescientas rayitas de más en
         // la pared le cuestan caro al Quest sin que se noten.
+        // OJO con las alturas en Z: la esfera es un cilindro de 8 mm de espesor centrado
+        // en 0.025, así que su cara de adelante está en 0.029. Todo lo que tiene que verse
+        // va por delante de eso, en capas: marcas 0.0315, números 0.0325, aguja de los
+        // minutos 0.035, aguja de la hora 0.038 y el pin 0.041. Antes las marcas y los
+        // números estaban en 0.028, o sea metidos adentro del disco blanco: por eso casi
+        // no se veían, por más que se les subiera el tamaño.
         var marcas = Grupo("Marcas", cara.transform);
-        marcas.transform.localPosition = new Vector3(0f, 0f, 0.028f);
+        marcas.transform.localPosition = new Vector3(0f, 0f, 0.0315f);
         for (int i = 0; i < 12; i++)
         {
             float ang = i * 30f * Mathf.Deg2Rad;
@@ -1008,7 +1017,7 @@ public static class ConstructorCuarto2
         // el jugador tiene que leer a qué hora está cada reloj desde donde esté parado, y
         // si los números son finitos no se distinguen y el acertijo se vuelve adivinanza.
         var numeros = Grupo("Numeros", cara.transform);
-        numeros.transform.localPosition = new Vector3(0f, 0f, 0.028f);
+        numeros.transform.localPosition = new Vector3(0f, 0f, 0.0325f);
         for (int h = 1; h <= 12; h++)
         {
             float ang = h * 30f * Mathf.Deg2Rad;
@@ -1024,13 +1033,13 @@ public static class ConstructorCuarto2
 
         // Manecilla de los minutos: queda clavada en el minuto del apagón
         var pivMin = Grupo("Manecilla_Minuto", cara.transform);
-        pivMin.transform.localPosition = new Vector3(0f, 0f, 0.031f);
+        pivMin.transform.localPosition = new Vector3(0f, 0f, 0.035f);
         pivMin.transform.localEulerAngles = new Vector3(0f, 0f, MINUTOS_APAGON * 6f);
         Cubo("Aguja", pivMin.transform, new Vector3(0f, 0.058f, 0f), new Vector3(0.005f, 0.135f, 0.003f), mNegro);
 
         // Manecilla de la hora: esta es la que el jugador agarra y gira
         var pivHora = Grupo("Manecilla_Hora", cara.transform);
-        pivHora.transform.localPosition = new Vector3(0f, 0f, 0.034f);
+        pivHora.transform.localPosition = new Vector3(0f, 0f, 0.038f);
         pivHora.transform.localEulerAngles = new Vector3(0f, 0f, HORA_APAGON * 30f);
         var aguja = Cubo("Aguja", pivHora.transform, new Vector3(0f, 0.042f, 0f),
                          new Vector3(0.011f, 0.095f, 0.004f), mNegro);
@@ -1039,7 +1048,7 @@ public static class ConstructorCuarto2
         // agarrarla sin puntería de cirujano: esta caja invisible es la que se toca
         Colision(pivHora.transform, "Zona_Aguja", new Vector3(0f, 0.045f, 0f), new Vector3(0.055f, 0.13f, 0.03f));
 
-        Esfera("Pin", cara.transform, new Vector3(0f, 0f, 0.037f), new Vector3(0.018f, 0.018f, 0.018f), mBronce);
+        Esfera("Pin", cara.transform, new Vector3(0f, 0f, 0.041f), new Vector3(0.018f, 0.018f, 0.018f), mBronce);
 
         // La letra va en una chapita debajo del reloj, para no taparle los números
         var chapaLetra = Grupo("Letra", g.transform);
