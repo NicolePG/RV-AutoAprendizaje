@@ -261,10 +261,14 @@ public static class ConstructorCuarto2
         panelObjetivo.pasos = new[]
         {
             "",
-            "VE AL ESCRITORIO\n\nPrende la computadora\ncon la tecla verde.",
-            "<size=70%>CODIGO DE LA PUERTA</size>\n\n<size=210%>3 7 1 9</size>",
-            "CODIGO ACEPTADO\n\nFalta la llave. El cuaderno\ndel estante dice donde esta.",
-            "PUERTA ABIERTA\n\nSacale los tornillos a la chapa\ndel cajon y llevate el medallon."
+            // Los mensajes son cortos a propósito: el televisor dice A DÓNDE ir, no qué
+            // hacer. Lo que hay que hacer se descubre tocando las cosas del cuarto.
+            "VE AL ESCRITORIO",
+            "<size=60%>CODIGO DE LA PUERTA</size>\n\n<size=210%>3 7 1 9</size>",
+            "CODIGO ACEPTADO",
+            // Este es el único que además avisa algo: sin el medallón del cajón no se
+            // puede terminar el Cuarto 4, y si el jugador sale sin él ya no puede volver.
+            "PUERTA ABIERTA\n\n<size=70%>No te olvides del cajon</size>"
         };
         texto.text = panelObjetivo.pasos[1];   // así se ve algo en el editor, sin darle Play
         EditorUtility.SetDirty(panelObjetivo);
@@ -480,13 +484,17 @@ public static class ConstructorCuarto2
 
         // Las instrucciones de los relojes: pocas lineas y letra grande. Ya no dice a que
         // hora quedaron parados; eso se ve en los relojes mismos.
+        // Letra grande y casi blanca: antes era más chica y celeste, y con el reflejo de
+        // las luces del techo no se leía. Las líneas se cortaron más cortas para que entre
+        // el tamaño nuevo sin que el texto se parta solo.
         var pistas = Texto("Texto_Pistas", encendida.transform, new Vector3(0f, 0.34f, -0.012f), new Vector3(0f, 180f, 0f),
-                           "Move la aguja corta de\n" +
-                           "cada reloj hasta su hora.\n\n" +
-                           "Los numeros que salen son\n" +
-                           "el codigo de la puerta.",
-                           0.36f, new Color(0.8f, 0.97f, 1f), 0.66f, 0.38f);
-        pistas.lineSpacing = -16f;
+                           "Move la aguja corta\n" +
+                           "de cada reloj\n" +
+                           "hasta su hora.\n\n" +
+                           "Los numeros que salen\n" +
+                           "son el codigo.",
+                           0.46f, new Color(0.93f, 0.99f, 1f), 0.66f, 0.38f);
+        pistas.lineSpacing = -14f;
 
         // Luz de la pantalla prendida, para que se note desde lejos que algo cambio
         LuzPunto("Luz_Pantalla", encendida.transform, new Vector3(0f, 0.34f, -0.3f),
@@ -660,8 +668,7 @@ public static class ConstructorCuarto2
                         "Entrada . . . 7:00\n" +
                         "Recreo  . . . 1:00\n" +
                         "Salida  . . . 3:00\n" +
-                        "Cierre  . . . 9:00\n\n" +
-                        "Orden: C - A - B - E",
+                        "Cierre  . . . 9:00",
                         0.155f, new Color(0.15f, 0.12f, 0.1f), 0.35f, 0.28f);
         txt.lineSpacing = -12f;
 
@@ -796,8 +803,14 @@ public static class ConstructorCuarto2
         // Globo terráqueo en el estante, ese toque de oficina de director
         ModeloSketchfab("globo_terraqueo", p, new Vector3(5.62f, 1.03f, 1.72f), 0f, 0.3f, false);
 
-        // Papelera al lado del escritorio y plantas en las esquinas vacías
-        Modelo("metal_trash_can", p, new Vector3(2.75f, 0f, 3.25f), 20f, 0.42f, false);
+        // Papelera moderna al lado del escritorio: cilindro de acero cepillado con el aro
+        // de arriba negro. Antes iba el tacho de chapa abollada de Poly Haven, que es de
+        // taller y desentonaba en una dirección.
+        var papelera = Grupo("Papelera", p);
+        papelera.transform.localPosition = new Vector3(2.78f, 0f, 3.3f);
+        Cilindro("Cuerpo", papelera.transform, new Vector3(0f, 0.17f, 0f), new Vector3(0.27f, 0.17f, 0.27f), mAluminio, true);
+        Cilindro("Aro", papelera.transform, new Vector3(0f, 0.345f, 0f), new Vector3(0.29f, 0.012f, 0.29f), mNegro);
+        Cilindro("Base", papelera.transform, new Vector3(0f, 0.008f, 0f), new Vector3(0.26f, 0.008f, 0.26f), mNegro);
         Modelo("potted_plant_02", p, new Vector3(5.4f, 0f, 0.75f), 0f, 0.95f, true);
         Modelo("ceramic_vase_01", p, new Vector3(4.3f, 0.37f, 4.6f), 0f, 0.26f, false);
 
@@ -853,8 +866,10 @@ public static class ConstructorCuarto2
         // Va apenas por encima del collider del sofá, así el rayo del control la toca
         // a ella y no al mueble: ese era el motivo por el que no se la podía agarrar.
         var llave = Grupo("Llave_Salida", p);
-        llave.transform.localPosition = new Vector3(5.45f, 0.44f, 4.95f);
-        llave.transform.localEulerAngles = new Vector3(0f, 25f, 0f);
+        llave.transform.localPosition = new Vector3(5.45f, 0.44f, 4.85f);
+        // Cruzada al sofá (y no a lo largo): así ocupa 16 cm de fondo en vez de 28 y el
+        // almohadón la tapa entera, pero con correrse un poco ya queda destapada
+        llave.transform.localEulerAngles = new Vector3(0f, 100f, 0f);
 
         // Acostada: la cabeza es un disco plano y el vástago va a lo largo de la Z
         Cilindro("Cabeza", llave.transform, new Vector3(0f, 0f, -0.075f),
@@ -880,13 +895,19 @@ public static class ConstructorCuarto2
         // Al hacerles clic se DESLIZAN de costado sobre el asiento, cada uno hacia su punta
         // del sofa. Antes eran agarrables y volaban hacia el jugador, que no era la idea.
         // El primero no tapa nada: la gracia es que haya que probar los dos.
-        float[] zAlmohadones = { 4.35f, 4.95f };
+        // Las medidas están calculadas para que, corrido y todo, el almohadón nunca se
+        // pase del asiento. Tomando el caso peor (un sofá de 1,50 m, o sea de z 3.85 a
+        // 5.35): el almohadón mide 34 cm de fondo y se corre 24 cm, así que el de atrás
+        // termina en 5.31 y el de adelante en 3.94, los dos adentro del asiento.
+        // La llave, cruzada, ocupa de 4.77 a 4.93: el segundo almohadón la tapa entera
+        // (4.73 a 5.07) y al correrse queda de 4.97 para allá, o sea destapada del todo.
+        float[] zAlmohadones = { 4.35f, 4.9f };
         for (int i = 0; i < zAlmohadones.Length; i++)
         {
             // Sin collider automatico: el de la esfera es una bola del tamano del lado mas
             // largo y se comia media llave. Se le pone una caja a medida.
             var almohadon = Esfera("Almohadon_" + (i + 1), p, new Vector3(5.45f, 0.53f, zAlmohadones[i]),
-                                   new Vector3(0.56f, 0.24f, 0.5f), mTela);
+                                   new Vector3(0.52f, 0.22f, 0.34f), mTela);
             almohadon.transform.localEulerAngles = new Vector3(0f, 0f, i == 0 ? 4f : -5f);
             almohadon.AddComponent<BoxCollider>().size = Vector3.one;
 
@@ -894,7 +915,7 @@ public static class ConstructorCuarto2
             var deslizar = almohadon.AddComponent<CojinDeslizante>();
             // Se corren a lo largo del sofa, cada uno para su lado, sin caerse del asiento
             deslizar.direccion = new Vector3(0f, 0f, i == 0 ? -1f : 1f);
-            deslizar.distancia = 0.42f;
+            deslizar.distancia = 0.24f;
             Resaltar(almohadon, almohadon.GetComponent<Renderer>());
             EditorUtility.SetDirty(deslizar);
         }
@@ -935,83 +956,89 @@ public static class ConstructorCuarto2
 
     // horaObjetivo es la hora a la que hay que dejarlo (y también el dígito que entrega).
     // En el señuelo va 0: ese no se resuelve, solo dispara el susto.
+    //
+    // Es un reloj minimalista: aro fino de grafito, esfera blanca sin vidrio, números
+    // finitos y agujas tipo bastón. Antes se usaba el modelo wall_clock de Poly Haven,
+    // que es un reloj de pared viejo de escuela y desentonaba con el resto del cuarto;
+    // armado con piezas queda moderno y además se le puede dar el aspecto que se quiera.
     static GameObject Reloj(Transform p, string nombre, float x, string letra,
                             int horaObjetivo, bool senuelo, ContadorPasos contador)
     {
         const float HORA_APAGON = 4.67f;   // todos arrancan parados a las 4:40
         const float MINUTOS_APAGON = 40f;
+        const float RADIO = 0.155f;        // de la esfera, para ubicar números y marcas
 
         var g = Grupo(nombre, p);
         g.transform.localPosition = new Vector3(x, ALTURA_RELOJ, 0.05f);
 
-        // El cuerpo del reloj se ve siempre, aunque no haya energía. Si está el modelo
-        // de Poly Haven se usa ese (trae la esfera con los números); sus agujas se
-        // ocultan, porque las que giran son las que se arman más abajo.
-        var reloj = Modelo("wall_clock", g.transform, Vector3.zero, 0f, 0.32f, false, false);
-        Renderer esferaRenderer = null;
-        if (reloj != null)
-        {
-            foreach (var r in reloj.GetComponentsInChildren<Renderer>())
-            {
-                if (r.name.ToLower().Contains("hand")) r.gameObject.SetActive(false);
-                else if (esferaRenderer == null && !r.name.ToLower().Contains("glass")) esferaRenderer = r;
-            }
-        }
+        // El cuerpo se ve siempre, aunque no haya energía: aro fino y esfera apagada
+        Cilindro("Aro", g.transform, Vector3.zero, new Vector3(0.35f, 0.022f, 0.35f), mNegro)
+            .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+        Cilindro("Esfera_Apagada", g.transform, new Vector3(0f, 0f, 0.023f),
+                 new Vector3(0.335f, 0.004f, 0.335f), mNegro)
+            .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
 
         // Todo lo que se enciende cuando vuelve la luz
         var cara = Grupo("Cara", g.transform);
 
-        if (reloj == null)
+        var esfera = Cilindro("Esfera", cara.transform, new Vector3(0f, 0f, 0.025f),
+                              new Vector3(0.335f, 0.004f, 0.335f), mEsfera);
+        esfera.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+        Renderer esferaRenderer = esfera.GetComponent<Renderer>();
+
+        // Marcas de las horas: doce rayitas finas pegadas al borde. Solo las doce y no
+        // las sesenta de los minutos: son cinco relojes, y trescientas rayitas de más en
+        // la pared le cuestan caro al Quest sin que se noten.
+        var marcas = Grupo("Marcas", cara.transform);
+        marcas.transform.localPosition = new Vector3(0f, 0f, 0.028f);
+        for (int i = 0; i < 12; i++)
         {
-            // Versión simple, sin el modelo: caja negra y esfera con marcas y números
-            Cilindro("Caja", g.transform, Vector3.zero, new Vector3(0.34f, 0.035f, 0.34f), mNegro)
-                .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
-            Cilindro("Esfera_Apagada", g.transform, new Vector3(0f, 0f, 0.034f), new Vector3(0.3f, 0.004f, 0.3f), mNegro)
-                .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+            float ang = i * 30f * Mathf.Deg2Rad;
+            float radio = RADIO - 0.011f;
+            var marca = Cubo("Marca", marcas.transform,
+                             new Vector3(-Mathf.Sin(ang) * radio, Mathf.Cos(ang) * radio, 0f),
+                             new Vector3(0.005f, 0.022f, 0.002f), mNegro);
+            marca.transform.localEulerAngles = new Vector3(0f, 0f, -i * 30f);
+        }
 
-            var esfera = Cilindro("Esfera", cara.transform, new Vector3(0f, 0f, 0.036f),
-                                  new Vector3(0.3f, 0.004f, 0.3f), mEsfera);
-            esfera.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
-            esferaRenderer = esfera.GetComponent<Renderer>();
-
-            // Números de las 12 horas
-            var numeros = Grupo("Numeros", cara.transform);
-            numeros.transform.localPosition = new Vector3(0f, 0f, 0.04f);
-            for (int h = 1; h <= 12; h++)
-            {
-                float ang = h * 30f * Mathf.Deg2Rad;
-                // -X es la derecha de quien mira el reloj, ahí van las 3
-                Texto("Numero_" + h, numeros.transform,
-                      new Vector3(-Mathf.Sin(ang) * 0.108f, Mathf.Cos(ang) * 0.108f, 0f), Vector3.zero,
-                      h.ToString(), 0.28f, new Color(0.1f, 0.1f, 0.1f), 0.06f, 0.05f);
-            }
+        // Números de las 12 horas, finitos y un poco adentro de las marcas
+        var numeros = Grupo("Numeros", cara.transform);
+        numeros.transform.localPosition = new Vector3(0f, 0f, 0.028f);
+        for (int h = 1; h <= 12; h++)
+        {
+            float ang = h * 30f * Mathf.Deg2Rad;
+            // -X es la derecha de quien mira el reloj, ahí van las 3
+            Texto("Numero_" + h, numeros.transform,
+                  new Vector3(-Mathf.Sin(ang) * 0.113f, Mathf.Cos(ang) * 0.113f, 0f), Vector3.zero,
+                  h.ToString(), 0.26f, new Color(0.12f, 0.12f, 0.14f), 0.06f, 0.05f);
         }
 
         // Los giros van en positivo: el reloj se mira desde su +Z, y desde ahí un giro
         // positivo en Z avanza en el sentido de las agujas (ver RelojManecilla)
 
         // Manecilla de los minutos: queda clavada en el minuto del apagón
-        // Con el modelo las agujas van pegadas a su esfera; sin él, sobre el cilindro
-        float zMin = reloj != null ? 0.018f : 0.046f;
-        float zHora = reloj != null ? 0.022f : 0.052f;
-
         var pivMin = Grupo("Manecilla_Minuto", cara.transform);
-        pivMin.transform.localPosition = new Vector3(0f, 0f, zMin);
+        pivMin.transform.localPosition = new Vector3(0f, 0f, 0.031f);
         pivMin.transform.localEulerAngles = new Vector3(0f, 0f, MINUTOS_APAGON * 6f);
-        Cubo("Aguja", pivMin.transform, new Vector3(0f, 0.06f, 0f), new Vector3(0.009f, 0.13f, 0.005f), mNegro);
+        Cubo("Aguja", pivMin.transform, new Vector3(0f, 0.058f, 0f), new Vector3(0.005f, 0.135f, 0.003f), mNegro);
 
         // Manecilla de la hora: esta es la que el jugador agarra y gira
         var pivHora = Grupo("Manecilla_Hora", cara.transform);
-        pivHora.transform.localPosition = new Vector3(0f, 0f, zHora);
+        pivHora.transform.localPosition = new Vector3(0f, 0f, 0.034f);
         pivHora.transform.localEulerAngles = new Vector3(0f, 0f, HORA_APAGON * 30f);
         var aguja = Cubo("Aguja", pivHora.transform, new Vector3(0f, 0.042f, 0f),
-                         new Vector3(0.022f, 0.1f, 0.012f), mNegro, true);
+                         new Vector3(0.011f, 0.095f, 0.004f), mNegro);
 
-        Esfera("Pin", cara.transform, new Vector3(0f, 0f, zHora + 0.004f), new Vector3(0.022f, 0.022f, 0.022f), mBronce);
+        // La aguja se dibuja finita para que quede linda, pero el jugador tiene que poder
+        // agarrarla sin puntería de cirujano: esta caja invisible es la que se toca
+        Colision(pivHora.transform, "Zona_Aguja", new Vector3(0f, 0.045f, 0f), new Vector3(0.055f, 0.13f, 0.03f));
+
+        Esfera("Pin", cara.transform, new Vector3(0f, 0f, 0.037f), new Vector3(0.018f, 0.018f, 0.018f), mBronce);
 
         // La letra va en una chapita debajo del reloj, para no taparle los números
         var chapaLetra = Grupo("Letra", g.transform);
-        chapaLetra.transform.localPosition = new Vector3(0f, -0.23f, -0.02f);
+        // Arriba del reloj: abajo aparece la chapa del dígito y antes se tapaban
+        chapaLetra.transform.localPosition = new Vector3(0f, 0.235f, -0.02f);
         Cubo("Chapa", chapaLetra.transform, Vector3.zero, new Vector3(0.1f, 0.08f, 0.01f), mMetal);
         Texto("Texto", chapaLetra.transform, new Vector3(0f, 0f, 0.008f), Vector3.zero,
               letra, 0.5f, new Color(0.1f, 0.1f, 0.1f), 0.1f, 0.08f);
@@ -1040,7 +1067,7 @@ public static class ConstructorCuarto2
         {
             // Al quedar en hora se enciende y muestra su dígito
             var chapa = Grupo("Digito", cara.transform);
-            chapa.transform.localPosition = new Vector3(0f, -0.26f, 0.02f);
+            chapa.transform.localPosition = new Vector3(0f, -0.265f, 0.02f);
             Cubo("Chapa", chapa.transform, Vector3.zero, new Vector3(0.16f, 0.16f, 0.02f), mDigito);
             Texto("Numero", chapa.transform, new Vector3(0f, 0f, 0.02f), Vector3.zero,
                   horaObjetivo.ToString(), 0.9f, new Color(0.03f, 0.08f, 0.1f), 0.16f, 0.16f);
@@ -1051,7 +1078,7 @@ public static class ConstructorCuarto2
 
             UnityEventTools.AddBoolPersistentListener(manecilla.alPonerEnHora, new UnityAction<bool>(luzOk.SetActive), true);
             UnityEventTools.AddBoolPersistentListener(manecilla.alPonerEnHora, new UnityAction<bool>(chapa.SetActive), true);
-            // Le avisa al contador: cuando esten los cuatro, el televisor muestra el codigo
+            // Le avisa al contador: cuando estén los cuatro, el televisor muestra el código
             if (contador != null)
                 UnityEventTools.AddVoidPersistentListener(manecilla.alPonerEnHora, new UnityAction(contador.Contar));
         }
@@ -1869,12 +1896,13 @@ public static class ConstructorCuarto2
         // Madera clara para los listones de la pared del aparador
         mMaderaClara = Mat("C2_MaderaClara", new Color(1f, 0.82f, 0.62f), 0f, 0.3f,
                            default, "american_walnut_veneer", 0.3f, 2f, true);
-        // Pantalla de la computadora: encendida, se lee aunque el cuarto esté oscuro
-        mPantallaPC = Mat("C2_PantallaPC", new Color(0.04f, 0.09f, 0.13f), 0f, 0.7f,
-                          new Color(0.05f, 0.16f, 0.22f));
-        // Pantalla del televisor: igual que la de la PC pero un poco más viva
-        mPantallaTV = Mat("C2_PantallaTV", new Color(0.03f, 0.08f, 0.12f), 0f, 0.8f,
-                          new Color(0.06f, 0.2f, 0.3f));
+        // Pantallas encendidas. La suavidad va casi en cero a propósito: con brillo alto
+        // reflejan las luces del techo y el reflejo tapa las letras. Mates, se leen igual
+        // de lejos y desde cualquier ángulo.
+        mPantallaPC = Mat("C2_PantallaPC", new Color(0.02f, 0.05f, 0.08f), 0f, 0.03f,
+                          new Color(0.03f, 0.1f, 0.15f));
+        mPantallaTV = Mat("C2_PantallaTV", new Color(0.02f, 0.05f, 0.09f), 0f, 0.03f,
+                          new Color(0.04f, 0.13f, 0.2f));
         // Vidrio de una pantalla apagada: negro espejado, no se lee nada
         mVidrioApagado = Mat("C2_VidrioApagado", new Color(0.02f, 0.02f, 0.025f), 0.2f, 0.92f);
         // Aluminio cepillado: frente del tablero, marco del televisor y bandeja del teclado
