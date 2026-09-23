@@ -264,7 +264,7 @@ public static class ConstructorCuarto2
             // Los mensajes son cortos a propósito: el televisor dice A DÓNDE ir, no qué
             // hacer. Lo que hay que hacer se descubre tocando las cosas del cuarto.
             "VE AL ESCRITORIO",
-            "<size=60%>CODIGO DE LA PUERTA</size>\n\n<size=210%>3 7 1 9</size>",
+            "<size=60%>CODIGO DE LA PUERTA</size>\n\n<size=155%>3 7 1 9</size>",
             "CODIGO ACEPTADO",
             // Este es el único que además avisa algo: sin el medallón del cajón no se
             // puede terminar el Cuarto 4, y si el jugador sale sin él ya no puede volver.
@@ -906,7 +906,10 @@ public static class ConstructorCuarto2
         {
             // Sin collider automatico: el de la esfera es una bola del tamano del lado mas
             // largo y se comia media llave. Se le pone una caja a medida.
-            var almohadon = Esfera("Almohadon_" + (i + 1), p, new Vector3(5.45f, 0.53f, zAlmohadones[i]),
+            // Van hundidos en el asiento (y no apoyados encima): así la llave queda
+            // aplastada debajo y no se le ve ni un pedacito. El asiento llega a 0.42 y el
+            // almohadón arranca en 0.37, o sea que se mete 5 cm, como un almohadón usado.
+            var almohadon = Esfera("Almohadon_" + (i + 1), p, new Vector3(5.45f, 0.48f, zAlmohadones[i]),
                                    new Vector3(0.52f, 0.22f, 0.34f), mTela);
             almohadon.transform.localEulerAngles = new Vector3(0f, 0f, i == 0 ? 4f : -5f);
             almohadon.AddComponent<BoxCollider>().size = Vector3.one;
@@ -1001,16 +1004,19 @@ public static class ConstructorCuarto2
             marca.transform.localEulerAngles = new Vector3(0f, 0f, -i * 30f);
         }
 
-        // Números de las 12 horas, finitos y un poco adentro de las marcas
+        // Los doce números, adentro de las marcas. Van en negrita y grandes a propósito:
+        // el jugador tiene que leer a qué hora está cada reloj desde donde esté parado, y
+        // si los números son finitos no se distinguen y el acertijo se vuelve adivinanza.
         var numeros = Grupo("Numeros", cara.transform);
         numeros.transform.localPosition = new Vector3(0f, 0f, 0.028f);
         for (int h = 1; h <= 12; h++)
         {
             float ang = h * 30f * Mathf.Deg2Rad;
             // -X es la derecha de quien mira el reloj, ahí van las 3
-            Texto("Numero_" + h, numeros.transform,
-                  new Vector3(-Mathf.Sin(ang) * 0.113f, Mathf.Cos(ang) * 0.113f, 0f), Vector3.zero,
-                  h.ToString(), 0.26f, new Color(0.12f, 0.12f, 0.14f), 0.06f, 0.05f);
+            var numero = Texto("Numero_" + h, numeros.transform,
+                               new Vector3(-Mathf.Sin(ang) * 0.111f, Mathf.Cos(ang) * 0.111f, 0f), Vector3.zero,
+                               h.ToString(), 0.34f, new Color(0.08f, 0.08f, 0.1f), 0.07f, 0.06f);
+            numero.fontStyle = FontStyles.Bold;
         }
 
         // Los giros van en positivo: el reloj se mira desde su +Z, y desde ahí un giro
