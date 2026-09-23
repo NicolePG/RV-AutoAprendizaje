@@ -1,0 +1,11 @@
+Model Information:
+* title:	Prop Globe
+* source:	https://sketchfab.com/3d-models/prop-globe-acbc64addc98410582d1f631dd9b6d5f
+* author:	Rosbergen Designs (https://sketchfab.com/RosbergenDesigns)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Prop Globe" (https://sketchfab.com/3d-models/prop-globe-acbc64addc98410582d1f631dd9b6d5f) by Rosbergen Designs (https://sketchfab.com/RosbergenDesigns) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

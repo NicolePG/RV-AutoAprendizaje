@@ -1,9 +1,10 @@
-MODELOS 3D DE SKETCHFAB USADOS EN EL JUEGO (Cuarto 3 - Sala de Computación)
+MODELOS 3D DE SKETCHFAB USADOS EN EL JUEGO
 
 Todos tienen licencia Creative Commons Attribution 4.0 (CC BY 4.0):
 se pueden usar gratis, también en proyectos comerciales, siempre que se nombre al autor.
 Licencia: https://creativecommons.org/licenses/by/4.0/
 
+CUARTO 3 - SALA DE COMPUTACIÓN
 Archivo                  Modelo                  Autor                      Enlace
 desktop_pc.glb           "Desktop PC"            R-LAB (@rakshaan)          https://sketchfab.com/3d-models/desktop-pc-7030da42a907455ea98fabedca0a5192
 server_rack.glb          "Server Rack"           Spellkaze                  https://sketchfab.com/3d-models/server-rack-62f6779cb7e448b19aaf58544c3c7218
@@ -12,5 +13,21 @@ projector.glb            "Projector"             bimadwiananto              http
 printer_low_poly.glb     "Printer- Low Poly"     CG Buzz (@Tapan_S)         https://sketchfab.com/3d-models/printer-low-poly-8a3a68f84f4d4a34973b527875a7314b
 whiteboard.glb           "Whiteboard"            tboiston                   https://sketchfab.com/3d-models/whiteboard-d0b05bd140734a799666f0a29e1fe1bb
 
-Se descargaron en formato GLB con texturas de 1k (livianas para el Quest).
+CUARTO 2 - DIRECCIÓN
+Carpeta                  Modelo                       Autor                Enlace
+cuadro_oleo/             "Victorian Framed Painting"  Matthew Collings     https://sketchfab.com/3d-models/victorian-framed-painting-pbr-game-ready-b2895c1c3b42401a949deac049e0051d
+globo_terraqueo/         "Prop Globe"                 Rosbergen Designs    https://sketchfab.com/3d-models/prop-globe-acbc64addc98410582d1f631dd9b6d5f
+
+La silla del director y la impresora del Cuarto 2 son las mismas del Cuarto 3
+(office_chair_modern.glb y printer_low_poly.glb), ya acreditadas arriba.
+
+FORMATOS
+Los del Cuarto 3 se bajaron en GLB: un solo archivo con las texturas adentro.
+Los del Cuarto 2 se bajaron en glTF: una carpeta con scene.gltf, scene.bin y las texturas
+sueltas. El constructor acepta los dos formatos (ver ModeloSketchfab en ConstructorCuarto2.cs).
+
+Las texturas de Sketchfab vienen en 4K y pesan demasiado para el Quest (el cuadro traía
+40 MB). Assets/Editor/TexturasLivianas.cs las importa a 1k automáticamente, igual que las
+de Poly Haven. Los archivos originales quedan intactos.
+
 Los modelos y texturas de Poly Haven (Assets/PolyHaven) son CC0: no necesitan crédito.

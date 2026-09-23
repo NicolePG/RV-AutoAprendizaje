@@ -1472,13 +1472,22 @@ public static class ConstructorCuarto2
         return ColocarModelo(fuente, nombrePolyHaven, padre, pos, giroY, altoReal, colisiona, apoyar);
     }
 
-    // Igual que Modelo, pero con un modelo de Sketchfab (Assets/Sketchfab/<archivo>.glb).
-    // Los trajo el Cuarto 3: tienen licencia CC BY y sus autores están anotados en
-    // Assets/Sketchfab/CREDITOS.txt. Si falta el archivo devuelve null, igual que Modelo.
+    // Igual que Modelo, pero con un modelo de Sketchfab (carpeta Assets/Sketchfab).
+    // Tienen licencia CC BY y sus autores están anotados en Assets/Sketchfab/CREDITOS.txt.
+    //
+    // Sketchfab deja bajar dos formatos y acá se aceptan los dos:
+    //  - GLB: un solo archivo, "Assets/Sketchfab/<nombre>.glb" (así están los del Cuarto 3).
+    //  - glTF: una carpeta "Assets/Sketchfab/<nombre>" con scene.gltf adentro, el .bin y las
+    //    texturas sueltas (así están el cuadro y el globo del Cuarto 2).
+    // Si no está en ninguno de los dos devuelve null, igual que Modelo, y el cuarto se arma
+    // con la versión de Poly Haven.
     static GameObject ModeloSketchfab(string archivo, Transform padre, Vector3 pos, float giroY,
                                       float altoReal, bool colisiona, bool apoyar = true)
     {
-        var fuente = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Sketchfab/" + archivo + ".glb");
+        const string CARPETA = "Assets/Sketchfab/";
+        var fuente = AssetDatabase.LoadAssetAtPath<GameObject>(CARPETA + archivo + ".glb");
+        if (fuente == null)
+            fuente = AssetDatabase.LoadAssetAtPath<GameObject>(CARPETA + archivo + "/scene.gltf");
         if (fuente == null) return null;
         return ColocarModelo(fuente, archivo, padre, pos, giroY, altoReal, colisiona, apoyar);
     }
