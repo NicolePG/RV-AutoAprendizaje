@@ -281,7 +281,13 @@ public static class ConstructorCuarto2
 
     // El primer paso del cuarto: sin esta llave no hay luz, ni relojes, ni teclado.
     // Es un tablero moderno: gabinete embutido de chapa blanca, frente de aluminio, la
-    // fila de térmicas y abajo la llave general grande, que es la que hay que subir.
+    // fila de térmicas y abajo la llave general, que es la única que se toca.
+    //
+    // Las térmicas van CHATAS, sin palanquitas. Antes tenían una palanquita negra cada
+    // una y parecían seis interruptores para subir: el jugador les hacía clic a esas (que
+    // solo decoran y ni collider tienen) y creía que el tablero estaba roto. Ahora lo único
+    // que parece un interruptor es la llave general, que además brilla en rojo y tiene el
+    // cartel justo debajo.
     static void ArmarTablero(Transform raiz, ControlEnergia control)
     {
         var g = Grupo("Tablero_Electrico", raiz);
@@ -295,40 +301,42 @@ public static class ConstructorCuarto2
         Texto("Titulo", g.transform, new Vector3(0f, 0.22f, 0.06f), Vector3.zero,
               "TABLERO GENERAL", 0.13f, new Color(0.88f, 0.88f, 0.86f), 0.38f, 0.045f);
 
-        // Fila de térmicas sobre su riel: solo decoran, le dan el aspecto de uno de verdad
-        Cubo("Riel", g.transform, new Vector3(0f, 0.1f, 0.056f), new Vector3(0.34f, 0.15f, 0.004f), mNegro);
+        // Fila de térmicas sobre su riel. Solo decoran: son chatas para que no se confundan
+        // con la llave general.
+        Cubo("Riel", g.transform, new Vector3(0f, 0.1f, 0.056f), new Vector3(0.34f, 0.13f, 0.004f), mNegro);
         for (int i = 0; i < 6; i++)
-        {
-            Cubo("Termica_" + (i + 1), g.transform, new Vector3(-0.125f + i * 0.05f, 0.1f, 0.062f),
-                 new Vector3(0.042f, 0.13f, 0.014f), mMetal);
-            Cubo("Palanquita_" + (i + 1), g.transform, new Vector3(-0.125f + i * 0.05f, 0.135f, 0.07f),
-                 new Vector3(0.022f, 0.035f, 0.012f), mNegro);
-        }
+            Cubo("Termica_" + (i + 1), g.transform, new Vector3(-0.125f + i * 0.05f, 0.1f, 0.06f),
+                 new Vector3(0.042f, 0.11f, 0.008f), mMetal);
 
         // Cartel del cuarto. Con el televisor apagado es lo único que se lee a oscuras,
         // así que va en ámbar emisivo: se ve solo, sin que le pegue ninguna luz.
-        Cubo("Aviso", g.transform, new Vector3(0f, -0.02f, 0.056f), new Vector3(0.36f, 0.055f, 0.003f), mNegro);
-        Texto("Texto_Aviso", g.transform, new Vector3(0f, -0.02f, 0.059f), Vector3.zero,
-              "SIN ENERGIA - SUBE LA LLAVE", 0.085f, new Color(1f, 0.72f, 0.15f), 0.36f, 0.05f);
+        Cubo("Aviso", g.transform, new Vector3(0f, 0f, 0.056f), new Vector3(0.36f, 0.05f, 0.003f), mNegro);
+        Texto("Texto_Aviso", g.transform, new Vector3(0f, 0f, 0.059f), Vector3.zero,
+              "SIN ENERGIA", 0.1f, new Color(1f, 0.72f, 0.15f), 0.36f, 0.045f);
 
         // Los pilotos son emisivos, así se los ve aunque el cuarto esté a oscuras
-        var pilotoRojo = Esfera("Piloto_Sin_Energia", g.transform, new Vector3(0.15f, -0.15f, 0.058f),
+        var pilotoRojo = Esfera("Piloto_Sin_Energia", g.transform, new Vector3(0.155f, -0.14f, 0.058f),
                                 new Vector3(0.036f, 0.036f, 0.036f), mRojo);
-        var pilotoVerde = Esfera("Piloto_Con_Energia", g.transform, new Vector3(-0.15f, -0.15f, 0.058f),
+        var pilotoVerde = Esfera("Piloto_Con_Energia", g.transform, new Vector3(-0.155f, -0.14f, 0.058f),
                                  new Vector3(0.036f, 0.036f, 0.036f), mVerde);
         pilotoVerde.SetActive(false);
 
         var audio = AudioEn("Audio_Llave", g.transform);
 
-        // La llave general: cuerpo negro fijo y palanca roja, que es la parte que se mueve
-        Cubo("Base_Llave", g.transform, new Vector3(0f, -0.15f, 0.058f), new Vector3(0.17f, 0.17f, 0.012f), mNegro);
-        var llave = Cubo("Llave_General", g.transform, new Vector3(0f, -0.14f, 0.082f),
-                         new Vector3(0.085f, 0.13f, 0.05f), mRojoMate, true);
+        // La llave general: chapa negra de fondo y la palanca roja, que es lo que se toca.
+        // Es grande a propósito, para que el rayo del control le pegue sin puntería fina.
+        Cubo("Base_Llave", g.transform, new Vector3(0f, -0.14f, 0.058f), new Vector3(0.21f, 0.21f, 0.01f), mNegro);
+        var llave = Cubo("Llave_General", g.transform, new Vector3(0f, -0.13f, 0.088f),
+                         new Vector3(0.115f, 0.17f, 0.06f), mRojoMate, true);
         llave.AddComponent<XRSimpleInteractable>();
         var boton = llave.AddComponent<PressableButton>();
         boton.parteMovil = llave.transform;
         boton.recorrido = 0.03f;
         Resaltar(llave, llave.GetComponent<Renderer>());
+
+        // El cartel que dice qué hacer, justo debajo de la llave y en ámbar emisivo
+        Texto("Texto_Instruccion", g.transform, new Vector3(0f, -0.235f, 0.059f), Vector3.zero,
+              "SUBE ESTA LLAVE", 0.095f, new Color(1f, 0.72f, 0.15f), 0.38f, 0.04f);
 
         // Al subir la llave vuelve la energía: de eso se encarga ControlEnergia
         UnityEventTools.AddVoidPersistentListener(boton.alPresionar, new UnityAction(control.Encender));
@@ -1871,8 +1879,10 @@ public static class ConstructorCuarto2
         mVidrioApagado = Mat("C2_VidrioApagado", new Color(0.02f, 0.02f, 0.025f), 0.2f, 0.92f);
         // Aluminio cepillado: frente del tablero, marco del televisor y bandeja del teclado
         mAluminio = Mat("C2_Aluminio", new Color(0.62f, 0.63f, 0.65f), 0.7f, 0.65f);
-        // Rojo mate para la llave general del tablero (el otro rojo es un piloto y brilla)
-        mRojoMate = Mat("C2_RojoMate", new Color(0.68f, 0.13f, 0.1f), 0f, 0.35f);
+        // Rojo de la llave general. Es emisivo a propósito: el cuarto entra a oscuras y
+        // una llave de rojo mate no se ve, así que el jugador no sabe qué tocar.
+        mRojoMate = Mat("C2_RojoMate", new Color(0.85f, 0.15f, 0.1f), 0f, 0.35f,
+                        new Color(0.7f, 0.1f, 0.05f));
         // Teclas de la computadora: las comunes, la verde apagada y la verde encendida
         mTecla = Mat("C2_Tecla", new Color(0.13f, 0.13f, 0.14f), 0.1f, 0.25f);
         mTeclaVerde = Mat("C2_TeclaVerde", new Color(0.13f, 0.45f, 0.2f), 0f, 0.3f);
