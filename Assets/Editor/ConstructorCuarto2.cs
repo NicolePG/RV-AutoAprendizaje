@@ -100,7 +100,8 @@ public static class ConstructorCuarto2
         conEnergia.AddRange(ArmarRelojes(relojes.transform));
         List<GameObject> sinEnergia = ArmarTerror(luces.transform);
 
-        ArmarRejaEntrada(raiz.transform);
+        // La entrada no lleva reja: la puerta del Cuarto 1 se cierra sola detrás del jugador
+        // (su zona la arma Cuarto1Builder), igual que la de este cuarto al salir
         CerraduraLlave cerradura = ArmarPuertaSalida(raiz.transform);
         ConectarLlave(llave, cerradura);
         conEnergia.Add(ArmarTeclado(raiz.transform, cerradura));
@@ -266,9 +267,7 @@ public static class ConstructorCuarto2
             "VE AL ESCRITORIO",
             "<size=60%>CODIGO DE LA PUERTA</size>\n\n<size=155%>3 7 1 9</size>",
             "CODIGO ACEPTADO",
-            // Este es el único que además avisa algo: sin el medallón del cajón no se
-            // puede terminar el Cuarto 4, y si el jugador sale sin él ya no puede volver.
-            "PUERTA ABIERTA\n\n<size=70%>No te olvides del cajon</size>"
+            "PUERTA ABIERTA"
         };
         texto.text = panelObjetivo.pasos[1];   // así se ve algo en el editor, sin darle Play
         EditorUtility.SetDirty(panelObjetivo);
@@ -396,43 +395,13 @@ public static class ConstructorCuarto2
         var drawer = cajon.AddComponent<Drawer>();
         drawer.aperturaMaxima = 0.45f;
         drawer.abrirDeUnToque = true;   // con el control, jalar de lejos es incómodo
-        drawer.bloqueado = true;        // hasta que se caiga la chapa atornillada
         Resaltar(cajon, cajon.transform.Find("Frente").GetComponent<Renderer>());
         EditorUtility.SetDirty(inter);
         EditorUtility.SetDirty(drawer);
 
-        // El cajón está tapado por una chapa atornillada: hay que sacarle los tres
-        // tornillos. Cuando la chapa se suelta, desbloquea el cajón.
-        ArmarTapaAtornillada(g.transform, new Vector3(0.5f, 0.61f, -0.45f), drawer);
-
-        // El medallón que hay que llevarse al Cuarto 4. Va adentro de un grupo para que
-        // el disco pueda estar girado sin que se deforme lo que cuelga de él.
-        var medallon = Grupo("Medallon", cajon.transform);
-        medallon.transform.localPosition = new Vector3(0f, -0.055f, -0.3f);
-        Cilindro("Disco", medallon.transform, Vector3.zero, new Vector3(0.11f, 0.007f, 0.11f), mOro)
-            .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
-        Cilindro("Aro", medallon.transform, new Vector3(0f, 0f, 0.001f), new Vector3(0.13f, 0.004f, 0.13f), mBronce)
-            .transform.localEulerAngles = new Vector3(90f, 0f, 0f);
-
-        var colisionMedallon = medallon.AddComponent<BoxCollider>();
-        colisionMedallon.size = new Vector3(0.16f, 0.16f, 0.06f);
-
-        // Se lleva de un toque, igual que la llave y los fusibles, y queda a la vista
-        // todo el camino hasta el laboratorio
-        medallon.AddComponent<XRSimpleInteractable>();
-        var llevable = medallon.AddComponent<ObjetoLlevable>();
-        // Se queda con el jugador hasta el Cuarto 4: agarrar un fusible no lo suelta
-        llevable.quedaConElJugador = true;
-        // Bien adelante y apenas a la izquierda: si va muy al costado, en la pantalla
-        // del simulador queda fuera de cuadro y parece que se perdió
-        llevable.distancia = 0.5f;
-        llevable.bajar = 0.14f;
-        EditorUtility.SetDirty(llevable);
-        var pick = medallon.AddComponent<PickableItem>();
-        pick.datos = BuscarAsset<ItemData>("ItemData_ObjetoEspecial");
-        pick.ocultarAlAgarrar = false;   // no desaparece: el jugador lo lleva en la mano
-        Resaltar(medallon, medallon.transform.Find("Disco").GetComponent<Renderer>());
-        EditorUtility.SetDirty(pick);
+        // El cajón es un mueble más: se abre de un toque y está vacío. Antes lo tapaba una
+        // chapa con tres tornillos y adentro estaba el medallón para el Cuarto 4; el Cuarto 4
+        // ya no lo usa (la salida se abre con la tarjeta del docente) y se sacaron los dos.
 
         ArmarComputadora(g.transform);
 
@@ -567,55 +536,6 @@ public static class ConstructorCuarto2
         UnityEventTools.AddBoolPersistentListener(boton.alPresionar, new UnityAction<bool>(pantallaEncendida.SetActive), true);
         UnityEventTools.AddVoidPersistentListener(boton.alPresionar, new UnityAction(audio.Play));
         EditorUtility.SetDirty(boton);
-    }
-
-    // Chapa atornillada que tapa el cajón del escritorio. Cada tornillo se saca con un
-    // toque; cuando sale el tercero, la chapa se suelta y se cae al piso, y recién ahí
-    // se puede abrir el cajón y sacar el medallón.
-    static void ArmarTapaAtornillada(Transform p, Vector3 pos, Drawer cajon)
-    {
-        // La chapa va adentro de un grupo: si los tornillos fueran hijos del cubo,
-        // heredarían su escala y saldrían aplastados
-        var g = Grupo("Tapa_Cajon", p);
-        g.transform.localPosition = pos;
-
-        Cubo("Chapa", g.transform, Vector3.zero, new Vector3(0.68f, 0.28f, 0.02f), mMetal, true);
-
-        var rb = g.AddComponent<Rigidbody>();
-        rb.isKinematic = true;   // se queda quieta hasta que se sueltan los tornillos
-        var panel = g.AddComponent<ScrewedPanel>();
-        panel.tornillosRestantes = 3;
-
-        // Recién con la chapa en el piso se puede abrir el cajón
-        if (cajon != null)
-            UnityEventTools.AddVoidPersistentListener(panel.alSoltarse, new UnityAction(cajon.Desbloquear));
-
-        Texto("Texto_Tapa", g.transform, new Vector3(0f, 0.025f, -0.013f), new Vector3(0f, 180f, 0f),
-              "ARCHIVO\nDIRECCION", 0.5f, new Color(0.12f, 0.12f, 0.12f), 0.62f, 0.16f);
-
-        // Los tres tornillos, hijos de la chapa para que se caigan con ella si queda alguno
-        Vector3[] puntos =
-        {
-            new Vector3(-0.28f, 0.1f, -0.02f),
-            new Vector3(0.28f, 0.1f, -0.02f),
-            new Vector3(0f, -0.1f, -0.02f)
-        };
-
-        for (int i = 0; i < puntos.Length; i++)
-        {
-            var t = Cilindro("Tornillo_" + (i + 1), g.transform, puntos[i],
-                             new Vector3(0.05f, 0.02f, 0.05f), mBronce, true);
-            t.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
-
-            t.AddComponent<XRSimpleInteractable>();
-            var tornillo = t.AddComponent<Screw>();
-            tornillo.tapa = panel;
-            tornillo.sacarConUnToque = true;   // se saca tocándolo, sin destornillador
-            Resaltar(t, t.GetComponent<Renderer>());
-            EditorUtility.SetDirty(tornillo);
-        }
-
-        EditorUtility.SetDirty(panel);
     }
 
     static void SillaSimple(Transform p, Vector3 pos)
@@ -1220,7 +1140,10 @@ public static class ConstructorCuarto2
         // Ángulo negativo: la hoja gira hacia +Z, o sea hacia afuera del cuarto
         puerta.anguloAbierto = -95f;
         puerta.duracion = 1.4f;
-        puerta.segundosParaCerrar = 30f;   // red de seguridad si el jugador no sale
+        // Sin cierre por tiempo: antes se cerraba sola a los 30 segundos y, si el jugador
+        // seguía adentro (por ejemplo, revisando el cajón), quedaba encerrado para siempre,
+        // porque la cerradura no vuelve a abrir
+        puerta.segundosParaCerrar = 0f;
         puerta.esperaAlPasar = 3f;         // no le cierra la puerta encima al jugador
 
         // Zona del otro lado del vano, ya bien metida en el pasillo: recién cuando el
@@ -1372,39 +1295,6 @@ public static class ConstructorCuarto2
         // Tocar la llave ya puesta es girarla: eso lo hace el jugador, no se abre sola
         UnityEventTools.AddVoidPersistentListener(llave.alGirar, new UnityAction(cerradura.Girar));
         EditorUtility.SetDirty(llave);
-    }
-
-    // Reja que cae sobre la entrada apenas el jugador pisa el cuarto: desde ahí no se
-    // puede volver al Cuarto 1, ni caminando ni teletransportándose (corta el rayo).
-    static void ArmarRejaEntrada(Transform raiz)
-    {
-        var reja = Grupo("Reja_Entrada", raiz);
-        reja.transform.localPosition = new Vector3((ENTRADA_X0 + ENTRADA_X1) / 2f, 0f, 0.02f);
-
-        float ancho = ENTRADA_X1 - ENTRADA_X0;
-        Cubo("Marco_Arriba", reja.transform, new Vector3(0f, ALTO_PUERTA - 0.04f, 0f),
-             new Vector3(ancho, 0.08f, 0.06f), mMetal, true);
-        Cubo("Marco_Abajo", reja.transform, new Vector3(0f, 0.04f, 0f),
-             new Vector3(ancho, 0.08f, 0.06f), mMetal, true);
-        for (int i = 0; i < 8; i++)
-            Cubo("Barrote", reja.transform,
-                 new Vector3(-ancho / 2f + 0.08f + i * (ancho - 0.16f) / 7f, ALTO_PUERTA / 2f, 0f),
-                 new Vector3(0.035f, ALTO_PUERTA, 0.035f), mMetal, true);
-
-        var audio = AudioEn("Audio_Reja", reja.transform);
-        reja.SetActive(false);
-
-        // Zona que cubre casi todo el cuarto: apenas el jugador está adentro, cae la reja
-        var zona = Grupo("Zona_Entrada", raiz);
-        zona.transform.localPosition = new Vector3(ANCHO / 2f, 1.2f, FONDO / 2f);
-        var colision = zona.AddComponent<BoxCollider>();
-        colision.isTrigger = true;
-        colision.size = new Vector3(ANCHO - 0.8f, 2.4f, FONDO - 0.8f);
-
-        var disparador = zona.AddComponent<DisparadorJugador>();
-        UnityEventTools.AddBoolPersistentListener(disparador.alEntrar, new UnityAction<bool>(reja.SetActive), true);
-        UnityEventTools.AddVoidPersistentListener(disparador.alEntrar, new UnityAction(audio.Play));
-        EditorUtility.SetDirty(disparador);
     }
 
     // ------------------------------------------------------------------ luces y terror
