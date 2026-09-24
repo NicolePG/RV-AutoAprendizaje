@@ -471,6 +471,18 @@ public static class Cuarto1Builder
         puertaDireccion.anguloPestillo = 4f;
         puertaDireccion.pausa = 0.35f;
         puertaDireccion.duracion = 2.2f;
+
+        // Cuando el jugador ya está en el Cuarto 2 (casi un metro pasando su entrada, al final del
+        // pasillo), la puerta se cierra sola detrás de él, con la misma animación: desde ahí no se
+        // puede volver a la Recepción. Door espera unos segundos antes de cerrarla (esperaAlPasar).
+        Transform zona = Grupo("Zona_Salida", g);
+        zona.localPosition = new Vector3(1.2f, 1.1f, -4.5f);
+        var colisionZona = zona.gameObject.AddComponent<BoxCollider>();
+        colisionZona.isTrigger = true;
+        colisionZona.size = new Vector3(1.8f, 2.2f, 1.2f);
+        var disparador = zona.gameObject.AddComponent<DisparadorJugador>();
+        UnityEventTools.AddVoidPersistentListener(disparador.alEntrar, puertaDireccion.Cerrar);
+
         ConstruirPasilloTemporal(g);
 
         // Ventanilla vertical de vidrio oscuro con marco antracita, del lado de la manija.

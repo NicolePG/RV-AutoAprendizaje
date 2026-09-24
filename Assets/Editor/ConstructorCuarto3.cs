@@ -708,6 +708,17 @@ public static partial class ConstructorCuarto3
         puerta.pausa = 0.3f;
         puerta.duracion = 2f;
 
+        // Cuando el jugador ya está en el Laboratorio (casi dos metros pasando la puerta), la
+        // puerta se cierra sola detrás de él con la misma animación, como la del Cuarto 2.
+        Transform zona = Grupo("Zona_Salida", g);
+        zona.localPosition = new Vector3((SALIDA_X0 + SALIDA_X1) / 2f, 1.1f, FONDO + 2f);
+        var colisionZona = zona.gameObject.AddComponent<BoxCollider>();
+        colisionZona.isTrigger = true;
+        colisionZona.size = new Vector3(SALIDA_X1 - SALIDA_X0 + 0.8f, 2.2f, 1.4f);
+        var disparador = zona.gameObject.AddComponent<DisparadorJugador>();
+        UnityEventTools.AddVoidPersistentListener(disparador.alEntrar, new UnityAction(puerta.Cerrar));
+        EditorUtility.SetDirty(disparador);
+
         // Hoja de 4.5 cm con una ventanita angosta: se arma en cuatro partes alrededor del vidrio
         const float esp = 0.045f, y0 = 0.01f, y1 = 2.04f;
         const float vx0 = 0.66f, vx1 = 0.78f, vy0 = 1.15f, vy1 = 1.8f;
