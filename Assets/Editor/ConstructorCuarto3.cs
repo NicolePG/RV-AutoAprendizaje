@@ -10,7 +10,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
 
 // Arma el Cuarto 3 (Sala de Computación) completo adentro del objeto "Cuarto3_Computacion".
-// Se corre desde el menú: Escape Room > Construir Cuarto 3. Borra lo que había adentro y lo
+// Se corre desde el menú: Escape Room > Construir los 4 cuartos. Borra lo que había adentro y lo
 // rehace, así siempre queda igual. No colocar nada a mano adentro: se borra al reconstruir.
 //
 // Este archivo arma la sala (estructura, muebles, luces y ambiente). La noche, los 4 acertijos
@@ -82,7 +82,7 @@ public static partial class ConstructorCuarto3
     // Tubos de la lámpara que parpadea: se conectan a su luz al final
     static readonly List<Renderer> tubosParpadeantes = new List<Renderer>();
 
-    [MenuItem("Escape Room/Construir Cuarto 3")]
+    // Lo llama el menú Escape Room > Construir los 4 cuartos (MenuEscapeRoom)
     public static void Construir()
     {
         var raiz = GameObject.Find(NOMBRE_RAIZ);
@@ -140,7 +140,7 @@ public static partial class ConstructorCuarto3
 
     // Atajo para probar el cuarto sin jugar los anteriores: deja al jugador parado apenas
     // pasando la entrada, mirando hacia el fondo. Se deshace con Ctrl+Z.
-    [MenuItem("Escape Room/Llevar jugador al Cuarto 3")]
+    // Lo llama el menú Escape Room > Llevar jugador al Cuarto 3 (MenuEscapeRoom)
     public static void LlevarJugador()
     {
         var raiz = GameObject.Find(NOMBRE_RAIZ);

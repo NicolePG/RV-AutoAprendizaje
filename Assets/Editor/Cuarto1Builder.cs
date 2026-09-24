@@ -15,9 +15,9 @@ using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
 // Construye el Cuarto 1 (Recepción = portería del colegio) dentro de la escena EscapeRoom: estructura,
 // texturas, luces, pistas y objetos interactivos (botones, cajones, destornillador y tapa atornillada).
 //
-// Uso: menú  Escape Room > Construir Cuarto 1 (Recepción)
+// Uso: menú  Escape Room > Construir los 4 cuartos (arma este cuarto y los otros tres)
 // Se puede ejecutar las veces que quieran: borra el cuarto anterior y lo vuelve a crear.
-// Al final hornea la iluminación (barra de progreso abajo a la derecha): hay que esperar a que termine
+// Al final se hornea la iluminación (barra de progreso abajo a la derecha): hay que esperar a que termine
 // antes de darle Play. Cuando termina, guarda la escena sola.
 //
 // Medidas del documento de diseño: cuarto de 4 x 4 m con techo a 2.6 m. Todo está en metros.
@@ -67,16 +67,10 @@ public static class Cuarto1Builder
     const string RutaSonidoPalanca = "Assets/Samples/XR Interaction Toolkit/3.5.1/Starter Assets/DemoAssets/Audio/Button Pop.wav";
     const string RutaSonidoAcierto = "Assets/Samples/XR Interaction Toolkit/3.5.1/Hands Interaction Demo/DemoAssets/Audio/TeleportSelection.wav";
 
-    [MenuItem("Escape Room/Construir Cuarto 1 (Recepción)")]
-    static void Construir()
+    // Arma el Cuarto 1. Lo llama el menú Escape Room > Construir los 4 cuartos (MenuEscapeRoom),
+    // que antes abre la escena del juego y al final, con todos los cuartos armados, hornea la luz.
+    public static void Construir()
     {
-        if (EditorApplication.isPlaying)
-        {
-            Debug.LogWarning("Detén el modo Play antes de construir el cuarto.");
-            return;
-        }
-        if (!AbrirEscenaJuego()) return;
-
         Borrar(NombreRaiz); // versión anterior del cuarto
         Borrar("Plane");    // piso de la plantilla, lo reemplaza el nuestro
 
@@ -97,12 +91,8 @@ public static class Cuarto1Builder
         MarcarEstaticos(raiz);
 
         AssetDatabase.SaveAssets();
-        Scene escena = SceneManager.GetActiveScene();
-        EditorSceneManager.MarkSceneDirty(escena);
-        EditorSceneManager.SaveScene(escena);
-        Selection.activeTransform = raiz;
-        Debug.Log("Cuarto 1 (Recepción) construido en " + EscenaJuego + ". Horneando la luz...");
-        HornearLuz();
+        EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+        Debug.Log("Cuarto 1 (Recepción) construido.");
     }
 
     // ================================================================ Estructura
@@ -190,7 +180,7 @@ public static class Cuarto1Builder
         GameObject sol = GameObject.Find("Directional Light");
         if (sol != null) sol.GetComponent<Light>().enabled = false;
         RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-        RenderSettings.ambientLight = new Color(0.22f, 0.24f, 0.27f); // un poco azulado: ambiente frío de apagón
+        RenderSettings.ambientLight = AmbienteApagon;
 
         // Sondas de luz: guardan la luz horneada en el aire para iluminar lo que se mueve
         // (cajones, llave, destornillador, puerta), que no puede tener la luz pintada encima.
@@ -965,7 +955,8 @@ public static class Cuarto1Builder
         }
     }
 
-    static void ColocarJugador()
+    // También lo usa el menú Escape Room > Llevar jugador al Cuarto 1
+    public static void ColocarJugador()
     {
         // Punto de inicio: frente a la entrada tapiada, mirando al sur (hacia el mostrador y la puerta)
         GameObject jugador = GameObject.Find("XR Origin (XR Rig)");
@@ -985,7 +976,7 @@ public static class Cuarto1Builder
 
     // ================================================================ Escena y materiales
 
-    static bool AbrirEscenaJuego()
+    public static bool AbrirEscenaJuego()
     {
         if (SceneManager.GetActiveScene().path == EscenaJuego) return true;
         if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return false;
@@ -1520,8 +1511,24 @@ public static class Cuarto1Builder
     }
 
     // Configura y lanza el horneado de luz. Corre en segundo plano (barra abajo a la derecha).
-    static void HornearLuz()
+    // Luz ambiental del Cuarto 1: un poco azulada, ambiente frío de apagón
+    static readonly Color AmbienteApagon = new Color(0.22f, 0.24f, 0.27f);
+
+    // La luz ambiental que dejaron los otros cuartos, para devolverla al terminar de hornear
+    static Color ambienteAnterior;
+    static UnityEngine.Rendering.AmbientMode modoAnterior;
+
+    // Hornea la luz de la escena (solo el Cuarto 1 usa luz horneada). Lo llama el menú
+    // Escape Room > Construir los 4 cuartos, al final. Los Cuartos 2 y 4 dejan una luz ambiental
+    // más clara al armarse: mientras se hornea se pone la del Cuarto 1 (así queda a oscuras,
+    // como se diseñó) y al terminar se devuelve la que estaba.
+    public static void HornearLuz()
     {
+        ambienteAnterior = RenderSettings.ambientLight;
+        modoAnterior = RenderSettings.ambientMode;
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+        RenderSettings.ambientLight = AmbienteApagon;
+
         LightingSettings ajustes = AssetDatabase.LoadAssetAtPath<LightingSettings>(RutaAjustesLuz);
         if (ajustes == null)
         {
@@ -1548,7 +1555,9 @@ public static class Cuarto1Builder
     static void AlTerminarHorneado()
     {
         Lightmapping.bakeCompleted -= AlTerminarHorneado;
+        RenderSettings.ambientMode = modoAnterior;
+        RenderSettings.ambientLight = ambienteAnterior;
         EditorSceneManager.SaveScene(SceneManager.GetActiveScene());
-        Debug.Log("Luz del Cuarto 1 horneada y escena guardada. Ya se puede dar Play.");
+        Debug.Log("Luz horneada y escena guardada. Ya se puede dar Play.");
     }
 }

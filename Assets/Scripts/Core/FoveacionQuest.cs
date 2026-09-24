@@ -12,7 +12,7 @@ using UnityEngine.XR;
 //
 // En el PC con el simulador no hay visor: el script no hace nada y se apaga solo.
 //
-// En la escena: va en el objeto "Optimizacion" (lo crea el menú Escape Room > Optimizar escena).
+// En la escena: va en el objeto "Optimizacion" (lo crea el menú Escape Room > Construir los 4 cuartos).
 public class FoveacionQuest : MonoBehaviour
 {
     [Tooltip("Cuánto se baja el detalle en los bordes: 0 = nada, 1 = lo máximo")]

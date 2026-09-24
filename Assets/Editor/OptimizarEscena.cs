@@ -2,15 +2,14 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-// Menú Escape Room > Optimizar escena: deja en la escena el objeto "Optimizacion" con los
-// scripts que ayudan a mantener los FPS en el Quest:
+// Deja en la escena el objeto "Optimizacion" con los scripts que ayudan a mantener los FPS
+// en el Quest:
 //  - GestorDeCuartos: dibuja solo los cuartos que el jugador puede ver.
 //  - FoveacionQuest: en el visor, dibuja los bordes de la vista con menos detalle.
-// Si el objeto ya existe, solo le agrega lo que le falte. El constructor del Cuarto 3 lo
-// llama al terminar, así que reconstruir ese cuarto ya deja todo listo.
+// Si el objeto ya existe, solo le agrega lo que le falte. Lo llama el constructor del
+// Cuarto 3 al terminar, dentro de Escape Room > Construir los 4 cuartos.
 public static class OptimizarEscena
 {
-    [MenuItem("Escape Room/Optimizar escena")]
     public static void Preparar()
     {
         GameObject objeto = GameObject.Find("Optimizacion");

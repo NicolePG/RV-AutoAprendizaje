@@ -13,7 +13,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
 
 // Arma el Cuarto 2 (Dirección) completo adentro del objeto "Cuarto2_Oficina",
-// con todo ya conectado. Se corre desde el menú: Escape Room > Construir Cuarto 2.
+// con todo ya conectado. Se corre desde el menú: Escape Room > Construir los 4 cuartos.
 // Borra el contenido anterior del cuarto y lo rehace, así siempre queda igual.
 //
 // Estilo: oficina moderna (paredes claras, piso de parquet, madera de nogal y acero
@@ -61,7 +61,7 @@ public static class ConstructorCuarto2
     // Sombra de la llave, que se arma con la puerta y se conecta con la llave del sofa
     static GameObject fantasmaLlave;
 
-    [MenuItem("Escape Room/Construir Cuarto 2")]
+    // Lo llama el menú Escape Room > Construir los 4 cuartos (MenuEscapeRoom)
     public static void Construir()
     {
         var raiz = GameObject.Find("Cuarto2_Oficina");

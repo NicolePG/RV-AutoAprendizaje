@@ -9,7 +9,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 // Segunda parte del constructor del Cuarto 3: la noche y los acertijos (la primera parte,
-// ConstructorCuarto3.cs, arma la sala). Se corre con el mismo menú: Escape Room > Construir Cuarto 3.
+// ConstructorCuarto3.cs, arma la sala). Se corre con el mismo menú: Escape Room > Construir los 4 cuartos.
 //
 // LA SALA ES DE NOCHE. Al entrar está a oscuras: solo se ven la luz azulada de la luna por la
 // persiana, el cartel verde de salida y el haz de una linterna que quedó prendida sobre las

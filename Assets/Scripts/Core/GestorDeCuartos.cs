@@ -18,8 +18,8 @@ using UnityEngine;
 // Nunca apaga las puertas que unen los cuartos (desde el otro lado se vería un hueco) ni lo que
 // salió de su cuarto (por ejemplo, un objeto del Cuarto 2 que el jugador llevó al Cuarto 4).
 //
-// En la escena: va en el objeto "Optimizacion". Lo crea el menú Escape Room > Optimizar escena
-// (también lo hace el constructor del Cuarto 3). El orden de "cuartos" es el del recorrido.
+// En la escena: va en el objeto "Optimizacion". Lo crea el menú Escape Room > Construir los 4
+// cuartos (lo hace el constructor del Cuarto 3). El orden de "cuartos" es el del recorrido.
 public class GestorDeCuartos : MonoBehaviour
 {
     [Tooltip("Nombres de los cuartos en la escena, en el orden en que se recorren")]

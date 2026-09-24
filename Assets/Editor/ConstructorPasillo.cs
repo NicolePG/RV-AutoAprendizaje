@@ -15,7 +15,7 @@ using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
 // Es temporal: cuando esté el Cuarto 3 se borra el objeto "Pasillo_Provisional" de la
 // escena y se borra este script.
 //
-// Se corre desde el menú: Escape Room > Construir pasillo provisional.
+// Ya no está en el menú: el Cuarto 3 ocupa su lugar y su constructor apaga el pasillo.
 public static class ConstructorPasillo
 {
     // El Cuarto 2 termina en Z = 11 y su puerta está entre X 4.4 y 5.6.
@@ -29,7 +29,6 @@ public static class ConstructorPasillo
 
     static Material mPiso, mPared, mFranja, mNegro, mCartel;
 
-    [MenuItem("Escape Room/Construir pasillo provisional")]
     public static void Construir()
     {
         var raiz = GameObject.Find("Pasillo_Provisional");

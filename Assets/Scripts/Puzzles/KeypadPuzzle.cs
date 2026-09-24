@@ -29,7 +29,7 @@ public class KeypadPuzzle : PuzzleBase
         if (datos == null)
         {
             Debug.LogError("El teclado no tiene PuzzleData asignado y no sabe cuál es el código. " +
-                           "Hay que reconstruir el Cuarto 2 (Escape Room > Construir Cuarto 2).", this);
+                           "Hay que reconstruir los cuartos (Escape Room > Construir los 4 cuartos).", this);
             return;
         }
 
