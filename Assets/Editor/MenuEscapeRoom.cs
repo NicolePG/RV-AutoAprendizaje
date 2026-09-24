@@ -57,6 +57,10 @@ public static class MenuEscapeRoom
         Cuarto1Builder.ColocarJugador();
         EditorSceneManager.SaveScene(SceneManager.GetActiveScene());
 
+        // Esta escena es la que se instala en el Quest al hacer el build. Antes la lista de
+        // escenas del build tenía solo la SampleScene vieja, sin los cuartos actuales.
+        EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(SceneManager.GetActiveScene().path, true) };
+
         // La luz se hornea una sola vez, con todos los cuartos armados. Al terminar se guarda sola.
         Debug.Log("Los 4 cuartos están armados. Horneando la luz: espera a que termine la barra de abajo antes de dar Play.");
         Cuarto1Builder.HornearLuz();
