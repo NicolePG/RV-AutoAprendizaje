@@ -25,6 +25,14 @@ public static class MenuEscapeRoom
             Debug.LogWarning("Todavía se está horneando la luz: espera a que termine la barra de abajo.");
             return;
         }
+        // Si Unity no terminó de compilar (o hay errores), el menú correría la versión VIEJA de
+        // los constructores y armaría los cuartos como estaban antes de los últimos cambios
+        if (EditorApplication.isCompiling || EditorUtility.scriptCompilationFailed)
+        {
+            Debug.LogWarning("Unity todavía está compilando los scripts (o hay errores en la consola). " +
+                             "Espera a que termine la ruedita de abajo a la derecha y vuelve a construir.");
+            return;
+        }
         if (!Cuarto1Builder.AbrirEscenaJuego()) return;
 
         try
