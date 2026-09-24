@@ -9,12 +9,13 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 // Un portafusibles del tablero eléctrico del laboratorio (Cuarto 4, acertijo 1).
 //
 // Es un encaje (XRSocketInteractor): al soltar un fusible cerca, entra solo, como la llave
-// del Cuarto 1. Solo acepta fusibles sanos. Al entrar, se compara su amperaje con el que
+// del Cuarto 1. Solo acepta fusibles. Al entrar, se compara su amperaje con el que
 // necesita este circuito:
 //  - igual: luz verde y un pitido; el circuito queda listo;
-//  - menor: el circuito le pide más de lo que aguanta y se QUEMA (chispazo, humo y queda
-//    negro). Hay que sacarlo y probar con otro;
+//  - menor: el circuito le pide más de lo que aguanta y SALTA (chispazo, humo y luz roja);
 //  - mayor: luz roja y zumbido: está sobredimensionado, no protegería el circuito.
+// En los dos casos de error el fusible no se arruina: se saca y se prueba en otro portafusibles.
+// Así el acertijo nunca queda trabado (hay un solo fusible de cada valor).
 //
 // En la escena: va en el portafusibles, junto a un XRSocketInteractor con un collider
 // "Is Trigger". ConstructorCuarto4 lo arma.
@@ -28,7 +29,7 @@ public class PortaFusible : MonoBehaviour, IXRSelectFilter, IXRHoverFilter
     public Renderer luz;
     public Material luzVerde, luzRoja, luzApagada;
 
-    [Tooltip("Luz del chispazo cuando se quema un fusible (empieza apagada)")]
+    [Tooltip("Luz del chispazo cuando se pone un fusible más chico (empieza apagada)")]
     public Light chispa;
 
     [Tooltip("Humo del chispazo (empieza apagado)")]
@@ -42,25 +43,18 @@ public class PortaFusible : MonoBehaviour, IXRSelectFilter, IXRHoverFilter
 
     public FusibleLab Actual { get; private set; }
 
-    // Está bien si tiene el fusible justo, sano
-    public bool Correcto => Actual != null && !Actual.Quemado && Actual.amperaje == amperaje;
+    // Está bien si tiene el fusible justo
+    public bool Correcto => Actual != null && Actual.amperaje == amperaje;
 
     XRSocketInteractor socket;
     Vector3 escalaAro;
 
-    // Filtros: solo entran fusibles que no estén quemados. El que se quemó adentro se queda puesto
-    // (negro y con la luz roja) hasta que el jugador lo saque: sin el "IsSelecting", XRI lo
-    // soltaría solo apenas se quema y se caería al piso.
+    // Filtros: solo entran fusibles (no otros objetos que el jugador suelte cerca)
     public bool canProcess => isActiveAndEnabled;
-    public bool Process(IXRSelectInteractor interactor, IXRSelectInteractable interactable)
-        => Acepta(interactable.transform) || socket.IsSelecting(interactable);
+    public bool Process(IXRSelectInteractor interactor, IXRSelectInteractable interactable) => Acepta(interactable.transform);
     public bool Process(IXRHoverInteractor interactor, IXRHoverInteractable interactable) => Acepta(interactable.transform);
 
-    static bool Acepta(Transform t)
-    {
-        var fusible = t != null ? t.GetComponent<FusibleLab>() : null;
-        return fusible != null && !fusible.Quemado;
-    }
+    static bool Acepta(Transform t) => t != null && t.GetComponent<FusibleLab>() != null;
 
     void Awake()
     {
@@ -108,7 +102,7 @@ public class PortaFusible : MonoBehaviour, IXRSelectFilter, IXRHoverFilter
         }
         else if (Actual.amperaje < amperaje)
         {
-            StartCoroutine(Quemar(Actual));
+            StartCoroutine(Chispazo(Actual));
         }
         else
         {
@@ -125,15 +119,14 @@ public class PortaFusible : MonoBehaviour, IXRSelectFilter, IXRHoverFilter
         alCambiar.Invoke();
     }
 
-    // El chispazo: dos destellos, un golpe seco y el fusible queda negro
-    IEnumerator Quemar(FusibleLab fusible)
+    // El chispazo del fusible que salta: dos destellos, un golpe seco, humo y luz roja
+    IEnumerator Chispazo(FusibleLab fusible)
     {
         yield return new WaitForSeconds(0.35f);
         if (fusible != Actual) yield break;   // lo sacaron antes
 
         SonidoSintetico.Tocar(SonidoSintetico.Golpe(), transform.position, 0.9f);
         SonidoSintetico.Tocar(SonidoSintetico.Zumbido(90f, 0.25f), transform.position, 0.6f);
-        fusible.Quemar();
         PintarLuz(luzRoja);
         if (humo != null) humo.SetActive(true);
         for (int i = 0; i < 2; i++)
@@ -143,7 +136,6 @@ public class PortaFusible : MonoBehaviour, IXRSelectFilter, IXRHoverFilter
             if (chispa != null) chispa.enabled = false;
             yield return new WaitForSeconds(0.08f);
         }
-        alCambiar.Invoke();
         yield return new WaitForSeconds(1.5f);
         if (humo != null) humo.SetActive(false);
     }

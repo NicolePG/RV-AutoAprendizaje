@@ -29,8 +29,9 @@ using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
 //     tablero antiguo con los portafusibles A, B y C; cada uno dice el consumo de su circuito.
 //     Al lado, el panel "Cómo reponer los fusibles" explica la regla (el fusible de valor
 //     inmediato superior) con un ejemplo y la escala de colores. En la caja de repuestos, seis
-//     fusibles ordenados y rotulados. Solución: A = 10 A, B = 16 A, C = 6 A. Uno más chico se
-//     quema; uno más grande no sirve. Con los tres vuelve la luz.
+//     fusibles ordenados y rotulados. Solución: A = 10 A, B = 16 A, C = 6 A. Uno más chico
+//     salta con un chispazo; uno más grande no sirve (los dos dan luz roja y se pueden sacar
+//     y volver a probar). Con los tres vuelve la luz.
 //  2. CAMPANA DE EXTRACCIÓN (CampanaExtraccion, VentanaCampana). El protocolo junto al gas dice:
 //     bajar el vidrio de la campana y poner el extractor en 3. Destraba las llaves de gas.
 //  3. LÍNEA DE GAS (LineaGas, ValvulaGas). Dos válvulas en la pared Este: se abren girando el
@@ -73,7 +74,7 @@ public static class ConstructorCuarto4
 
     static Material mParedAlta, mFriso, mGuarda, mPiso, mTecho, mAcero, mAceroOscuro, mNegro, mBlanco,
                     mPapel, mSabana, mSabanaGris, mMancha, mSangre, mVerdeLuz, mRojoLuz, mLedApagado, mLuzTecho,
-                    mTuboApagado, mVidrio, mGas, mCeramica, mLaton, mFusQuemado, mHumo, mEsfera, mVisor, mSal,
+                    mTuboApagado, mVidrio, mGas, mCeramica, mLaton, mHumo, mEsfera, mVisor, mSal,
                     mPlastico, mPlasticoOscuro, mMadera, mAmbarLuz, mGrisCasillero, mPantalla, mCianOscuro,
                     mAmarilloSenal, mAzulSenal, mVerdeSenal, mRojoSenal, mLlamaExterior, mLlamaInterior,
                     mFus4, mFus6, mFus10, mFus16, mFus20, mFus25;
@@ -575,7 +576,7 @@ public static class ConstructorCuarto4
         var socket = t.gameObject.AddComponent<XRSocketInteractor>();
         socket.attachTransform = encaje;
 
-        // El chispazo y el humo cuando se quema un fusible
+        // El chispazo y el humo cuando se pone un fusible más chico
         Light chispa = LuzPunto("Chispa", t, new Vector3(0f, 0f, 0.06f), new Color(1f, 0.8f, 0.5f), 5f, 1f);
         chispa.enabled = false;
         Transform humo = Grupo("Humo", t);
@@ -704,8 +705,6 @@ public static class ConstructorCuarto4
 
         var fusible = f.gameObject.AddComponent<FusibleLab>();
         fusible.amperaje = amperaje;
-        fusible.cuerpo = new[] { cuerpo.GetComponent<Renderer>() };
-        fusible.quemado = mFusQuemado;
     }
 
     static Material ColorFusible(int amperaje)
@@ -2229,7 +2228,7 @@ public static class ConstructorCuarto4
         mLuzTecho = Mat("C4_LuzTecho", new Color(1f, 1f, 0.97f), 0f, 0.5f, new Color(1.5f, 1.6f, 1.5f));
         mTuboApagado = Mat("C4_TuboApagado", new Color(0.8f, 0.82f, 0.82f), 0f, 0.6f);
 
-        // Transparentes: vidrio, humo del fusible quemado y la sangre (con su textura)
+        // Transparentes: vidrio, humo del chispazo del fusible y la sangre (con su textura)
         mVidrio = Transparente("C4_Vidrio", new Color(0.9f, 1f, 0.95f, 0.15f), default);
         mHumo = Transparente("C4_Humo", new Color(0.55f, 0.55f, 0.55f, 0.35f), default);
         mSangre = Transparente("C4_Sangre", Color.white, default);
@@ -2240,14 +2239,13 @@ public static class ConstructorCuarto4
         mLlamaExterior = Aditivo("C4_LlamaExterior", new Color(0.2f, 0.4f, 1f, 0.6f));
         mLlamaInterior = Aditivo("C4_LlamaInterior", new Color(0.4f, 0.7f, 1f, 0.9f));
 
-        // Fusibles con los colores normalizados de su amperaje, y el quemado
+        // Fusibles con los colores normalizados de su amperaje
         mFus4 = Mat("C4_Fusible4", new Color(0.45f, 0.27f, 0.12f), 0f, 0.6f);
         mFus6 = Mat("C4_Fusible6", new Color(0.2f, 0.6f, 0.25f), 0f, 0.6f);
         mFus10 = Mat("C4_Fusible10", new Color(0.8f, 0.12f, 0.1f), 0f, 0.6f);
         mFus16 = Mat("C4_Fusible16", new Color(0.55f, 0.57f, 0.6f), 0f, 0.6f);
         mFus20 = Mat("C4_Fusible20", new Color(0.15f, 0.3f, 0.75f), 0f, 0.6f);
         mFus25 = Mat("C4_Fusible25", new Color(0.9f, 0.78f, 0.15f), 0f, 0.6f);
-        mFusQuemado = Mat("C4_FusibleQuemado", new Color(0.05f, 0.045f, 0.04f), 0f, 0.1f);
     }
 
     // Material que deja ver a través. El alpha va en el color; si se le pasa emisión, además brilla.
