@@ -1,7 +1,7 @@
 using UnityEngine;
 
 // Se agregan más valores acá a medida que se arman los objetos de los otros cuartos
-public enum TipoItem { ObjetoEspecial }
+public enum TipoItem { ObjetoEspecial, Tarjeta }
 
 // Datos de un objeto que se puede guardar en el inventario, como asset reusable sin tocar código.
 // Un asset por objeto (por ejemplo "ItemData_ObjetoEspecial").

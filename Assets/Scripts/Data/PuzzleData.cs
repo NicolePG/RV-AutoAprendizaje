@@ -1,7 +1,7 @@
 using UnityEngine;
 
 // Qué tipo de acertijo es. Sirve para describirlo; el comportamiento lo pone cada script de acertijo.
-public enum TipoAcertijo { Llave, Codigo, Computadoras, Laboratorio, Luces, Red }
+public enum TipoAcertijo { Llave, Codigo, Computadoras, Laboratorio, Luces, Red, Fusibles, Ventilacion, Gas, Secuencia, Analisis, Acceso }
 
 // Datos de un acertijo guardados como asset (ScriptableObject).
 //

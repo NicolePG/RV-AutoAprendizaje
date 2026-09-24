@@ -88,7 +88,7 @@ llegue a cero muestra la pantalla de tiempo agotado, con opción de cargar la
 | 1 | Recepción (portería) | Llave en un cajón bajo el mostrador; la cerradura tiene una tapa atornillada | Grab + Socket, cajones, botones |
 | 2 | Dirección | Código de 4 dígitos: reloj real (1 de 5 idénticos), libro y cuadro | Teclado (Simple Interactable) |
 | 3 | Sala de computación | 3 de las 5 computadoras muestran un carácter; se marcan en la consola | Botones |
-| 4 | Laboratorio de ciencias | Fusibles → llaves de gas → 3 palancas en orden, más el objeto del cuarto 2 | Grab + Socket, perillas, palancas, inventario |
+| 4 | Laboratorio de ciencias | Fusibles → campana de extracción → llaves de gas → ensayo a la llama registrado en la terminal → tarjeta del docente en el lector de la salida | Grab + Socket, perillas, botones, trigger |
 
 El cuarto 1 funciona como tutorial: enseña a agarrar sin decirlo.
 
@@ -107,8 +107,8 @@ El cuarto 1 funciona como tutorial: enseña a agarrar sin decirlo.
    (`KeyPuzzle` + `PuzzleData` + `Door`).
 
 **Cuarto 3 — Sala de Computación (en construcción):** lo arma
-`Assets/Editor/ConstructorCuarto3.cs` (menú **Escape Room › Construir Cuarto 3**, y
-**Llevar jugador al Cuarto 3** para probarlo). Mide 8 × 7,52 m con techo de 3,2 m y
+`Assets/Editor/ConstructorCuarto3.cs` (para probarlo: **Escape Room › Llevar jugador al
+Cuarto 3**). Mide 8 × 7,52 m con techo de 3,2 m y
 ocupa el lugar del pasillo provisional, que el constructor apaga. La sala la arma
 `ConstructorCuarto3.cs` y la noche con los acertijos `ConstructorCuarto3Acertijos.cs`.
 Es **de noche**: entra a oscuras (luna por la persiana, cartel de salida y una linterna
@@ -131,7 +131,36 @@ se apunta. Cuatro acertijos en cadena, cada uno con su pista en la sala:
    `Cuarto3_Consola`). Luces en cascada y se abre la puerta al Laboratorio.
 Susto (`SustoSillas`, versión segura): tocar o pasar junto a S1, S2 o S3. Su luz
 ambiental la pone `ClimaCuarto` (noche → luz a medida que se prenden lámparas).
-Orden para armar la escena: Cuarto 1 → Cuarto 2 → Cuarto 4 → Cuarto 3.
+
+**Cuarto 4 — Laboratorio de Ciencias:** lo arma `Assets/Editor/ConstructorCuarto4.cs`
+(8 × 9,5 m, techo de 3,3 m). Laboratorio de química de colegio, moderno: muebles de Sketchfab
+(mesada química en L, mesa de acero, vitrina, mesa de disección, ducha de emergencia) y Poly Haven
+(mecheros Bunsen, taburetes); los equipos que funcionan se arman con piezas (tablero eléctrico,
+panel de gas, terminal, casillero, lector de tarjetas, pantalla de estado) y la señalización es
+estilo ISO 7010 (`CartelModerno`). Empieza a oscuras. La **pantalla de estado** junto a la entrada
+(`PanelObjetivo`) lista las 5 tareas y dice qué hacer en la actual. Cinco acertijos en cadena:
+1. **Tablero** (`TableroFusibles`, `PortaFusible`, `FusibleLab`): cada circuito dice su consumo
+   (C1 8 A, C2 14 A, C3 5 A) y el tablero la regla del fusible inmediato superior; una silueta
+   ámbar marca dónde va cada uno. Se encajan 10, 16 y 6 A; uno chico se quema. Vuelve la luz.
+2. **Campana de extracción** (`CampanaExtraccion`, `VentanaCampana`): bajar el vidrio con la mano
+   y girar la perilla del extractor a 3 (protocolo en el panel de gas). Destraba las llaves de gas.
+3. **Gas** (`LineaGas`, `ValvulaGas`): dos llaves esféricas con manija amarilla, un cuarto de
+   vuelta (`XRKnob`): abierta = paralela al caño. A mitad de V2 salta el susto (`SustoCamilla`):
+   apagón, la camilla rueda sola y al volver la luz la mesa está vacía (sin muñeco). Se prenden
+   los mecheros.
+4. **Análisis de muestras** (`Mechero`, `MuestraLlama`, `TerminalAnalisis`): las muestras 1, 2 y 3
+   tiñen la llama de verde, amarillo y rojo; la terminal junto a los mecheros tiene la tabla de
+   colores y se marca el metal de cada una (Cu, Na, Li) y VALIDAR. Abre el casillero del docente.
+5. **Salida** (`LectorTarjeta`, `TarjetaAcceso`, `ItemData`): en el casillero está la tarjeta del
+   docente; se acerca al lector junto a la puerta y se abre. La tarjeta del alumno (sobre la
+   mesada) da "acceso denegado". El lector compara assets `ItemData`, no textos.
+Diferencia con el GDD (decisión del equipo, 24/09): se sacaron las 3 palancas y el objeto especial
+del Cuarto 2, porque si el jugador no lo agarraba no podía volver a buscarlo (las puertas se cierran).
+
+**Menú Escape Room** (`MenuEscapeRoom.cs`): **Construir los 4 cuartos** arma toda la escena
+con los constructores de cada cuarto, en orden (1 → 2 → 4 → 3), la guarda y hornea la luz
+una sola vez al final (esperar la barra antes de dar Play). **Llevar jugador al Cuarto 1, 2,
+3 o 4** pone al jugador en la entrada de ese cuarto para probarlo directo.
 
 **Objetos agarrables** (regla para todos los cuartos): agarre firme, como una mano
 que toma bien una herramienta. `XRGrabInteractable` con **punto de agarre fijo**
@@ -181,8 +210,8 @@ de altura.
   ser estático: se ilumina con las sondas de luz. Las luces que cambian durante
   el juego (como la de la cerradura) van en tiempo real, no horneadas.
 - **Rendimiento en el Quest.** Presupuesto aproximado: 250 mil triángulos por cuarto y
-  pocas luces en tiempo real. `GestorDeCuartos` (objeto "Optimizacion", menú
-  **Escape Room › Optimizar escena**; lo agrega también el constructor del Cuarto 3) dibuja
+  pocas luces en tiempo real. `GestorDeCuartos` (objeto "Optimizacion", lo agrega el
+  constructor del Cuarto 3 al construir los 4 cuartos) dibuja
   solo el cuarto del jugador, los de al lado y los que se ven por puertas abiertas. Los FBX
   de Poly Haven se importan con Mesh LOD (`MallasLivianas`). Antes de sumar un modelo, mirar
   cuántos triángulos tiene: lo decorativo pesado (plantas, cajas, lámparas de techo) va en

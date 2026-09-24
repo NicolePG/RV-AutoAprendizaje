@@ -21,6 +21,19 @@ globo_terraqueo/         "Prop Globe"                 Rosbergen Designs    https
 La silla del director y la impresora del Cuarto 2 son las mismas del Cuarto 3
 (office_chair_modern.glb y printer_low_poly.glb), ya acreditadas arriba.
 
+CUARTO 4 - LABORATORIO DE CIENCIAS
+Archivo                  Modelo                                  Autor                                        Enlace
+mesada_quimica.glb       "Chemistry Lab Table"                   Jawahar Yokesh (@Jawahar_Yokesh)             https://sketchfab.com/3d-models/fc5951d8af674da4bf55aef0693ff1d0
+mesa_laboratorio.glb     "Laboratory Table"                      yuitop                                       https://sketchfab.com/3d-models/d2eb1e1321eb486f8862d52bcacc2b36
+mueble_laboratorio.glb   "Science lab cabinet"                   tboiston                                     https://sketchfab.com/3d-models/121829e2dbef45128ba5c9b04d0f03ce
+vitrina_laboratorio.glb  "Laboratory Cabinet Storage"            Naked Singularity Studio (@nakedsingularity) https://sketchfab.com/3d-models/6c5d3bde09dd4f55ad973d8429441190
+cristaleria.glb          "Chemistry Glassware"                   maxdragonn (@maxdragon)                      https://sketchfab.com/3d-models/b8594f7dc7e8442dbaaae7a11da4a962
+tabla_periodica.glb      "Periodic_Table"                        rubysloth32                                  https://sketchfab.com/3d-models/c9d421cf508e48a393d7b20835794f55
+mesa_diseccion.glb       "Dissection Table"                      Shining Salt (@shiningsalt)                  https://sketchfab.com/3d-models/fb73798b95b84dabb5eef1b74f36b15c
+ducha_emergencia.glb     "Emergency Shower with Eye Wash"        cesar.seidel                                 https://sketchfab.com/3d-models/61a536cf4e1f4995a8128863f8994e3e
+microscopio.glb          "Microscope"                            VeeRuby Technologies (@veerubyinc)           https://sketchfab.com/3d-models/2435e338bf7541a4b919e53df50eeeea
+Estos se bajaron en GLB con las texturas ya reducidas a 1k (opción de Sketchfab).
+
 FORMATOS
 Los del Cuarto 3 se bajaron en GLB: un solo archivo con las texturas adentro.
 Los del Cuarto 2 se bajaron en glTF: una carpeta con scene.gltf, scene.bin y las texturas

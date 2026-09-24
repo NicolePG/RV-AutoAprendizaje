@@ -41,12 +41,27 @@ public static class SonidoSintetico
     public static AudioClip Golpe()
         => Crear("golpe", 0.25f, t => Mathf.Sin(2f * Mathf.PI * 95f * t) * Mathf.Exp(-t * 18f) * 2f);
 
+    // Ruido continuo para usar en loop: el siseo del gas, el rugido de un mechero o el viento
+    // de un extractor. "suavidad" le saca lo agudo: 0 = siseo fino, 0.95 = rugido grave.
+    public static AudioClip Ruido(float suavidad, float segundos = 2f)
+    {
+        var azar = new System.Random(11);
+        float anterior = 0f;
+        return Crear("ruido_" + suavidad + "_" + segundos, segundos, t =>
+        {
+            float blanco = (float)azar.NextDouble() * 2f - 1f;
+            anterior = Mathf.Lerp(blanco, anterior, suavidad);
+            return anterior * (1f + suavidad * 3f);   // al filtrarlo baja el volumen: se compensa
+        }, true);
+    }
+
     public static void Tocar(AudioClip clip, Vector3 donde, float volumen = 1f)
     {
         if (clip != null) AudioSource.PlayClipAtPoint(clip, donde, volumen);
     }
 
-    static AudioClip Crear(string nombre, float segundos, System.Func<float, float> onda)
+    // enLoop: el sonido se repite sin cortes, así que no se le suavizan los bordes
+    static AudioClip Crear(string nombre, float segundos, System.Func<float, float> onda, bool enLoop = false)
     {
         if (guardados.TryGetValue(nombre, out AudioClip guardado) && guardado != null) return guardado;
 
@@ -56,7 +71,7 @@ public static class SonidoSintetico
         {
             float t = i / (float)MuestrasPorSegundo;
             // Sube y baja el volumen en los bordes: sin esto se oye un "clic" al empezar y al terminar
-            float borde = Mathf.Min(1f, t / 0.005f) * Mathf.Min(1f, (segundos - t) / 0.03f);
+            float borde = enLoop ? 1f : Mathf.Min(1f, t / 0.005f) * Mathf.Min(1f, (segundos - t) / 0.03f);
             muestras[i] = Mathf.Clamp(onda(t), -1f, 1f) * borde * 0.5f;
         }
 
