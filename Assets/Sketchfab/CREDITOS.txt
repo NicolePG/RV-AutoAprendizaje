@@ -30,6 +30,10 @@ vitrina_laboratorio.glb  "Laboratory Cabinet Storage"            Naked Singulari
 cristaleria.glb          "Chemistry Glassware"                   maxdragonn (@maxdragon)                      https://sketchfab.com/3d-models/b8594f7dc7e8442dbaaae7a11da4a962
 tabla_periodica.glb      "Periodic_Table"                        rubysloth32                                  https://sketchfab.com/3d-models/c9d421cf508e48a393d7b20835794f55
 mesa_diseccion.glb       "Dissection Table"                      Shining Salt (@shiningsalt)                  https://sketchfab.com/3d-models/fb73798b95b84dabb5eef1b74f36b15c
+tablero_fusibles.glb     "Game Art: Vintage Fuse Box"            Alex Filip (@filip.alecsandru)               https://sketchfab.com/3d-models/4109ae3e180d4ed8b3427fe6a97d58b6
+valvula_gas.glb          "Wedge gate valve"                      Kozlov Maksim (@kozlovchik)                  https://sketchfab.com/3d-models/dd989566c71b43a6a7ba44d2ab54146c
+palanca_corriente.glb    "Lever Power Switch"                    Sam Feng (@fengyuan20000303)                 https://sketchfab.com/3d-models/374608f75c114b8a9bf41dbc02c51c50
+cuerpo_cubierto.glb      "Low Poly Dead Body Covered Game Ready" -Arthur- (@.arthur)                          https://sketchfab.com/3d-models/1e6ae13f6c2e46429eaca4d22d8bdbaa
 ducha_emergencia.glb     "Emergency Shower with Eye Wash"        cesar.seidel                                 https://sketchfab.com/3d-models/61a536cf4e1f4995a8128863f8994e3e
 microscopio.glb          "Microscope"                            VeeRuby Technologies (@veerubyinc)           https://sketchfab.com/3d-models/2435e338bf7541a4b919e53df50eeeea
 Estos se bajaron en GLB con las texturas ya reducidas a 1k (opción de Sketchfab).

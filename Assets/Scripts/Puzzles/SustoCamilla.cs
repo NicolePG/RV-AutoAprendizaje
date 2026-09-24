@@ -4,10 +4,12 @@ using UnityEngine;
 // El susto del laboratorio, el más fuerte de los tres (GDD, sección 6).
 //
 // Salta mientras el jugador gira la segunda llave de gas: tiene la mano ocupada y la mesa de
-// disección, con un cuerpo tapado por una sábana, le queda a la espalda. En dos segundos:
+// disección, con un cuerpo tapado por una sábana ensangrentada, le queda a la espalda.
+// En dos segundos:
 //  1. Un golpe seco y se corta la luz del laboratorio.
-//  2. A oscuras suenan las ruedas: la sábana cae al piso y la camilla se corre y gira sola.
-//  3. La luz vuelve parpadeando... y la mesa está VACÍA. El cuerpo ya no está.
+//  2. A oscuras suenan las ruedas: la camilla se corre y gira sola.
+//  3. La luz vuelve parpadeando... y el cuerpo YA NO ESTÁ: la sábana quedó tirada en el piso y
+//     un rastro de sangre se aleja de la camilla.
 // No hay ningún muñeco que se mueva (se veía falso): el miedo lo da lo que no se ve.
 //
 // Es la versión segura del GDD: nada va hacia el jugador ni lo toca. La camilla rueda hacia el
@@ -22,27 +24,28 @@ public class SustoCamilla : MonoBehaviour
     [Tooltip("Lo que se ve encendido y se apaga con las luces (los tubos de las lámparas)")]
     public GameObject[] encendidos;
 
-    [Tooltip("La sábana con la forma del cuerpo")]
-    public GameObject sabana;
+    [Tooltip("El cuerpo tapado con la sábana: desaparece durante el apagón")]
+    public GameObject cuerpo;
 
-    [Tooltip("La sábana tirada en el piso: arranca apagada")]
-    public GameObject sabanaCaida;
+    [Tooltip("Lo que aparece durante el apagón: la sábana en el piso y el rastro de sangre")]
+    public GameObject[] aparecen;
 
-    [Tooltip("La parte que rueda: la mesa con la sábana")]
+    [Tooltip("La parte que rueda: la mesa")]
     public Transform camilla;
 
     [Tooltip("Cuánto se corre la camilla (en los ejes del cuarto) y cuánto gira")]
     public Vector3 corrimiento = new Vector3(0f, 0f, 0.6f);
     public float giro = 10f;
 
-    [Tooltip("Chirrido de las ruedas y golpe (si no hay audio, se arma uno por código)")]
+    [Tooltip("Chirrido de las ruedas (si no hay audio, se arma uno por código)")]
     public AudioSource ruido;
 
     public bool Disparado { get; private set; }
 
     void Awake()
     {
-        if (sabanaCaida != null) sabanaCaida.SetActive(false);
+        foreach (GameObject objeto in aparecen)
+            if (objeto != null) objeto.SetActive(false);
     }
 
     // Lo llama la segunda llave de gas cuando va por la mitad del giro
@@ -65,14 +68,15 @@ public class SustoCamilla : MonoBehaviour
         Luz(false, prendidas, ambiente, reflejos);
         yield return new WaitForSeconds(0.35f);
 
-        // 2. A oscuras: se cae la sábana y la camilla rueda sola, con chirrido
+        // 2. A oscuras: el cuerpo desaparece y la camilla rueda sola, con chirrido
         if (ruido != null)
         {
             if (ruido.clip == null) ruido.clip = SonidoSintetico.Chirrido(0.9f);
             ruido.Play();
         }
-        if (sabana != null) sabana.SetActive(false);
-        if (sabanaCaida != null) sabanaCaida.SetActive(true);
+        if (cuerpo != null) cuerpo.SetActive(false);
+        foreach (GameObject objeto in aparecen)
+            if (objeto != null) objeto.SetActive(true);
         if (camilla != null)
         {
             Vector3 desde = camilla.localPosition;

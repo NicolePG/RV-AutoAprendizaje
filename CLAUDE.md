@@ -88,7 +88,7 @@ llegue a cero muestra la pantalla de tiempo agotado, con opción de cargar la
 | 1 | Recepción (portería) | Llave en un cajón bajo el mostrador; la cerradura tiene una tapa atornillada | Grab + Socket, cajones, botones |
 | 2 | Dirección | Código de 4 dígitos: reloj real (1 de 5 idénticos), libro y cuadro | Teclado (Simple Interactable) |
 | 3 | Sala de computación | 3 de las 5 computadoras muestran un carácter; se marcan en la consola | Botones |
-| 4 | Laboratorio de ciencias | Fusibles → campana de extracción → llaves de gas → ensayo a la llama registrado en la terminal → tarjeta del docente en el lector de la salida | Grab + Socket, perillas, botones, trigger |
+| 4 | Laboratorio de ciencias | Fusibles → campana de extracción → llaves de gas → ensayo a la llama con 3 palancas → tarjeta del docente en el lector de la salida | Grab + Socket, perillas, palancas, trigger |
 
 El cuarto 1 funciona como tutorial: enseña a agarrar sin decirlo.
 
@@ -133,29 +133,33 @@ Susto (`SustoSillas`, versión segura): tocar o pasar junto a S1, S2 o S3. Su lu
 ambiental la pone `ClimaCuarto` (noche → luz a medida que se prenden lámparas).
 
 **Cuarto 4 — Laboratorio de Ciencias:** lo arma `Assets/Editor/ConstructorCuarto4.cs`
-(8 × 9,5 m, techo de 3,3 m). Laboratorio de química de colegio, moderno: muebles de Sketchfab
-(mesada química en L, mesa de acero, vitrina, mesa de disección, ducha de emergencia) y Poly Haven
-(mecheros Bunsen, taburetes); los equipos que funcionan se arman con piezas (tablero eléctrico,
-panel de gas, terminal, casillero, lector de tarjetas, pantalla de estado) y la señalización es
-estilo ISO 7010 (`CartelModerno`). Empieza a oscuras. La **pantalla de estado** junto a la entrada
+(8 × 9,5 m, techo de 3,3 m). Laboratorio de química de colegio con muebles y equipos de Sketchfab
+(mesada química en L, mesa de acero, vitrina, mesa de disección con un cuerpo tapado, tablero de
+fusibles, válvulas, palancas de cuchilla, ducha de emergencia) y Poly Haven (mecheros Bunsen,
+taburetes). Los carteles son modernos: señales estilo ISO 7010 (`CartelModerno`) y paneles con
+encabezado de color. Empieza a oscuras. La **pantalla de estado** junto a la entrada
 (`PanelObjetivo`) lista las 5 tareas y dice qué hacer en la actual. Cinco acertijos en cadena:
-1. **Tablero** (`TableroFusibles`, `PortaFusible`, `FusibleLab`): cada circuito dice su consumo
-   (C1 8 A, C2 14 A, C3 5 A) y el tablero la regla del fusible inmediato superior; una silueta
-   ámbar marca dónde va cada uno. Se encajan 10, 16 y 6 A; uno chico se quema. Vuelve la luz.
+1. **Tablero** (`TableroFusibles`, `PortaFusible`, `FusibleLab`): cada portafusibles (A, B, C) dice
+   el consumo de su circuito (8, 14 y 5 A) y un aro ámbar marca dónde va el fusible. El panel
+   "Cómo reponer los fusibles" explica la regla (valor inmediato superior) con un ejemplo y la
+   escala de colores; los repuestos están ordenados y rotulados. Se encajan 10, 16 y 6 A; uno chico
+   se quema. Vuelve la luz.
 2. **Campana de extracción** (`CampanaExtraccion`, `VentanaCampana`): bajar el vidrio con la mano
-   y girar la perilla del extractor a 3 (protocolo en el panel de gas). Destraba las llaves de gas.
-3. **Gas** (`LineaGas`, `ValvulaGas`): dos llaves esféricas con manija amarilla, un cuarto de
-   vuelta (`XRKnob`): abierta = paralela al caño. A mitad de V2 salta el susto (`SustoCamilla`):
-   apagón, la camilla rueda sola y al volver la luz la mesa está vacía (sin muñeco). Se prenden
+   y girar la perilla del extractor a 3 (protocolo junto al gas). Destraba las llaves de gas.
+3. **Gas** (`LineaGas`, `ValvulaGas`): dos válvulas que se abren girando el volante dos vueltas
+   (`XRKnob`). A mitad de V2 salta el susto (`SustoCamilla`): apagón, la camilla rueda sola y al
+   volver la luz el cuerpo tapado ya no está (queda la sábana y un rastro de sangre). Se prenden
    los mecheros.
-4. **Análisis de muestras** (`Mechero`, `MuestraLlama`, `TerminalAnalisis`): las muestras 1, 2 y 3
-   tiñen la llama de verde, amarillo y rojo; la terminal junto a los mecheros tiene la tabla de
-   colores y se marca el metal de cada una (Cu, Na, Li) y VALIDAR. Abre el casillero del docente.
+4. **Ensayo a la llama** (`Mechero`, `MuestraLlama`, `SecuenciaPalancas`, `PalancaCuchilla`): las
+   muestras 1, 2 y 3 tiñen la llama de verde, amarillo y rojo; el atril y la pizarra dicen Cu, Na,
+   Li. Las palancas (Na, Li, Cu) se bajan en el orden de las muestras: Cu, Na, Li. El visor pide
+   "el metal de la muestra 1", después la 2 y la 3. Abre el casillero del docente.
 5. **Salida** (`LectorTarjeta`, `TarjetaAcceso`, `ItemData`): en el casillero está la tarjeta del
    docente; se acerca al lector junto a la puerta y se abre. La tarjeta del alumno (sobre la
    mesada) da "acceso denegado". El lector compara assets `ItemData`, no textos.
-Diferencia con el GDD (decisión del equipo, 24/09): se sacaron las 3 palancas y el objeto especial
-del Cuarto 2, porque si el jugador no lo agarraba no podía volver a buscarlo (las puertas se cierran).
+Diferencia con el GDD (decisión del equipo, 24/09): la ranura del objeto especial del Cuarto 2 se
+cambió por la tarjeta del docente, porque si el jugador no agarraba el objeto no podía volver a
+buscarlo (las puertas se cierran).
 
 **Menú Escape Room** (`MenuEscapeRoom.cs`): **Construir los 4 cuartos** arma toda la escena
 con los constructores de cada cuarto, en orden (1 → 2 → 4 → 3), la guarda y hornea la luz

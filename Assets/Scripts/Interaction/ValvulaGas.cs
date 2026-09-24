@@ -1,18 +1,16 @@
-using TMPro;
 using Unity.VRTemplate;
 using UnityEngine;
 using UnityEngine.Events;
 
 // Una llave de paso de la línea de gas (V1 o V2) del Cuarto 4, acertijo 3.
 //
-// Es una válvula esférica moderna, la que se usa para gas: una manija amarilla que se gira un
-// cuarto de vuelta. Cerrada, la manija queda atravesada al caño; abierta, queda paralela
-// (así se sabe de un vistazo cómo está cualquier llave de gas). El giro lo maneja XRKnob, la
-// perilla de la plantilla de VR de Unity: se agarra la manija y se gira la mano hacia arriba.
-// Mientras gira, el visor digital marca la presión y se oye el gas.
+// Es una válvula de compuerta de verdad: se abre agarrando el volante y GIRÁNDOLO con la
+// mano, dos vueltas completas (el giro lo maneja XRKnob, la perilla de la plantilla de VR de
+// Unity: en el Quest se gira la muñeca o la mano alrededor del volante; en el PC, mouse en
+// círculos). Mientras gira, la aguja del manómetro sube y se oye el gas.
 //
-// Empieza BLOQUEADA (cartel rojo): hasta que la campana de extracción no está andando, la
-// manija no se puede agarrar. Desbloquear() la habilita (cartel verde).
+// Empieza BLOQUEADA (tiene colgada la tarjeta roja): hasta que la campana de extracción no
+// está andando, el volante no se puede agarrar. Desbloquear() la habilita.
 //
 // "alMitad" avisa cuando va por la mitad del giro: ahí salta el susto de la camilla (con la
 // segunda llave), porque el jugador tiene la mano ocupada y está de espaldas.
@@ -22,19 +20,17 @@ public class ValvulaGas : MonoBehaviour
 {
     public XRKnob volante;
 
-    [Tooltip("Visor digital de presión")]
-    public TMP_Text presion;
-
-    [Tooltip("Presión de la línea con la llave abierta del todo, en kPa")]
-    public float presionMaxima = 2.1f;
+    [Tooltip("Aguja del manómetro: gira sobre su Z")]
+    public Transform aguja;
+    public float recorridoAguja = 240f;
 
     [Tooltip("Siseo del gas mientras se abre")]
     public AudioSource siseo;
 
-    [Tooltip("Cartel rojo de bloqueo (se apaga al habilitarla)")]
+    [Tooltip("Tarjeta roja de bloqueo (se saca al habilitarla)")]
     public GameObject tarjetaBloqueo;
 
-    [Tooltip("Cartel verde de habilitada (aparece al habilitarla)")]
+    [Tooltip("Tarjeta verde de habilitada (aparece al habilitarla)")]
     public GameObject tarjetaHabilitada;
 
     public float puntoDelMedio = 0.5f;
@@ -43,6 +39,7 @@ public class ValvulaGas : MonoBehaviour
 
     public bool Abierta { get; private set; }
 
+    Quaternion agujaCero;
     float ultimoValor;
     bool avisoMitad;
     float siseoHasta;
@@ -50,13 +47,13 @@ public class ValvulaGas : MonoBehaviour
     void Awake()
     {
         if (siseo != null && siseo.clip == null) siseo.clip = SonidoSintetico.Ruido(0.15f);
+        if (aguja != null) agujaCero = aguja.localRotation;
         if (volante != null)
         {
             volante.onValueChange.AddListener(AlGirar);
             volante.enabled = false;   // bloqueada hasta que ande la campana
         }
         if (tarjetaHabilitada != null) tarjetaHabilitada.SetActive(false);
-        MostrarPresion(0f);
     }
 
     public void Desbloquear()
@@ -70,9 +67,9 @@ public class ValvulaGas : MonoBehaviour
     void AlGirar(float valor)
     {
         if (Abierta) return;
-        MostrarPresion(valor);
+        if (aguja != null) aguja.localRotation = agujaCero * Quaternion.Euler(0f, 0f, -valor * recorridoAguja);
 
-        // Mientras la manija se mueve, suena el gas
+        // Mientras el volante se mueve, suena el gas
         if (Mathf.Abs(valor - ultimoValor) > 0.001f) siseoHasta = Time.time + 0.25f;
         ultimoValor = valor;
 
@@ -81,20 +78,14 @@ public class ValvulaGas : MonoBehaviour
             avisoMitad = true;
             alMitad.Invoke();
         }
-        if (valor < 0.98f) return;
+        if (valor < 0.995f) return;
 
-        // Abierta del todo: queda así (la manija ya no se mueve)
+        // Abierta del todo: queda así (el volante ya no se mueve)
         Abierta = true;
         volante.enabled = false;
-        MostrarPresion(1f);
         if (siseo != null) siseo.Stop();
         SonidoSintetico.Tocar(SonidoSintetico.Golpe(), transform.position, 0.6f);
         alAbrir.Invoke();
-    }
-
-    void MostrarPresion(float valor)
-    {
-        if (presion != null) presion.text = (valor * presionMaxima).ToString("0.0") + " kPa";
     }
 
     void Update()
