@@ -148,6 +148,9 @@ public class ComputadoraSala : MonoBehaviour
         Encendida = false;
         StopAllCoroutines();
         arrancando = false;
+        // Si se apaga justo durante la cara del susto, esa corrutina se cortó sin volver a
+        // mostrar el texto: se lo devuelve acá, si no la pantalla queda muda para siempre
+        if (texto != null) texto.enabled = true;
         MostrarApagada();
         SonidoSintetico.Tocar(SonidoSintetico.Pitido(500f, 0.06f), transform.position, 0.5f);
     }
