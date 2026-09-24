@@ -45,6 +45,10 @@ using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
 //  5. SALIDA DE EMERGENCIA (LectorTarjeta, TarjetaAcceso). Con las palancas en orden se abre el
 //     casillero del docente; su tarjeta, acercada al lector junto a la puerta, abre la salida.
 //     La tarjeta del alumno (sobre la mesada) no sirve.
+//
+// EL FINAL: detrás de la salida está el patio del colegio, al aire libre (PantallaVictoria). Al
+// salir se hace de día, aparece el cartel "¡LOGRASTE SALIR DEL COLEGIO!", suena una fanfarria y
+// hay un botón para volver a jugar.
 public static class ConstructorCuarto4
 {
     const float ANCHO = 8f;      // eje X: pared Oeste (0) a pared Este (8)
@@ -77,7 +81,7 @@ public static class ConstructorCuarto4
                     mTuboApagado, mVidrio, mGas, mCeramica, mLaton, mHumo, mEsfera, mVisor, mSal,
                     mPlastico, mPlasticoOscuro, mMadera, mAmbarLuz, mGrisCasillero, mPantalla, mCianOscuro,
                     mAmarilloSenal, mAzulSenal, mVerdeSenal, mRojoSenal, mLlamaExterior, mLlamaInterior,
-                    mFus4, mFus6, mFus10, mFus16, mFus20, mFus25;
+                    mFus4, mFus6, mFus10, mFus16, mFus20, mFus25, mPatio, mMuroPatio;
 
     // Mallas hechas por código (se guardan como asset en Materials/Cuarto4)
     static Mesh mallaTriangulo, mallaLlama;
@@ -143,6 +147,7 @@ public static class ConstructorCuarto4
         SecuenciaPalancas palancas = ArmarPalancas(acertijos);
         Door casillero = ArmarCasillero(acertijos, tarjetaDocente);
         Door puerta = ArmarPuertaSalida(raiz.transform);
+        ArmarPatioSalida(raiz.transform, puerta);
         LectorTarjeta lector = ArmarLector(acertijos, tarjetaDocente);
 
         ControlEnergia control = ArmarControlEnergia(raiz.transform, sinEnergia);
@@ -1598,6 +1603,90 @@ public static class ConstructorCuarto4
         return puerta;
     }
 
+    // El final del juego: el patio del colegio, al aire libre, del otro lado de la salida de
+    // emergencia. Muros bajos alrededor (se ve el cielo) y, en el muro del fondo, el cartel de la
+    // victoria. Al pisar el patio (la zona de la entrada) PantallaVictoria hace de día, muestra el
+    // cartel y el botón de volver a jugar, y suena la fanfarria. Mide 7 x 7 m y queda centrado con
+    // la puerta; en los ejes del cuarto arranca en la cara de afuera de la pared del fondo.
+    static void ArmarPatioSalida(Transform raiz, Door puerta)
+    {
+        const float X0 = 3f, X1 = 10f, LARGO = 7f, ALTO_MURO = 2.6f;
+        const float Z0 = FONDO + MURO, Z1 = Z0 + LARGO;
+        const float XC = (X0 + X1) / 2f, ZC = (Z0 + Z1) / 2f;
+        Transform g = Grupo("Patio_Salida", raiz);
+
+        // Piso de baldosa: también es zona de teletransporte
+        var piso = Cubo("Piso_Patio", g, new Vector3(XC, -0.1f, ZC), new Vector3(X1 - X0, 0.2f, LARGO), mPatio, true);
+        var area = piso.AddComponent<TeleportationArea>();
+        int capaTeleport = InteractionLayerMask.GetMask("Teleport");
+        if (capaTeleport == 0) capaTeleport = 1 << 31;
+        area.interactionLayers = capaTeleport;
+
+        // Muros bajos alrededor. El del lado de la puerta es la pared del laboratorio; solo falta
+        // cerrar el tramo que pasa el ancho del cuarto
+        Cubo("Muro_Oeste", g, new Vector3(X0 - MURO / 2f, ALTO_MURO / 2f, ZC), new Vector3(MURO, ALTO_MURO, LARGO), mMuroPatio, true);
+        Cubo("Muro_Este", g, new Vector3(X1 + MURO / 2f, ALTO_MURO / 2f, ZC), new Vector3(MURO, ALTO_MURO, LARGO), mMuroPatio, true);
+        Cubo("Muro_Fondo", g, new Vector3(XC, ALTO_MURO / 2f, Z1 + MURO / 2f), new Vector3(X1 - X0 + MURO * 2f, ALTO_MURO, MURO), mMuroPatio, true);
+        Cubo("Muro_Cierre", g, new Vector3((ANCHO + X1) / 2f + MURO, ALTO_MURO / 2f, FONDO + MURO / 2f),
+             new Vector3(X1 - ANCHO, ALTO_MURO, MURO), mMuroPatio, true);
+
+        // La luz del día sobre el patio: se prende al abrirse la puerta. Antes no, porque las luces
+        // sin sombra atraviesan las paredes e iluminarían el laboratorio a oscuras.
+        Light sol = LuzPunto("Luz_Patio", g, new Vector3(XC, 3.6f, ZC + 0.8f), new Color(1f, 0.97f, 0.9f), 1.6f, 8f);
+        sol.gameObject.SetActive(false);
+        UnityEventTools.AddBoolPersistentListener(puerta.alAbrirse, new UnityAction<bool>(sol.gameObject.SetActive), true);
+
+        // El cartel del muro del fondo: la placa oscura se ve siempre, los textos aparecen al ganar
+        Cubo("Cartel_Placa", g, new Vector3(XC, 1.75f, Z1 - 0.02f), new Vector3(4.4f, 1.3f, 0.04f), mNegro);
+        Transform cartel = Grupo("Cartel_Victoria", g);
+        cartel.localPosition = new Vector3(XC, 0f, Z1 - 0.045f);
+        Texto("Titulo", cartel, new Vector3(0f, 2.1f, 0f), Vector3.back, "<b>¡LOGRASTE SALIR DEL COLEGIO!</b>",
+              new Vector2(4.1f, 0.42f), new Color(0.45f, 1f, 0.55f));
+        Texto("Subtitulo", cartel, new Vector3(0f, 1.68f, 0f), Vector3.back, "Resolviste los cuatro cuartos y escapaste a tiempo",
+              new Vector2(3.8f, 0.2f), Color.white);
+        Texto("Gracias", cartel, new Vector3(0f, 1.35f, 0f), Vector3.back, "Gracias por jugar",
+              new Vector2(2.2f, 0.16f), new Color(0.75f, 0.8f, 0.85f));
+        LuzPunto("Luz_Cartel", cartel, new Vector3(0f, 1.9f, -0.9f), new Color(1f, 0.95f, 0.85f), 1.5f, 3.5f);
+
+        // El botón de volver a jugar, sobre un pedestal en el medio del patio (aparece al ganar)
+        Transform pedestal = Grupo("Boton_Volver", g);
+        pedestal.localPosition = new Vector3(XC, 0f, Z1 - 1.8f);
+        Cubo("Pedestal", pedestal, new Vector3(0f, 0.5f, 0f), new Vector3(0.36f, 1f, 0.36f), mAceroOscuro, true);
+        Cubo("Placa", pedestal, new Vector3(0f, 0.8f, -0.182f), new Vector3(0.32f, 0.12f, 0.004f), mBlanco);
+        Texto("Texto", pedestal, new Vector3(0f, 0.8f, -0.186f), Vector3.back, "<b>VOLVER A JUGAR</b>",
+              new Vector2(0.3f, 0.1f), new Color(0.1f, 0.12f, 0.16f));
+        GameObject tapa = Cilindro("Tapa", pedestal, new Vector3(0f, 1.02f, 0f), new Vector3(0.16f, 0.02f, 0.16f), mVerdeSenal, true);
+        tapa.AddComponent<XRSimpleInteractable>();
+        var boton = tapa.AddComponent<PressableButton>();
+        boton.parteMovil = tapa.transform;
+        boton.recorrido = 0.015f;
+        tapa.AddComponent<ResaltarAlApuntar>();
+
+        // El clima del patio: de día (nivel 1 = "con las luces prendidas")
+        var clima = g.gameObject.AddComponent<ClimaCuarto>();
+        clima.luzAmbienteEncendido = new Color(0.62f, 0.66f, 0.72f);
+        clima.reflejosEncendido = 1f;
+        clima.colorNieblaEncendido = new Color(0.7f, 0.78f, 0.88f);
+        clima.densidadNieblaEncendido = 0.004f;
+        clima.nivel = 1f;
+
+        var victoria = g.gameObject.AddComponent<PantallaVictoria>();
+        victoria.clima = clima;
+        victoria.mostrarAlGanar = new[] { cartel.gameObject, pedestal.gameObject };
+        UnityEventTools.AddVoidPersistentListener(boton.alPresionar, new UnityAction(victoria.VolverAJugar));
+
+        // La zona apenas pasando la puerta: al pisarla, gana
+        Transform zona = Grupo("Zona_Victoria", g);
+        zona.localPosition = new Vector3((SALIDA_X0 + SALIDA_X1) / 2f, 1.1f, Z0 + 1.6f);
+        var colision = zona.gameObject.AddComponent<BoxCollider>();
+        colision.isTrigger = true;
+        colision.size = new Vector3(3f, 2.2f, 1.6f);
+        var disparador = zona.gameObject.AddComponent<DisparadorJugador>();
+        UnityEventTools.AddVoidPersistentListener(disparador.alEntrar, new UnityAction(victoria.Ganar));
+
+        foreach (Object o in new Object[] { area, boton, clima, victoria, disparador, puerta }) EditorUtility.SetDirty(o);
+    }
+
     // ------------------------------------------------------------------ energía y entrada
 
     static ControlEnergia ArmarControlEnergia(Transform raiz, List<GameObject> sinEnergia)
@@ -1658,7 +1747,7 @@ public static class ConstructorCuarto4
 
         string[] seMueven = { "Puerta_Salida", "Camilla", "Fusible_", "Muestra_", "Vidrio_Campana", "Perilla",
                               "Valvula_", "Palanca_P", "Mechero_", "Tablero_Electrico", "Casillero_Docente",
-                              "Tarjeta_", "Lector_Salida" };
+                              "Tarjeta_", "Lector_Salida", "Boton_Volver", "Cartel_Victoria" };
         foreach (Transform t in raiz.GetComponentsInChildren<Transform>(true))
         {
             bool mueve = false;
@@ -2246,6 +2335,10 @@ public static class ConstructorCuarto4
         mFus16 = Mat("C4_Fusible16", new Color(0.55f, 0.57f, 0.6f), 0f, 0.6f);
         mFus20 = Mat("C4_Fusible20", new Color(0.15f, 0.3f, 0.75f), 0f, 0.6f);
         mFus25 = Mat("C4_Fusible25", new Color(0.9f, 0.78f, 0.15f), 0f, 0.6f);
+
+        // El patio de salida: baldosa gris de vereda y muros claros de ladrillo pintado
+        mPatio = Mat("C4_Patio", new Color(0.56f, 0.56f, 0.53f), 0f, 0.3f);
+        mMuroPatio = Mat("C4_MuroPatio", new Color(0.88f, 0.83f, 0.72f), 0f, 0.2f);
     }
 
     // Material que deja ver a través. El alpha va en el color; si se le pasa emisión, además brilla.
