@@ -12,6 +12,7 @@ Paquete                        Autor        Enlace
 "100 CC0 SFX #2"               rubberduck   https://opengameart.org/content/100-cc0-sfx-2
 "100 CC0 metal and wood SFX"   rubberduck   https://opengameart.org/content/100-cc0-metal-and-wood-sfx
 "Creaky Door Hinge Spooky"     w.forster    https://opengameart.org/content/creaky-door-hinge-spooky
+"Creepy Ambient Loop"          epb9000      https://opengameart.org/content/creepy-ambient-loop
 
 QUÉ ES CADA ARCHIVO
 Archivo                 Suena en                                      Original
@@ -35,6 +36,7 @@ agarrar.ogg             levantar un objeto                            sfx100v2_i
 soltar.ogg              apoyarlo                                      sfx100v2_items_02
 papel.ogg               libros y notas                                paper_01
 vidrio.ogg              el vidrio de la campana del Cuarto 4          metal_sheet_02
+menu_terror.ogg         fondo del menu de inicio                      creepyloop-v2
 
 CÓMO ESTÁN CONECTADOS
 La carpeta se llama "Resources" a propósito: Unity mete adentro del juego todo lo

@@ -36,7 +36,7 @@ public class SonidosLivianos : AssetPostprocessor
         ajustes.quality = 0.6f;
         // Los ambientes son largos y van en bucle: se leen del disco mientras suenan.
         // Los demás son golpes cortos: se dejan comprimidos en memoria y salen al instante.
-        ajustes.loadType = assetPath.Contains("/ambiente_")
+        ajustes.loadType = assetPath.Contains("/ambiente_") || assetPath.Contains("/menu_terror")
             ? AudioClipLoadType.Streaming
             : AudioClipLoadType.CompressedInMemory;
 

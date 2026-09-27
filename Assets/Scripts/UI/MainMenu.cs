@@ -62,17 +62,27 @@ public class MainMenu : MonoBehaviour
     [Tooltip("Sonido de los menús: un AudioSource 2D que no se pausa con el juego")]
     public AudioSource audioMenu;
 
+    [Tooltip("Volumen del fondo de terror del menú")]
+    [Range(0f, 1f)]
+    public float volumenMusica = 0.35f;
+
     MaterialPropertyBlock bloque;
     float confirmarSalirHasta = -1f;
+
+    // El fondo de terror del menú. Va en su propio AudioSource y no en "audioMenu" para no
+    // pisarse con los clics de los botones, que se tocan encima con PlayOneShot.
+    AudioSource musica;
+    float musicaObjetivo;
 
     void Awake()
     {
         Instancia = this;
         bloque = new MaterialPropertyBlock();
         AplicarVolumenGuardado();
+        PrepararMusica();
 
         botonNuevaPartida.alPresionar.AddListener(NuevaPartida);
-        botonContinuar.alPresionar.AddListener(() => GameManager.Instancia.CargarPartida());
+        botonContinuar.alPresionar.AddListener(() => { ApagarMusica(); GameManager.Instancia.CargarPartida(); });
         botonOpciones.alPresionar.AddListener(() => MostrarPagina(paginaOpciones));
         botonControles.alPresionar.AddListener(() => MostrarPagina(paginaControles));
         botonSalir.alPresionar.AddListener(Salir);
@@ -102,11 +112,19 @@ public class MainMenu : MonoBehaviour
         MostrarPagina(paginaPrincipal);
         panel.Mostrar();
         Sonar(SonidoSintetico.Subida(520f, 880f, 0.12f), 0.45f);
+
+        // El fondo de terror entra de a poco, no de golpe
+        if (musica != null)
+        {
+            musicaObjetivo = volumenMusica;
+            if (!musica.isPlaying) musica.Play();
+        }
     }
 
     void NuevaPartida()
     {
         panel.Ocultar();
+        ApagarMusica();
         Sonar(SonidoSintetico.Golpe(), 0.8f);   // el golpe del apagón: empieza el juego
         GameManager.Instancia.EmpezarPartida();
     }
@@ -125,6 +143,8 @@ public class MainMenu : MonoBehaviour
 
     void Update()
     {
+        AnimarMusica();
+
         // Pasaron los 3 segundos sin confirmar: el botón SALIR vuelve a ser el de siempre
         if (confirmarSalirHasta > 0f && Time.unscaledTime >= confirmarSalirHasta) CancelarSalir();
     }
@@ -189,6 +209,36 @@ public class MainMenu : MonoBehaviour
         PlayerPrefs.SetFloat(CLAVE_VOLUMEN, volumen);
         PlayerPrefs.Save();
         Refrescar();
+    }
+
+    // El fondo de terror del menú: la grabación de Resources/Audio/menu_terror.
+    // Si el archivo no está, el menú queda como antes (sin fondo) y no se rompe nada.
+    void PrepararMusica()
+    {
+        AudioClip clip = SonidoSintetico.Grabado("menu_terror");
+        if (clip == null) return;
+
+        var go = new GameObject("Musica_Menu");
+        go.transform.SetParent(transform, false);
+        musica = go.AddComponent<AudioSource>();
+        musica.clip = clip;
+        musica.loop = true;
+        musica.playOnAwake = false;
+        musica.spatialBlend = 0f;              // 2D: se oye igual mire para donde mire
+        musica.ignoreListenerPause = true;     // el menú corre con el juego en pausa
+        musica.volume = 0f;
+    }
+
+    void ApagarMusica() => musicaObjetivo = 0f;
+
+    // Sube y baja el fondo de a poco. Cuando llega a cero, se para del todo para no
+    // dejar un AudioSource sonando en silencio durante toda la partida.
+    void AnimarMusica()
+    {
+        if (musica == null) return;
+
+        musica.volume = Mathf.MoveTowards(musica.volume, musicaObjetivo, Time.unscaledDeltaTime * 0.5f);
+        if (musica.volume <= 0f && musica.isPlaying) musica.Stop();
     }
 
     void Sonar(AudioClip clip, float volumen)
