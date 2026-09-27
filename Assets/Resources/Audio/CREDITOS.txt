@@ -12,13 +12,18 @@ Paquete                        Autor        Enlace
 "100 CC0 SFX #2"               rubberduck   https://opengameart.org/content/100-cc0-sfx-2
 "100 CC0 metal and wood SFX"   rubberduck   https://opengameart.org/content/100-cc0-metal-and-wood-sfx
 "Creaky Door Hinge Spooky"     w.forster    https://opengameart.org/content/creaky-door-hinge-spooky
-"Creepy Ambient Loop"          epb9000      https://opengameart.org/content/creepy-ambient-loop
+"Dark Environment"             KiluaBoy     https://opengameart.org/content/dark-environment-horror-games
+"Creepy"                       TokyoGeisha  https://opengameart.org/content/creepy
+"Ambience Pack 1 Sci-Fi Horror" Joth        https://opengameart.org/content/ambience-pack-1-sci-fi-horror
+
+CON CREDITO OBLIGATORIO (CC BY 4.0): hay que nombrar al autor
+"Abandoned Building Ambience"  tcarisland   https://opengameart.org/content/abandoned-building-ambience
 
 QUÉ ES CADA ARCHIVO
 Archivo                 Suena en                                      Original
-ambiente_cuarto1.ogg    fondo del Cuarto 1 (recepción)                sfx100v2_loop_ambient_01
-ambiente_cuarto2.ogg    fondo del Cuarto 2 (dirección)                sfx100v2_loop_machine_02
-ambiente_cuarto3.ogg    fondo del Cuarto 3 (computación)              sfx100v2_loop_machine_01
+ambiente_cuarto1.mp3    fondo del Cuarto 1 (recepción)                "Abandoned Building Ambience"
+ambiente_cuarto2.ogg    fondo del Cuarto 2 (dirección)                "Creepy"
+ambiente_cuarto3.mp3    fondo del Cuarto 3 (computación)              "Infestation in the Control Room"
 ambiente_cuarto4.ogg    fondo del Cuarto 4 (laboratorio)              sfx100v2_loop_ambient_03
 crujido1..4.ogg         los crujidos sueltos de cada cuarto           wood_cracking_01, wood_squeak_01,
                                                                       wood_cracking_03, metal_falling_01
@@ -28,7 +33,7 @@ pestillo.ogg            los tornillos al caerse                       wood_close
 clic.ogg                botones y manecillas de los relojes           switch_01
 tecla.ogg               teclados numéricos                            sfx100v2_switch_02
 cajon.ogg               cajones                                       wooded_box_open
-tornillo.ogg            tornillos al girar                            tools_03
+tornillo.ogg            tornillos al girar                            spring_03
 cerradura.ogg           la llave al girar en la cerradura             lock_open_01
 encajar.ogg             algo entra en su lugar / al inventario        plop_01
 susto.ogg               el susto del reloj falso del Cuarto 2         weird_01
@@ -36,7 +41,7 @@ agarrar.ogg             levantar un objeto                            sfx100v2_i
 soltar.ogg              apoyarlo                                      sfx100v2_items_02
 papel.ogg               libros y notas                                paper_01
 vidrio.ogg              el vidrio de la campana del Cuarto 4          metal_sheet_02
-menu_terror.ogg         fondo del menu de inicio                      creepyloop-v2
+menu_terror.ogg         fondo del menu de inicio                      "Dark Environment"
 
 CÓMO ESTÁN CONECTADOS
 La carpeta se llama "Resources" a propósito: Unity mete adentro del juego todo lo
