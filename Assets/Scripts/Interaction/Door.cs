@@ -112,10 +112,13 @@ public class Door : MonoBehaviour
         // Y ahí el portazo. Van dos sonidos juntos: el golpe de la hoja contra el marco y,
         // abajo, un golpe grave que le da el cuerpo. Es el aviso de que ese cuarto quedó
         // cerrado y no se puede volver, así que suena fuerte a propósito.
+        // Va con TocarFuerte: el portazo tiene que oirse de punta a punta del cuarto y
+        // hacer que el jugador se de vuelta a mirar, aunque este lejos de la puerta.
         if (sonido == null)
         {
-            SonidoSintetico.Tocar(SonidoSintetico.Portazo(), transform.position, 1f);
-            SonidoSintetico.Tocar(SonidoSintetico.Golpe(), transform.position, 0.85f);
+            SonidoSintetico.TocarFuerte(SonidoSintetico.Portazo(), transform.position, 1f, 22f);
+            SonidoSintetico.TocarFuerte(SonidoSintetico.Golpe(), transform.position, 1f, 22f);
+            SonidoSintetico.TocarFuerte(SonidoSintetico.Pestillo(), transform.position, 0.9f, 22f);
         }
     }
 

@@ -130,6 +130,29 @@ public static class SonidoSintetico
         if (clip != null) AudioSource.PlayClipAtPoint(clip, donde, volumen);
     }
 
+    // Igual que Tocar, pero el sonido NO se apaga con la distancia hasta pasados "alcance"
+    // metros. Tocar usa PlayClipAtPoint, que arranca a bajar el volumen desde un metro: a
+    // cinco metros ya se oye cinco veces mas bajo. Eso esta bien para un boton, pero no para
+    // un portazo, que tiene que oirse de punta a punta del cuarto y hacer girar al jugador.
+    public static void TocarFuerte(AudioClip clip, Vector3 donde, float volumen = 1f, float alcance = 18f)
+    {
+        if (clip == null) return;
+
+        var go = new GameObject("Sonido_" + clip.name);
+        go.transform.position = donde;
+
+        var fuente = go.AddComponent<AudioSource>();
+        fuente.clip = clip;
+        fuente.volume = volumen;
+        fuente.spatialBlend = 1f;                        // se sigue notando de donde viene
+        fuente.rolloffMode = AudioRolloffMode.Linear;
+        fuente.minDistance = alcance * 0.8f;             // a volumen pleno casi todo el cuarto
+        fuente.maxDistance = alcance;
+        fuente.Play();
+
+        Object.Destroy(go, clip.length + 0.2f);
+    }
+
     // enLoop: el sonido se repite sin cortes, así que no se le suavizan los bordes
     static AudioClip Crear(string nombre, float segundos, System.Func<float, float> onda, bool enLoop = false)
     {
