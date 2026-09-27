@@ -16,9 +16,12 @@ Paquete                        Autor        Enlace
 "Creepy"                       TokyoGeisha  https://opengameart.org/content/creepy
 "Ambience Pack 1 Sci-Fi Horror" Joth        https://opengameart.org/content/ambience-pack-1-sci-fi-horror
 "Cursed Tower Veranda"         Bobjt        https://opengameart.org/content/cursed-tower-veranda
+"Evil Laugh"                   Sauer2       https://opengameart.org/content/evil-laugh
 
 CON CREDITO OBLIGATORIO (CC BY 4.0): hay que nombrar al autor
 "Abandoned Building Ambience"  tcarisland   https://opengameart.org/content/abandoned-building-ambience
+"Female Screams"               thanvannispen (via Freesound, recopilado en OpenGameArt)
+                                            https://opengameart.org/content/female-screams
 
 QUÉ ES CADA ARCHIVO
 Archivo                 Suena en                                      Original
@@ -37,7 +40,9 @@ cajon.ogg               cajones                                       wooded_box
 tornillo.ogg            tornillos al girar                            spring_03
 cerradura.ogg           la llave al girar en la cerradura             lock_open_01
 encajar.ogg             algo entra en su lugar / al inventario        plop_01
-susto.ogg               el susto del reloj falso del Cuarto 2         weird_01
+susto.ogg               el susto del reloj falso del Cuarto 2         "Evil Laugh" (risa endemoniada)
+grito.ogg               el susto de la camilla del Cuarto 4           "Female Screams"
+entrada_cuarto4.mp3     suena una vez al entrar al Cuarto 4           "The Depths of Hell"
 agarrar.ogg             levantar un objeto                            sfx100v2_items_01
 soltar.ogg              apoyarlo                                      sfx100v2_items_02
 papel.ogg               libros y notas                                paper_01

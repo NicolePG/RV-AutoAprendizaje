@@ -64,7 +64,10 @@ public class SustoCamilla : MonoBehaviour
         bool[] prendidas = new bool[luces.Length];
         for (int i = 0; i < luces.Length; i++) prendidas[i] = luces[i] != null && luces[i].enabled;
 
+        // El golpe del apagón y, encima, un grito: es el último susto del juego y el más
+        // fuerte de los tres, así que suena a los dos a la vez
         SonidoSintetico.Tocar(SonidoSintetico.Golpe(), transform.position, 1f);
+        SonidoSintetico.Tocar(SonidoSintetico.Grito(), transform.position, 1f);
         Luz(false, prendidas, ambiente, reflejos);
         yield return new WaitForSeconds(0.35f);
 

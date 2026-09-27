@@ -89,7 +89,8 @@ public static class SonidoSintetico
     public static AudioClip Cojin() => Grabado("cojin") ?? Roce(0.45f, 0.95f);        // almohadón
     public static AudioClip Tornillo() => Grabado("tornillo") ?? Roce(0.18f, 0.6f);   // tornillo girando
     public static AudioClip Cerradura() => Grabado("cerradura") ?? Golpe();           // la llave que gira
-    public static AudioClip Susto() => Grabado("susto") ?? Subida(600f, 55f, 0.8f);   // el susto
+    public static AudioClip Susto() => Grabado("susto") ?? Subida(600f, 55f, 0.8f);   // risa endemoniada
+    public static AudioClip Grito() => Grabado("grito") ?? Subida(900f, 300f, 0.6f);  // grito humano
     public static AudioClip Agarrar() => Grabado("agarrar") ?? Roce(0.12f, 0.75f);    // la mano toma algo
     public static AudioClip Soltar() => Grabado("soltar") ?? Roce(0.16f, 0.88f);      // lo apoya
     public static AudioClip Papel() => Grabado("papel") ?? Roce(0.3f, 0.35f);         // hoja o libro

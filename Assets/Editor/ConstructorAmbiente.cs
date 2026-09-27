@@ -20,6 +20,7 @@ public static class ConstructorAmbiente
     {
         public string cuarto;
         public string fondo;
+        public string entrada;
         public float gravedad;
         public float volumenSinLuz;
         public float volumenConLuz;
@@ -38,7 +39,8 @@ public static class ConstructorAmbiente
         new Ajuste { cuarto = "Cuarto3_Computacion", fondo = "ambiente_cuarto3", gravedad = 0.80f, volumenSinLuz = 0.30f,
                      volumenConLuz = 0.20f, cadaCuanto = new Vector2(20f, 44f) },
         // Laboratorio: el más grave y el más incómodo, que es donde está el último susto
-        new Ajuste { cuarto = "Cuarto4_Laboratorio", fondo = "ambiente_cuarto4", gravedad = 0.95f, volumenSinLuz = 0.38f,
+        new Ajuste { cuarto = "Cuarto4_Laboratorio", fondo = "ambiente_cuarto4", entrada = "entrada_cuarto4",
+                     gravedad = 0.95f, volumenSinLuz = 0.38f,
                      volumenConLuz = 0.18f, cadaCuanto = new Vector2(12f, 30f) },
     };
 
@@ -74,6 +76,7 @@ public static class ConstructorAmbiente
 
             var ambiente = go.AddComponent<AmbienteCuarto>();
             ambiente.nombreDelFondo = ajuste.fondo;
+            ambiente.nombreDeLaEntrada = ajuste.entrada;
             ambiente.gravedad = ajuste.gravedad;
             ambiente.volumenSinLuz = ajuste.volumenSinLuz;
             ambiente.volumenConLuz = ajuste.volumenConLuz;

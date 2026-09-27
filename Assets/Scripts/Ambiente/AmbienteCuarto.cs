@@ -33,6 +33,13 @@ public class AmbienteCuarto : MonoBehaviour
              "y si tampoco está se arma el ruido por código")]
     public AudioClip fondo;
 
+    [Tooltip("Grabación que suena UNA VEZ al entrar al cuarto, por encima del fondo. " +
+             "Vacío = no suena ninguna")]
+    public string nombreDeLaEntrada = "";
+
+    [Tooltip("Volumen de esa entrada")]
+    public float volumenEntrada = 0.8f;
+
     [Tooltip("Qué tan grave es el ruido: 0 = siseo fino, 0.95 = rugido grave")]
     [Range(0f, 0.97f)]
     public float gravedad = 0.9f;
@@ -57,6 +64,8 @@ public class AmbienteCuarto : MonoBehaviour
     public float dispersion = 3f;
 
     AudioSource fuente;
+    AudioSource entrada;       // la que suena una sola vez, al llegar
+    bool yaEntro;
     float proximoCrujido;
     Transform camara;
 
@@ -78,6 +87,7 @@ public class AmbienteCuarto : MonoBehaviour
         fuente.volume = volumenSinLuz;
         fuente.Play();
 
+        PrepararEntrada();
         ProgramarCrujido();
     }
 
@@ -85,6 +95,9 @@ public class AmbienteCuarto : MonoBehaviour
     {
         // La luz ambiental va de casi negra (cuarto a oscuras) a gris claro (luz prendida).
         // Con 0.25 de gris ya se considera el cuarto iluminado.
+        if (camara == null && Camera.main != null) camara = Camera.main.transform;
+        ProbarEntrada();
+
         float luz = Mathf.InverseLerp(0.02f, 0.25f, RenderSettings.ambientLight.grayscale);
         float objetivo = Mathf.Lerp(volumenSinLuz, volumenConLuz, luz);
         fuente.volume = Mathf.MoveTowards(fuente.volume, objetivo, Time.deltaTime * 0.3f);
@@ -92,6 +105,36 @@ public class AmbienteCuarto : MonoBehaviour
         if (Time.time < proximoCrujido) return;
         ProgramarCrujido();
         Crujir();
+    }
+
+    // La entrada del cuarto: un tema distinto que suena una sola vez, cuando el jugador
+    // llega, por encima del fondo que se repite. Así el cuarto tiene un golpe de efecto al
+    // entrar y después se queda el fondo, en vez de oírse siempre lo mismo.
+    void PrepararEntrada()
+    {
+        if (string.IsNullOrEmpty(nombreDeLaEntrada)) return;
+
+        AudioClip clip = SonidoSintetico.Grabado(nombreDeLaEntrada);
+        if (clip == null) return;
+
+        var go = new GameObject("Entrada");
+        go.transform.SetParent(transform, false);
+        entrada = go.AddComponent<AudioSource>();
+        entrada.clip = clip;
+        entrada.loop = false;
+        entrada.playOnAwake = false;
+        entrada.spatialBlend = 0f;        // 2D: es un golpe de efecto, no viene de un lugar
+        entrada.volume = volumenEntrada;
+    }
+
+    // Suena la primera vez que el jugador se acerca, y nunca más
+    void ProbarEntrada()
+    {
+        if (yaEntro || entrada == null || camara == null) return;
+        if (Vector3.Distance(camara.position, transform.position) > alcance) return;
+
+        yaEntro = true;
+        entrada.Play();
     }
 
     void ProgramarCrujido() => proximoCrujido = Time.time + Random.Range(cadaCuanto.x, cadaCuanto.y);
