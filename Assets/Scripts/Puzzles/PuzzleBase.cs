@@ -19,6 +19,9 @@ public abstract class PuzzleBase : MonoBehaviour
 
     public bool Resuelto { get; private set; }
 
+    // Avisa que se resolvió un acertijo cualquiera (lo escucha SaveManager para guardar cuáles van)
+    public static event System.Action<PuzzleBase> AlResolverCualquiera;
+
     // Lo llama cada acertijo cuando el jugador lo resuelve. Solo tiene efecto la primera vez.
     protected void Resolver()
     {
@@ -27,6 +30,8 @@ public abstract class PuzzleBase : MonoBehaviour
 
         if (sonidoAcierto != null) AudioSource.PlayClipAtPoint(sonidoAcierto, transform.position);
         MostrarAcierto();
+        // Antes que "alResolverse": si eso abre una puerta, el guardado automático ya lo cuenta
+        AlResolverCualquiera?.Invoke(this);
         alResolverse.Invoke();
     }
 

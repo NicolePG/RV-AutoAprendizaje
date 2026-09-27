@@ -1642,10 +1642,13 @@ public static class ConstructorCuarto4
         cartel.localPosition = new Vector3(XC, 0f, Z1 - 0.045f);
         Texto("Titulo", cartel, new Vector3(0f, 2.1f, 0f), Vector3.back, "<b>¡LOGRASTE SALIR DEL COLEGIO!</b>",
               new Vector2(4.1f, 0.42f), new Color(0.45f, 1f, 0.55f));
-        Texto("Subtitulo", cartel, new Vector3(0f, 1.68f, 0f), Vector3.back, "Resolviste los cuatro cuartos y escapaste a tiempo",
+        Texto("Subtitulo", cartel, new Vector3(0f, 1.73f, 0f), Vector3.back, "Resolviste los cuatro cuartos y escapaste a tiempo",
               new Vector2(3.8f, 0.2f), Color.white);
-        Texto("Gracias", cartel, new Vector3(0f, 1.35f, 0f), Vector3.back, "Gracias por jugar",
-              new Vector2(2.2f, 0.16f), new Color(0.75f, 0.8f, 0.85f));
+        // Lo completa PantallaVictoria con el tiempo del reloj
+        TextMeshPro tiempo = Texto("Tiempo", cartel, new Vector3(0f, 1.5f, 0f), Vector3.back, "Tu tiempo: --:--",
+                                   new Vector2(3.4f, 0.15f), new Color(0.96f, 0.65f, 0.14f));
+        Texto("Gracias", cartel, new Vector3(0f, 1.27f, 0f), Vector3.back, "Gracias por jugar",
+              new Vector2(2.2f, 0.13f), new Color(0.75f, 0.8f, 0.85f));
         LuzPunto("Luz_Cartel", cartel, new Vector3(0f, 1.9f, -0.9f), new Color(1f, 0.95f, 0.85f), 1.5f, 3.5f);
 
         // El botón de volver a jugar, sobre un pedestal en el medio del patio (aparece al ganar)
@@ -1673,6 +1676,7 @@ public static class ConstructorCuarto4
         var victoria = g.gameObject.AddComponent<PantallaVictoria>();
         victoria.clima = clima;
         victoria.mostrarAlGanar = new[] { cartel.gameObject, pedestal.gameObject };
+        victoria.textoTiempo = tiempo;
         UnityEventTools.AddVoidPersistentListener(boton.alPresionar, new UnityAction(victoria.VolverAJugar));
 
         // La zona apenas pasando la puerta: al pisarla, gana

@@ -4,7 +4,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 // El menú Escape Room de Unity, todo en un lugar:
-//  - Construir los 4 cuartos: arma la escena completa, en orden, y al final hornea la luz.
+//  - Construir los 4 cuartos: arma la escena completa, en orden (con el reloj, los menús y el
+//    guardado de ConstructorSistema), y al final hornea la luz.
+//  - Construir menús, reloj y guardado: rearma solo eso (está en ConstructorSistema).
 //  - Llevar jugador al Cuarto 1, 2, 3 o 4: pone al jugador en la entrada de ese cuarto, para
 //    dar Play y probarlo sin tener que resolver los anteriores.
 //
@@ -47,6 +49,9 @@ public static class MenuEscapeRoom
             // optimización (el objeto "Optimizacion")
             Paso("Cuarto 3 (Sala de Computación)", 0.85f);
             ConstructorCuarto3.Construir();
+            // Al final, con los cuatro cuartos armados: se conecta a sus puertas
+            Paso("Reloj, menús y guardado", 0.95f);
+            ConstructorSistema.Construir();
         }
         finally
         {

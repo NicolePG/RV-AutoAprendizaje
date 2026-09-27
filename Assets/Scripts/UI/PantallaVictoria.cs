@@ -1,4 +1,5 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
@@ -8,8 +9,10 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 //
 // Cuando el jugador sale al patio (la zona de la entrada del patio llama a Ganar()):
 //  - se hace de día: la luz ambiental y la niebla pasan a las del patio (su ClimaCuarto);
-//  - aparece el cartel "¡LOGRASTE SALIR DEL COLEGIO!" y el botón para volver a jugar;
-//  - suena una fanfarria corta y los dos controles vibran.
+//  - aparece el cartel "¡LOGRASTE SALIR DEL COLEGIO!" con el tiempo que tardó, y el botón para
+//    volver a jugar;
+//  - suena una fanfarria corta y los dos controles vibran;
+//  - GameManager da la partida por ganada (el reloj de la esquina se pone verde).
 // El botón "VOLVER A JUGAR" llama a VolverAJugar(): carga la escena otra vez, desde el Cuarto 1.
 //
 // En la escena: va en el patio. ConstructorCuarto4 lo arma y lo conecta.
@@ -20,6 +23,9 @@ public class PantallaVictoria : MonoBehaviour
 
     [Tooltip("Lo que aparece al ganar: el cartel y el botón. Empiezan ocultos")]
     public GameObject[] mostrarAlGanar;
+
+    [Tooltip("La línea del cartel con el tiempo que tardó")]
+    public TMP_Text textoTiempo;
 
     public bool Gano { get; private set; }
 
@@ -33,6 +39,15 @@ public class PantallaVictoria : MonoBehaviour
     {
         if (Gano) return;
         Gano = true;
+
+        var juego = GameManager.Instancia;
+        if (juego != null)
+        {
+            juego.Ganar();
+            if (textoTiempo != null && juego.reloj != null)
+                textoTiempo.text = "Tu tiempo: <b>" + TimerController.Formato(juego.reloj.TiempoUsado) + "</b>" +
+                                   "     ·     Te sobraron " + TimerController.Formato(juego.reloj.TiempoRestante);
+        }
 
         if (clima != null) clima.Aplicar();
         foreach (GameObject objeto in mostrarAlGanar)
@@ -55,5 +70,9 @@ public class PantallaVictoria : MonoBehaviour
     }
 
     // Empieza de nuevo: la escena vuelve a cargarse como al darle Play
-    public void VolverAJugar() => SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    public void VolverAJugar()
+    {
+        if (GameManager.Instancia != null) GameManager.Instancia.Reiniciar();
+        else SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
 }
