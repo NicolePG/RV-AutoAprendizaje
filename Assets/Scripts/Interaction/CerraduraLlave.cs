@@ -61,6 +61,7 @@ public class CerraduraLlave : MonoBehaviour
 
         abierta = true;
         if (sonidoGiro != null) AudioSource.PlayClipAtPoint(sonidoGiro, transform.position);
+        else SonidoSintetico.Tocar(SonidoSintetico.Cerradura(), transform.position, 0.7f);
         StartCoroutine(GirarLlave());
     }
 

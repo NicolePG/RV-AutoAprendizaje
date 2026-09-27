@@ -55,6 +55,36 @@ public static class SonidoSintetico
         }, true);
     }
 
+    // Roce: ruido filtrado que arranca fuerte y se va apagando, como algo que se
+    // arrastra y se frena. Sirve para el cajón, el almohadón del sofá y el tornillo.
+    public static AudioClip Roce(float segundos, float suavidad = 0.85f)
+    {
+        var azar = new System.Random(3);
+        float anterior = 0f;
+        return Crear("roce_" + segundos + "_" + suavidad, segundos, t =>
+        {
+            float blanco = (float)azar.NextDouble() * 2f - 1f;
+            anterior = Mathf.Lerp(blanco, anterior, suavidad);
+            return anterior * (1f + suavidad * 3f) * Mathf.Exp(-t * 2.5f / segundos);
+        });
+    }
+
+    // ------------------------------------------------------------ sonidos del juego
+    //
+    // Los scripts piden el sonido por su nombre y no por su frecuencia, así se entiende
+    // qué suena en cada lado. Son el RESPALDO: si en el Inspector se le arrastra una
+    // grabación de verdad al campo "sonido" del componente, esa le gana a esto.
+
+    public static AudioClip Clic() => Pitido(1400f, 0.05f);        // botón, tecla, manecilla
+    public static AudioClip Tecla() => Pitido(880f, 0.06f);        // teclado numérico
+    public static AudioClip Error() => Zumbido(150f, 0.4f);        // código equivocado
+    public static AudioClip Puerta() => Chirrido(1.1f);            // bisagra que gira
+    public static AudioClip Pestillo() => Golpe();                 // la hoja que encaja
+    public static AudioClip Cajon() => Roce(0.5f, 0.9f);           // cajón que se desliza
+    public static AudioClip Cojin() => Roce(0.45f, 0.95f);         // almohadón que se corre
+    public static AudioClip Tornillo() => Roce(0.18f, 0.6f);       // tornillo girando
+    public static AudioClip Cerradura() => Golpe();                // la llave que gira
+
     public static void Tocar(AudioClip clip, Vector3 donde, float volumen = 1f)
     {
         if (clip != null) AudioSource.PlayClipAtPoint(clip, donde, volumen);

@@ -76,6 +76,7 @@ public class Door : MonoBehaviour
     IEnumerator AnimarApertura()
     {
         if (sonido != null) AudioSource.PlayClipAtPoint(sonido, transform.position);
+        else SonidoSintetico.Tocar(SonidoSintetico.Puerta(), transform.position, 0.55f);
         alAbrirse.Invoke();
         float direccion = Mathf.Sign(anguloAbierto);
 
@@ -102,8 +103,13 @@ public class Door : MonoBehaviour
         if (espera > 0f) yield return new WaitForSeconds(espera);
 
         if (sonido != null) AudioSource.PlayClipAtPoint(sonido, transform.position);
+        else SonidoSintetico.Tocar(SonidoSintetico.Puerta(), transform.position, 0.45f);
+
         // Vuelve desde donde esté (abierta del todo o a medio abrir) hasta cerrada
         yield return Girar(AnguloActual(), 0f, 1.2f, true);
+
+        // Y al final el golpe de la hoja contra el marco
+        if (sonido == null) SonidoSintetico.Tocar(SonidoSintetico.Pestillo(), transform.position, 0.7f);
     }
 
     // Cuántos grados está girada ahora respecto de cerrada, entre -180 y 180

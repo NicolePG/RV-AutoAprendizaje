@@ -95,6 +95,7 @@ public class Screw : MonoBehaviour
         if (giro <= 0f) return;
 
         if (progreso == 0f && sonido != null) AudioSource.PlayClipAtPoint(sonido, transform.position);
+        else if (progreso == 0f) SonidoSintetico.Tocar(SonidoSintetico.Tornillo(), transform.position, 0.6f);
         progreso = Mathf.Min(1f, progreso + giro / (vueltasParaSacar * 360f));
         herramienta.GirarVisual(giro);
 
@@ -125,6 +126,7 @@ public class Screw : MonoBehaviour
         quitado = true;
         Resaltar(false);
         if (sonido != null) AudioSource.PlayClipAtPoint(sonido, transform.position);
+        else SonidoSintetico.Tocar(SonidoSintetico.Pestillo(), transform.position, 0.5f);
 
         // El tornillo se suelta y cae con física. Su zona de detección pasa a ser un collider sólido pequeño.
         transform.SetParent(null, true);

@@ -38,6 +38,9 @@ public class CojinDeslizante : MonoBehaviour
     {
         if (corrido) return;
         corrido = true;
+
+        // Tela que roza el asiento del sofa
+        SonidoSintetico.Tocar(SonidoSintetico.Cojin(), transform.position, 0.7f);
         destino = transform.localPosition + direccion.normalized * distancia;
     }
 

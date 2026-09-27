@@ -52,7 +52,10 @@ public class PressableButton : MonoBehaviour
     void Presionar(SelectEnterEventArgs args)
     {
         if (parteMovil != null) parteMovil.localPosition = posicionInicial + Vector3.down * recorrido;
+        // Con grabación propia suena esa; si no, el clic armado por código, bajito para
+        // que se mezcle con el pitido que algunos acertijos tocan por su cuenta
         if (sonido != null && audioSource != null) audioSource.PlayOneShot(sonido);
+        else SonidoSintetico.Tocar(SonidoSintetico.Clic(), transform.position, 0.35f);
         alPresionar.Invoke();
     }
 

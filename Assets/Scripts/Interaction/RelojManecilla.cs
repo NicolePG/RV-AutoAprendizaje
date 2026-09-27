@@ -55,6 +55,7 @@ public class RelojManecilla : MonoBehaviour
 
         transform.localRotation = Quaternion.Euler(0f, 0f, hora * 30f);
         if (sonidoClic != null) AudioSource.PlayClipAtPoint(sonidoClic, transform.position);
+        else SonidoSintetico.Tocar(SonidoSintetico.Clic(), transform.position, 0.5f);
 
         if (hora != horaObjetivo) return;
 

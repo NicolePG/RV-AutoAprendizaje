@@ -51,6 +51,9 @@ public class Drawer : MonoBehaviour
     {
         if (bloqueado) return;
 
+        // Madera que se desliza. Es el sonido armado por codigo (ver SonidoSintetico)
+        SonidoSintetico.Tocar(SonidoSintetico.Cajon(), transform.position, 0.6f);
+
         if (abrirDeUnToque)
         {
             abierto = !abierto;
