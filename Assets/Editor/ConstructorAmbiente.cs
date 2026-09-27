@@ -19,6 +19,7 @@ public static class ConstructorAmbiente
     struct Ajuste
     {
         public string cuarto;
+        public string fondo;
         public float gravedad;
         public float volumenSinLuz;
         public float volumenConLuz;
@@ -28,16 +29,16 @@ public static class ConstructorAmbiente
     static readonly Ajuste[] AJUSTES =
     {
         // Recepción: el viento que entra por la entrada tapiada, y la madera del mostrador
-        new Ajuste { cuarto = "Cuarto1_Recepcion", gravedad = 0.93f, volumenSinLuz = 0.30f,
+        new Ajuste { cuarto = "Cuarto1_Recepcion", fondo = "ambiente_cuarto1", gravedad = 0.93f, volumenSinLuz = 0.30f,
                      volumenConLuz = 0.14f, cadaCuanto = new Vector2(18f, 40f) },
         // Dirección: zumbido de la instalación eléctrica, más cerrado
-        new Ajuste { cuarto = "Cuarto2_Oficina", gravedad = 0.88f, volumenSinLuz = 0.32f,
+        new Ajuste { cuarto = "Cuarto2_Oficina", fondo = "ambiente_cuarto2", gravedad = 0.88f, volumenSinLuz = 0.32f,
                      volumenConLuz = 0.15f, cadaCuanto = new Vector2(16f, 36f) },
         // Sala de computación: de noche, con los equipos y sus ventiladores
-        new Ajuste { cuarto = "Cuarto3_Computacion", gravedad = 0.80f, volumenSinLuz = 0.30f,
+        new Ajuste { cuarto = "Cuarto3_Computacion", fondo = "ambiente_cuarto3", gravedad = 0.80f, volumenSinLuz = 0.30f,
                      volumenConLuz = 0.20f, cadaCuanto = new Vector2(20f, 44f) },
         // Laboratorio: el más grave y el más incómodo, que es donde está el último susto
-        new Ajuste { cuarto = "Cuarto4_Laboratorio", gravedad = 0.95f, volumenSinLuz = 0.38f,
+        new Ajuste { cuarto = "Cuarto4_Laboratorio", fondo = "ambiente_cuarto4", gravedad = 0.95f, volumenSinLuz = 0.38f,
                      volumenConLuz = 0.18f, cadaCuanto = new Vector2(12f, 30f) },
     };
 
@@ -72,6 +73,7 @@ public static class ConstructorAmbiente
             go.transform.position = new Vector3(centro.x, 1.6f, centro.z);
 
             var ambiente = go.AddComponent<AmbienteCuarto>();
+            ambiente.nombreDelFondo = ajuste.fondo;
             ambiente.gravedad = ajuste.gravedad;
             ambiente.volumenSinLuz = ajuste.volumenSinLuz;
             ambiente.volumenConLuz = ajuste.volumenConLuz;

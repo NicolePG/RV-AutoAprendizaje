@@ -26,7 +26,11 @@ using UnityEngine;
 public class AmbienteCuarto : MonoBehaviour
 {
     [Header("Fondo")]
-    [Tooltip("Grabación de fondo (opcional). Vacío = se arma por código")]
+    [Tooltip("Nombre de la grabación en Resources/Audio, por ejemplo ambiente_cuarto2")]
+    public string nombreDelFondo = "";
+
+    [Tooltip("Grabación de fondo (opcional). Si está vacía se busca por 'nombreDelFondo', " +
+             "y si tampoco está se arma el ruido por código")]
     public AudioClip fondo;
 
     [Tooltip("Qué tan grave es el ruido: 0 = siseo fino, 0.95 = rugido grave")]
@@ -59,7 +63,12 @@ public class AmbienteCuarto : MonoBehaviour
     void Start()
     {
         fuente = GetComponent<AudioSource>();
-        fuente.clip = fondo != null ? fondo : SonidoSintetico.Ruido(gravedad, 3f);
+        // 1) la grabación arrastrada a mano, 2) la de Resources/Audio, 3) el ruido por código
+        AudioClip clip = fondo;
+        if (clip == null && !string.IsNullOrEmpty(nombreDelFondo))
+            clip = SonidoSintetico.Grabado(nombreDelFondo);
+        if (clip == null) clip = SonidoSintetico.Ruido(gravedad, 3f);
+        fuente.clip = clip;
         fuente.loop = true;
         fuente.playOnAwake = false;
         fuente.spatialBlend = 1f;                       // 3D: se oye el de cada cuarto
@@ -103,10 +112,13 @@ public class AmbienteCuarto : MonoBehaviour
             Random.Range(-1f, 0.6f),
             Random.Range(-dispersion, dispersion));
 
-        // La mitad de las veces madera que cruje, la otra mitad un golpe lejano
-        AudioClip clip = Random.value < 0.5f
-            ? SonidoSintetico.Chirrido(Random.Range(0.4f, 0.9f))
-            : SonidoSintetico.Golpe();
+        // Uno de los cuatro crujidos grabados, al azar, para que no se repita siempre el
+        // mismo. Si no estan los archivos, madera o un golpe armados por codigo.
+        AudioClip clip = SonidoSintetico.Grabado("crujido" + Random.Range(1, 5));
+        if (clip == null)
+            clip = Random.value < 0.5f
+                ? SonidoSintetico.Chirrido(Random.Range(0.4f, 0.9f))
+                : SonidoSintetico.Golpe();
 
         SonidoSintetico.Tocar(clip, donde, volumenCrujidos);
     }

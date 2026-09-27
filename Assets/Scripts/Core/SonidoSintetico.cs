@@ -11,6 +11,7 @@ public static class SonidoSintetico
 {
     const int MuestrasPorSegundo = 44100;
     static readonly Dictionary<string, AudioClip> guardados = new Dictionary<string, AudioClip>();
+    static readonly Dictionary<string, AudioClip> grabados = new Dictionary<string, AudioClip>();
 
     // Tono puro, como el pitido de una tecla
     public static AudioClip Pitido(float hz, float segundos)
@@ -75,26 +76,44 @@ public static class SonidoSintetico
     // qué suena en cada lado. Son el RESPALDO: si en el Inspector se le arrastra una
     // grabación de verdad al campo "sonido" del componente, esa le gana a esto.
 
-    public static AudioClip Clic() => Pitido(1400f, 0.05f);        // botón, tecla, manecilla
-    public static AudioClip Tecla() => Pitido(880f, 0.06f);        // teclado numérico
-    public static AudioClip Error() => Zumbido(150f, 0.4f);        // código equivocado
-    public static AudioClip Puerta() => Chirrido(1.1f);            // bisagra que gira
-    public static AudioClip Pestillo() => Golpe();                 // la hoja que encaja
-    public static AudioClip Cajon() => Roce(0.5f, 0.9f);           // cajón que se desliza
-    public static AudioClip Cojin() => Roce(0.45f, 0.95f);         // almohadón que se corre
-    public static AudioClip Tornillo() => Roce(0.18f, 0.6f);       // tornillo girando
-    public static AudioClip Cerradura() => Golpe();                // la llave que gira
-    public static AudioClip Susto() => Subida(600f, 55f, 0.8f);    // tono que se desploma
-    public static AudioClip Agarrar() => Roce(0.12f, 0.75f);       // la mano toma algo
-    public static AudioClip Soltar() => Roce(0.16f, 0.88f);        // lo apoya
-    public static AudioClip Papel() => Roce(0.3f, 0.35f);          // una hoja o un libro
-    public static AudioClip Vidrio() => Roce(0.8f, 0.55f);         // el vidrio que corre
-    public static AudioClip Encajar() => Pitido(900f, 0.09f);      // algo entra en su lugar
+    // Cada uno busca primero la GRABACIÓN en Assets/Resources/Audio (los .ogg que se
+    // bajaron de OpenGameArt, ver el CREDITOS.txt de esa carpeta). Si el archivo no está,
+    // usa el sonido armado por código, que es el que había antes: así el juego nunca queda
+    // mudo, ni siquiera si alguien borra la carpeta de audio.
+    public static AudioClip Clic() => Grabado("clic") ?? Pitido(1400f, 0.05f);        // botón, tecla
+    public static AudioClip Tecla() => Grabado("tecla") ?? Pitido(880f, 0.06f);       // teclado numérico
+    public static AudioClip Error() => Grabado("error") ?? Zumbido(150f, 0.4f);       // código equivocado
+    public static AudioClip Puerta() => Grabado("puerta") ?? Chirrido(1.1f);          // bisagra que gira
+    public static AudioClip Pestillo() => Grabado("pestillo") ?? Golpe();             // la hoja que encaja
+    public static AudioClip Cajon() => Grabado("cajon") ?? Roce(0.5f, 0.9f);          // cajón que se desliza
+    public static AudioClip Cojin() => Grabado("cojin") ?? Roce(0.45f, 0.95f);        // almohadón
+    public static AudioClip Tornillo() => Grabado("tornillo") ?? Roce(0.18f, 0.6f);   // tornillo girando
+    public static AudioClip Cerradura() => Grabado("cerradura") ?? Golpe();           // la llave que gira
+    public static AudioClip Susto() => Grabado("susto") ?? Subida(600f, 55f, 0.8f);   // el susto
+    public static AudioClip Agarrar() => Grabado("agarrar") ?? Roce(0.12f, 0.75f);    // la mano toma algo
+    public static AudioClip Soltar() => Grabado("soltar") ?? Roce(0.16f, 0.88f);      // lo apoya
+    public static AudioClip Papel() => Grabado("papel") ?? Roce(0.3f, 0.35f);         // hoja o libro
+    public static AudioClip Vidrio() => Grabado("vidrio") ?? Roce(0.8f, 0.55f);       // vidrio que corre
+    public static AudioClip Encajar() => Grabado("encajar") ?? Pitido(900f, 0.09f);   // entra en su lugar
+
+    // Busca una grabación en Assets/Resources/Audio. Devuelve null si no está, y se acuerda
+    // de lo que ya buscó (también de lo que no encontró) para no mirar el disco cada vez.
+    public static AudioClip Grabado(string nombre)
+    {
+        if (grabados.TryGetValue(nombre, out AudioClip guardado)) return guardado;
+
+        AudioClip clip = Resources.Load<AudioClip>("Audio/" + nombre);
+        grabados[nombre] = clip;
+        return clip;
+    }
 
     // Portazo: el golpe de la hoja contra el marco con el crujido de la madera encima.
     // Es aparte del Golpe porque este tiene que oírse fuerte y desde todo el cuarto.
     public static AudioClip Portazo()
     {
+        AudioClip grabacion = Grabado("portazo");
+        if (grabacion != null) return grabacion;
+
         var azar = new System.Random(5);
         return Crear("portazo", 0.45f, t =>
         {
