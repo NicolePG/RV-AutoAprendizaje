@@ -37,6 +37,7 @@ public class VentanaCampana : MonoBehaviour
 
     void AlAgarrar(SelectEnterEventArgs args)
     {
+        SonidoSintetico.Tocar(SonidoSintetico.Vidrio(), transform.position, 0.7f);
         desplazamientoAlAgarrar = desplazamiento;
         alturaManoAlAgarrar = args.interactorObject.GetAttachTransform(interactable).position.y;
     }

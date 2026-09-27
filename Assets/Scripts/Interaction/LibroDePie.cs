@@ -34,12 +34,15 @@ public class LibroDePie : MonoBehaviour
     }
 
     void OnEnable() => interactable.selectEntered.AddListener(Alternar);
+
+    // El roce de las hojas al levantar el libro
     void OnDisable() => interactable.selectEntered.RemoveListener(Alternar);
 
     void Alternar(SelectEnterEventArgs args)
     {
         if (camara == null && Camera.main != null) camara = Camera.main.transform;
         Parado = !Parado && camara != null;
+        SonidoSintetico.Tocar(SonidoSintetico.Papel(), transform.position, 0.7f);
     }
 
     void Update()

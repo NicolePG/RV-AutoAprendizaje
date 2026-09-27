@@ -67,6 +67,7 @@ public class LlaveAutomatica : MonoBehaviour
         if (EnMano || entrando) return;
 
         EnMano = true;
+        SonidoSintetico.Tocar(SonidoSintetico.Agarrar(), transform.position, 0.8f);
         // El mando que le hizo clic es el que se la lleva
         mano = args.interactorObject != null ? args.interactorObject.transform : null;
         // Mientras la lleva no tiene que taparle el rayo al mando
@@ -125,6 +126,7 @@ public class LlaveAutomatica : MonoBehaviour
         Encajada = true;
         // Se le devuelven los colliders: ahora hay que tocarla para girarla
         Colisiones(true);
+        SonidoSintetico.Tocar(SonidoSintetico.Encajar(), transform.position, 0.9f);
         alEncajar.Invoke();
     }
 

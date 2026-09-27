@@ -72,6 +72,7 @@ public class ObjetoLlevable : MonoBehaviour
         Agarrar();
     }
 
+    // Suena al tomarlo y al dejarlo, como cualquier cosa que se levanta de una mesa
     public void Agarrar()
     {
         // Lo que estaba en la mano se queda donde está. Lo que se lleva encima no
@@ -86,6 +87,7 @@ public class ObjetoLlevable : MonoBehaviour
             encaje.Sacar(this);
         }
 
+        SonidoSintetico.Tocar(SonidoSintetico.Agarrar(), transform.position, 0.8f);
         transform.SetParent(null, true);
         enMano = true;
         Colocado = false;
@@ -97,6 +99,7 @@ public class ObjetoLlevable : MonoBehaviour
     // Deja de llevarlo y lo devuelve a donde estaba
     public void Soltar()
     {
+        SonidoSintetico.Tocar(SonidoSintetico.Soltar(), transform.position, 0.6f);
         DejarDeLlevar();
 
         transform.SetParent(padreOriginal, true);

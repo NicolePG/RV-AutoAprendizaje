@@ -40,12 +40,15 @@ public class NotaInspeccionable : MonoBehaviour
     }
 
     void OnEnable() => interactable.selectEntered.AddListener(Alternar);
+
+    // El roce del papel al levantar la nota
     void OnDisable() => interactable.selectEntered.RemoveListener(Alternar);
 
     void Alternar(SelectEnterEventArgs args)
     {
         if (camara == null && Camera.main != null) camara = Camera.main.transform;
         Enfocada = !Enfocada && camara != null;
+        SonidoSintetico.Tocar(SonidoSintetico.Papel(), transform.position, 0.7f);
     }
 
     void Update()

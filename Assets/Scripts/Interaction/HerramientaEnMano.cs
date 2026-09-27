@@ -54,6 +54,7 @@ public class HerramientaEnMano : MonoBehaviour
 
     void AlAgarrar(SelectEnterEventArgs args)
     {
+        SonidoSintetico.Tocar(SonidoSintetico.Agarrar(), transform.position, 0.8f);
         // Solo las manos: la cerradura (socket) también "agarra" la llave, pero no es una mano
         if (!(args.interactorObject is XRBaseInputInteractor nuevaMano)) return;
         // Sin simulador es el Quest real: agarre normal
@@ -70,6 +71,7 @@ public class HerramientaEnMano : MonoBehaviour
 
     void AlSoltar(SelectExitEventArgs args)
     {
+        SonidoSintetico.Tocar(SonidoSintetico.Soltar(), transform.position, 0.6f);
         if ((Object)args.interactorObject != mano) return;
         agarre.trackRotation = true;
         manoPorRestaurar = mano;

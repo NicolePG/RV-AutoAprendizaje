@@ -103,13 +103,14 @@ public class Door : MonoBehaviour
         if (espera > 0f) yield return new WaitForSeconds(espera);
 
         if (sonido != null) AudioSource.PlayClipAtPoint(sonido, transform.position);
-        else SonidoSintetico.Tocar(SonidoSintetico.Puerta(), transform.position, 0.45f);
+        else SonidoSintetico.Tocar(SonidoSintetico.Puerta(), transform.position, 0.6f);
 
         // Vuelve desde donde esté (abierta del todo o a medio abrir) hasta cerrada
         yield return Girar(AnguloActual(), 0f, 1.2f, true);
 
-        // Y al final el golpe de la hoja contra el marco
-        if (sonido == null) SonidoSintetico.Tocar(SonidoSintetico.Pestillo(), transform.position, 0.7f);
+        // Y al final el portazo: va al volumen máximo porque es el aviso de que el
+        // cuarto quedó cerrado y no se puede volver
+        if (sonido == null) SonidoSintetico.Tocar(SonidoSintetico.Portazo(), transform.position, 1f);
     }
 
     // Cuántos grados está girada ahora respecto de cerrada, entre -180 y 180

@@ -85,6 +85,25 @@ public static class SonidoSintetico
     public static AudioClip Tornillo() => Roce(0.18f, 0.6f);       // tornillo girando
     public static AudioClip Cerradura() => Golpe();                // la llave que gira
     public static AudioClip Susto() => Subida(600f, 55f, 0.8f);    // tono que se desploma
+    public static AudioClip Agarrar() => Roce(0.12f, 0.75f);       // la mano toma algo
+    public static AudioClip Soltar() => Roce(0.16f, 0.88f);        // lo apoya
+    public static AudioClip Papel() => Roce(0.3f, 0.35f);          // una hoja o un libro
+    public static AudioClip Vidrio() => Roce(0.8f, 0.55f);         // el vidrio que corre
+    public static AudioClip Encajar() => Pitido(900f, 0.09f);      // algo entra en su lugar
+
+    // Portazo: el golpe de la hoja contra el marco con el crujido de la madera encima.
+    // Es aparte del Golpe porque este tiene que oírse fuerte y desde todo el cuarto.
+    public static AudioClip Portazo()
+    {
+        var azar = new System.Random(5);
+        return Crear("portazo", 0.45f, t =>
+        {
+            float ruido = (float)azar.NextDouble() * 2f - 1f;
+            float cuerpo = Mathf.Sin(2f * Mathf.PI * 80f * t) * Mathf.Exp(-t * 11f) * 2.2f;
+            float madera = ruido * Mathf.Exp(-t * 26f) * 0.8f;
+            return cuerpo + madera;
+        });
+    }
 
     public static void Tocar(AudioClip clip, Vector3 donde, float volumen = 1f)
     {

@@ -38,6 +38,8 @@ public class PickableItem : MonoBehaviour
 
     void AlAgarrar(SelectEnterEventArgs args)
     {
+        // Aviso de que quedó guardado, igual que la vibración del control
+        SonidoSintetico.Tocar(SonidoSintetico.Encajar(), transform.position, 0.8f);
         if (Inventory.Instancia != null) Inventory.Instancia.Agregar(datos);
 
         var mano = args.interactorObject.transform.GetComponent<XRBaseInputInteractor>();

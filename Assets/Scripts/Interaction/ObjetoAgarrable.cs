@@ -46,6 +46,7 @@ public class ObjetoAgarrable : MonoBehaviour
 
     void AlSoltar(SelectExitEventArgs args)
     {
+        SonidoSintetico.Tocar(SonidoSintetico.Soltar(), transform.position, 0.6f);
         // Si lo suelta un encaje (socket), el encaje decide qué pasa con el objeto
         if (args.interactorObject is XRSocketInteractor) return;
         // Al soltarlo con la mano ya tiene física de verdad, aunque haya empezado quieto en un cajón

@@ -53,6 +53,9 @@ public static class MenuEscapeRoom
             // Al final, con los cuatro cuartos armados: se conecta a sus puertas
             Paso("Reloj, menús y guardado", 0.95f);
             ConstructorSistema.Construir();
+
+            // El ruido de fondo de cada cuarto y sus crujidos (ver AmbienteCuarto)
+            ConstructorAmbiente.Construir();
         }
         finally
         {
