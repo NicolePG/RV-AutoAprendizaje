@@ -15,6 +15,7 @@ Paquete                        Autor        Enlace
 "Dark Environment"             KiluaBoy     https://opengameart.org/content/dark-environment-horror-games
 "Creepy"                       TokyoGeisha  https://opengameart.org/content/creepy
 "Ambience Pack 1 Sci-Fi Horror" Joth        https://opengameart.org/content/ambience-pack-1-sci-fi-horror
+"Cursed Tower Veranda"         Bobjt        https://opengameart.org/content/cursed-tower-veranda
 
 CON CREDITO OBLIGATORIO (CC BY 4.0): hay que nombrar al autor
 "Abandoned Building Ambience"  tcarisland   https://opengameart.org/content/abandoned-building-ambience
@@ -24,7 +25,7 @@ Archivo                 Suena en                                      Original
 ambiente_cuarto1.mp3    fondo del Cuarto 1 (recepción)                "Abandoned Building Ambience"
 ambiente_cuarto2.ogg    fondo del Cuarto 2 (dirección)                "Creepy"
 ambiente_cuarto3.mp3    fondo del Cuarto 3 (computación)              "Infestation in the Control Room"
-ambiente_cuarto4.ogg    fondo del Cuarto 4 (laboratorio)              sfx100v2_loop_ambient_03
+ambiente_cuarto4.ogg    fondo del Cuarto 4 (laboratorio)              "Cursed Tower Veranda"
 crujido1..4.ogg         los crujidos sueltos de cada cuarto           wood_cracking_01, wood_squeak_01,
                                                                       wood_cracking_03, metal_falling_01
 puerta.wav              las puertas al abrirse y al cerrarse          creaky_door_hinge
