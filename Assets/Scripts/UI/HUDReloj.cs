@@ -73,7 +73,8 @@ public class HUDReloj : MonoBehaviour
         // Con un menú abierto no se ve (el menú ya tiene el tiempo y quedaría encima de él)
         var juego = GameManager.Instancia;
         bool hayMenu = juego != null &&
-                       (juego.EstadoActual == GameManager.Estado.Pausado || juego.EstadoActual == GameManager.Estado.TiempoAgotado);
+                       (juego.EstadoActual == GameManager.Estado.EnMenu || juego.EstadoActual == GameManager.Estado.Pausado ||
+                        juego.EstadoActual == GameManager.Estado.TiempoAgotado);
         if (tarjeta != null && tarjeta.activeSelf == hayMenu) tarjeta.SetActive(!hayMenu);
         if (aviso != null && hayMenu && aviso.activeSelf) aviso.SetActive(false);
         if (hayMenu) return;

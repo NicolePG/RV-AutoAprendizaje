@@ -49,6 +49,12 @@ public static class Cuarto1Builder
     // Rotaciones para que un texto se lea de frente según el muro donde está
     static readonly Vector3 TextoMuroSur = new Vector3(0, 180, 0);  // el jugador mira al sur
 
+    // Donde empieza el juego: frente a la entrada tapiada, mirando al sur (hacia el mostrador y la
+    // puerta). Lo usan ColocarJugador y el punto de inicio del Cuarto 1 de GameManager, que es a
+    // donde llevan "Volver a jugar" y "Reiniciar juego".
+    public static readonly Vector3 InicioJugador = new Vector3(0, 0, 1.2f);
+    public static readonly Quaternion GiroInicioJugador = Quaternion.Euler(0, 180, 0);
+
     static Material matPiso, matPared, matVerdeAzulado, matTecho, matMadera, matMaderaOscura, matAzul, matMetal;
     static Material matNegro, matPapel, matLaton, matRojo, matAmarillo, matVerde, matTerracota, matCarton;
     static Material matTela, matAlfombra, matFoco, matPantalla, matLuzRoja, matLuzAmbar;
@@ -970,10 +976,9 @@ public static class Cuarto1Builder
     // También lo usa el menú Escape Room > Llevar jugador al Cuarto 1
     public static void ColocarJugador()
     {
-        // Punto de inicio: frente a la entrada tapiada, mirando al sur (hacia el mostrador y la puerta)
         GameObject jugador = GameObject.Find("XR Origin (XR Rig)");
         if (jugador == null) return;
-        jugador.transform.SetPositionAndRotation(new Vector3(0, 0, 1.2f), Quaternion.Euler(0, 180, 0));
+        jugador.transform.SetPositionAndRotation(InicioJugador, GiroInicioJugador);
 
         // La cabeza no atraviesa paredes ni muebles, y la altura de los ojos queda entre 0.8 y 1.85 m
         if (jugador.GetComponent<LimitesDelJugador>() == null) jugador.AddComponent<LimitesDelJugador>();

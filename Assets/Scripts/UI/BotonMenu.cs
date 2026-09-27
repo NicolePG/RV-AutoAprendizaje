@@ -10,6 +10,8 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 //  - Al apretarlo: hace clic, se hunde un instante y dispara "alPresionar".
 //  - Deshabilitado (por ejemplo "Cargar partida" sin partida guardada): queda apagado y al
 //    apretarlo suena un zumbido corto, sin hacer nada.
+// Estilo opcional (lo usa el menú de inicio): con el rayo encima el fondo pasa a "colorEncima" en
+// vez de aclararse, se prende la lucecita "indicador" y la vista se corre un poco a la derecha.
 // Funciona con el juego en pausa: se anima con el tiempo real y su sonido no se pausa
 // (el AudioSource de los menús ignora la pausa del audio).
 //
@@ -30,6 +32,16 @@ public class BotonMenu : MonoBehaviour
 
     public UnityEvent alPresionar = new UnityEvent();
 
+    [Header("Estilo (opcional)")]
+    [Tooltip("Color del fondo con el rayo encima. Con alfa 0 el fondo solo se aclara (como en la pausa)")]
+    public Color colorEncima = new Color(0f, 0f, 0f, 0f);
+    [Tooltip("Lucecita que se prende con el rayo encima (opcional)")]
+    public Renderer indicador;
+    public Color colorIndicador = new Color(0.3f, 0.04f, 0.05f);
+    public Color colorIndicadorEncima = new Color(1f, 0.22f, 0.2f);
+    [Tooltip("Cuántos metros se corre la vista a la derecha con el rayo encima (0 = no se corre)")]
+    public float desplazarAlApuntar;
+
     public bool Habilitado { get; private set; } = true;
 
     XRSimpleInteractable interactable;
@@ -37,6 +49,7 @@ public class BotonMenu : MonoBehaviour
     Color colorBase, colorTexto, colorDetalle;
     Color? colorForzado;
     string textoOriginal, detalleOriginal;
+    Vector3 posicionVista;
     float encimaAvance, pulso;
     bool preparado;
 
@@ -54,6 +67,7 @@ public class BotonMenu : MonoBehaviour
         if (fondo != null) colorBase = fondo.sharedMaterial.GetColor("_BaseColor");
         if (texto != null) { colorTexto = texto.color; textoOriginal = texto.text; }
         if (detalle != null) { colorDetalle = detalle.color; detalleOriginal = detalle.text; }
+        if (vista != null) posicionVista = vista.localPosition;
         if (audioMenu != null) audioMenu.ignoreListenerPause = true;
     }
 
@@ -64,7 +78,11 @@ public class BotonMenu : MonoBehaviour
         interactable.selectEntered.RemoveListener(Presionar);
         encimaAvance = 0f;
         pulso = 0f;
-        if (vista != null) vista.localScale = Vector3.one;
+        if (vista != null)
+        {
+            vista.localScale = Vector3.one;
+            vista.localPosition = posicionVista;
+        }
     }
 
     public void Habilitar(bool habilitado) => Habilitado = habilitado;
@@ -106,17 +124,28 @@ public class BotonMenu : MonoBehaviour
         pulso = Mathf.MoveTowards(pulso, 0f, dt / 0.15f);
 
         if (vista != null)
+        {
             vista.localScale = Vector3.one * (1f + 0.035f * encimaAvance - 0.06f * pulso);
+            vista.localPosition = posicionVista + Vector3.right * (desplazarAlApuntar * encimaAvance);
+        }
 
         // Color del fondo: el suyo (o el forzado), más claro con el rayo encima, apagado si no anda
         Color color = colorForzado ?? colorBase;
         if (!Habilitado) color = Color.Lerp(color, new Color(0.16f, 0.19f, 0.24f), 0.75f);
+        else if (colorEncima.a > 0f) color = Color.Lerp(color, colorEncima, encimaAvance);
         else color = Color.Lerp(color, Color.white, 0.2f * encimaAvance);
         if (fondo != null)
         {
             fondo.GetPropertyBlock(bloque);
             bloque.SetColor("_BaseColor", color);
             fondo.SetPropertyBlock(bloque);
+        }
+        if (indicador != null)
+        {
+            Color luz = Habilitado ? Color.Lerp(colorIndicador, colorIndicadorEncima, encimaAvance) : colorIndicador * 0.5f;
+            indicador.GetPropertyBlock(bloque);
+            bloque.SetColor("_BaseColor", luz);
+            indicador.SetPropertyBlock(bloque);
         }
 
         float alfa = Habilitado ? 1f : 0.4f;

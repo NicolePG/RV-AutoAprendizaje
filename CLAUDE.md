@@ -161,10 +161,40 @@ Diferencia con el GDD (decisión del equipo, 24/09): la ranura del objeto especi
 cambió por la tarjeta del docente, porque si el jugador no agarraba el objeto no podía volver a
 buscarlo (las puertas se cierran).
 
+**Final — Pasillo de salida:** lo arma `Assets/Editor/ConstructorCuarto4Salida.cs` (segunda parte
+del constructor del Cuarto 4; reemplaza al patio). Detrás de la salida de emergencia está el pasillo
+principal del colegio (3,8 × 12 m, techo de 3,2 m), moderno: terrazo, pared de listones de madera,
+tiras LED, casilleros, sillones y jardinera. Al fondo, la puerta principal de vidrio con corredizas
+automáticas (`PuertaCorrediza`) y afuera, de día, la explanada con la fachada, la reja y el cielo
+HDRI de Poly Haven (`museumplein_2k`, skybox de la escena). Todo empieza apagado y se prende al
+abrirse la salida de emergencia. Al entrar se gana (`PantallaVictoria`): la pantalla colgada dice
+"¡GANASTE!" con el tiempo, las luces se prenden en cascada y al final se abre la puerta principal.
+El tótem junto a la puerta tiene el botón **VOLVER A JUGAR**, que lleva siempre al Cuarto 1 (punto
+`Inicio_Cuarto1` de `GameManager`). Casilleros, puertas de vidrio, pantallas y reja están armados
+con piezas: Poly Haven no tiene esos modelos.
+
+**Menú de inicio** (`MainMenu` y `EfectosMenuInicio`, lo arma `ConstructorMenuInicio.cs`): al abrir
+el juego flota delante del jugador en la recepción a oscuras, con el título *Protocolo Apagón*, la
+premisa y la última partida guardada. Tiene su propio estilo de terror, distinto de la pausa: una
+pantalla grande (unos 73° de la vista) con la foto oscurecida de un aula abandonada de fondo
+(`Assets/Menu`, de Yiquan Zhang en Unsplash, crédito en `Assets/Menu/CREDITOS.txt`), el título
+**ESCAPE BACKROOM** (con "Protocolo Apagón" de subtítulo), líneas de monitor, fallas de señal,
+"BACKROOM" que parpadea, la recepción latiendo en rojo y un latido grave. Si un mueble o una lámpara
+se meterían en el panel, `PanelFlotante` lo acerca y lo achica (se sigue viendo igual de grande).
+Usa tipografías de Google Fonts con licencia OFL (Bebas Neue, Barlow Condensed y Share Tech Mono, en
+`Assets/Fuentes` junto a sus licencias). Mientras está abierto, el reloj no corre y las manos solo tocan los botones (estado
+`EnMenu` de `GameManager`). Botones: **Nueva partida**, **Continuar** (carga la partida guardada),
+**Opciones** (volumen, guardado en `PlayerPrefs`), **Cómo jugar** (controles del visor y del PC, sin
+pistas) y **Salir** (pide confirmación). "Volver a jugar" y "Reiniciar" empiezan directo en el
+Cuarto 1; **Menú principal** (en la pausa, el tótem del final y tiempo agotado) vuelve a este menú.
+En el editor, si se llevó al jugador a otro cuarto para probarlo, el menú no aparece.
+
 **Menú Escape Room** (`MenuEscapeRoom.cs`): **Construir los 4 cuartos** arma toda la escena
 con los constructores de cada cuarto, en orden (1 → 2 → 4 → 3), la guarda y hornea la luz
 una sola vez al final (esperar la barra antes de dar Play). **Llevar jugador al Cuarto 1, 2,
-3 o 4** pone al jugador en la entrada de ese cuarto para probarlo directo.
+3 o 4** pone al jugador en la entrada de ese cuarto para probarlo directo. **Llevar jugador al
+pasillo final** prende el pasillo y lo deja recién entrado: al dar Play gana enseguida (sirve para
+probar el final y el botón de volver a jugar).
 
 **Objetos agarrables** (regla para todos los cuartos): agarre firme, como una mano
 que toma bien una herramienta. `XRGrabInteractable` con **punto de agarre fijo**

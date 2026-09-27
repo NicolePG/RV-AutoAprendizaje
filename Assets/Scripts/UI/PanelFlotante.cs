@@ -28,6 +28,10 @@ public class PanelFlotante : MonoBehaviour
     [Tooltip("Ancho del panel en metros: para revisar si hay algo a los costados")]
     public float anchoPanel = 1f;
 
+    [Tooltip("Alto del panel en metros: si es mayor que 0, revisa también arriba y abajo (un mueble o " +
+             "una lámpara que se metería en un panel grande). 0 = solo a la altura de los ojos")]
+    public float altoPanel;
+
     [Tooltip("Cuánto más abajo de los ojos queda el centro del panel")]
     public float bajoLosOjos = 0.06f;
 
@@ -36,6 +40,10 @@ public class PanelFlotante : MonoBehaviour
     public Renderer oscurecedor;
 
     [Range(0f, 1f)] public float oscuridad = 0.6f;
+
+    [Tooltip("El color con que se oscurece (el alfa no se usa: lo pone \"oscuridad\"). Negro en la pausa, " +
+             "rojo muy oscuro en el menú de inicio")]
+    public Color colorOscuro = Color.black;
 
     public bool Visible { get; private set; }
 
@@ -96,7 +104,7 @@ public class PanelFlotante : MonoBehaviour
         if (oscurecedor != null)
         {
             oscurecedor.GetPropertyBlock(bloque);
-            bloque.SetColor("_BaseColor", new Color(0f, 0f, 0f, oscuridad * suave));
+            bloque.SetColor("_BaseColor", new Color(colorOscuro.r, colorOscuro.g, colorOscuro.b, oscuridad * suave));
             oscurecedor.SetPropertyBlock(bloque);
         }
     }
@@ -111,11 +119,15 @@ public class PanelFlotante : MonoBehaviour
         frente.Normalize();
         Vector3 derecha = Vector3.Cross(Vector3.up, frente);
 
-        // Tres rayos: al centro del panel y a sus dos bordes. Si alguno choca antes, se acerca.
+        // Tres rayos: al centro del panel y a sus dos bordes (nueve, con las esquinas de arriba y de
+        // abajo, si el panel dice su alto). Si alguno choca antes, se acerca.
         float d = distancia;
+        float[] alturas = altoPanel > 0f ? new[] { 0f, -0.5f, 0.5f } : new[] { 0f };
         foreach (float lado in new[] { 0f, -0.5f, 0.5f })
+        foreach (float alto in alturas)
         {
             Vector3 hasta = frente * distancia + derecha * (lado * anchoPanel);
+            if (altoPanel > 0f) hasta += Vector3.up * (alto * altoPanel - bajoLosOjos);
             if (Physics.Raycast(ojos, hasta.normalized, out RaycastHit golpe, hasta.magnitude + 0.1f, ~0,
                                 QueryTriggerInteraction.Ignore))
             {

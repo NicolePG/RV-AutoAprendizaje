@@ -7,12 +7,14 @@ using UnityEngine.Rendering;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 // Arma lo que no es de ningún cuarto: el reloj de la partida, el guardado, el reloj de la muñeca,
-// el menú de pausa y la pantalla de tiempo agotado. Queda todo dentro de un objeto "Sistema" en la
+// el menú de inicio, el menú de pausa y la pantalla de tiempo agotado. Queda todo dentro de un objeto "Sistema" en la
 // raíz de la escena (si ya existía, se rearma de cero).
 //
 // Además conecta las puertas: al abrirse la salida de cada cuarto, GameManager.LlegarAlCuarto
 // guarda la partida sola; al abrirse la salida del Cuarto 4, GameManager.SalidaAbierta detiene el
 // reloj. Por eso va DESPUÉS de construir los cuatro cuartos (lo llama "Construir los 4 cuartos").
+//
+// El menú de inicio (un panel de emergencia, con otro estilo) está en ConstructorMenuInicio.cs.
 //
 // Diseño de los menús: paneles planos oscuros con borde, una franja de color arriba (ámbar en la
 // pausa, rojo en el tiempo agotado), textos claros y botones grandes que se iluminan al apuntarlos.
@@ -20,7 +22,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 // oscurece el cuarto, después el borde, el fondo, las tarjetas, las barras y los botones, y al
 // final los textos. Así nada tapa a nada aunque estén casi pegados, y el rayo del control se ve
 // encima del menú.
-public static class ConstructorSistema
+public static partial class ConstructorSistema
 {
     const string CARPETA = "Assets/Materials/Sistema";
     const string AJUSTES_CAPAS = "Assets/XRI/Settings/Resources/InteractionLayerSettings.asset";
@@ -70,6 +72,7 @@ public static class ConstructorSistema
 
         juego.puntosDeInicio = ArmarPuntosDeInicio(sistema.transform);
         juego.hud = ArmarHUD(sistema.transform, reloj);
+        juego.menuInicio = ArmarMenuInicio(sistema.transform);
         ArmarMenuPausa(sistema.transform);
         juego.pantallaTiempoAgotado = ArmarTiempoAgotado(sistema.transform);
         ConectarPuertas(juego);
@@ -80,14 +83,16 @@ public static class ConstructorSistema
     // ------------------------------------------------------------------ puertas y puntos de inicio
 
     // Dónde aparece el jugador al cargar cada cuarto: en su entrada, mirando hacia adentro (los
-    // mismos lugares que usa el menú "Llevar jugador al Cuarto N"). El Cuarto 1 no necesita:
-    // la partida siempre empieza ahí.
+    // mismos lugares que usa el menú "Llevar jugador al Cuarto N"). El del Cuarto 1 es donde
+    // empieza el juego: ahí llevan "Volver a jugar" y "Reiniciar juego".
     static Transform[] ArmarPuntosDeInicio(Transform sistema)
     {
         Transform g = Grupo("Puntos_De_Inicio", sistema, Vector3.zero);
+        Transform inicio1 = Grupo("Inicio_Cuarto1", g, Vector3.zero);
+        inicio1.SetPositionAndRotation(Cuarto1Builder.InicioJugador, Cuarto1Builder.GiroInicioJugador);
         return new[]
         {
-            null,
+            inicio1,
             PuntoDeInicio(g, "Inicio_Cuarto2", "Cuarto2_Oficina", new Vector3(1.35f, 0f, 0.6f)),
             PuntoDeInicio(g, "Inicio_Cuarto3", "Cuarto3_Computacion", new Vector3(5f, 0f, 0.6f)),
             PuntoDeInicio(g, "Inicio_Cuarto4", "Cuarto4_Laboratorio", new Vector3(1.35f, 0f, 1f))
@@ -206,7 +211,8 @@ public static class ConstructorSistema
 
     // 1.04 x 0.66 m a 1.1 m de la cabeza. Arriba: "PAUSA" y cómo cerrarlo. A la izquierda, una
     // tarjeta con la partida (tiempo, cuarto con sus cuatro fichas, acertijos). A la derecha, los
-    // cuatro botones. Abajo, la línea de estado (la partida guardada o lo que acaba de pasar).
+    // botones (los dos de abajo, lado a lado). Abajo, la línea de estado (la partida guardada o lo
+    // que acaba de pasar).
     static PauseMenu ArmarMenuPausa(Transform sistema)
     {
         Transform raiz = Grupo("Menu_Pausa", sistema, Vector3.zero);
@@ -257,8 +263,12 @@ public static class ConstructorSistema
                                   "GUARDAR PARTIDA", "Cuarto 1 · 15:00");
         menu.botonCargar = Boton("Boton_Cargar", c, new Vector3(XB, -0.07f, 0f), ANCHO, ALTO, mSecundario, Texto,
                                  "CARGAR PARTIDA", "No hay partida guardada");
-        menu.botonReiniciar = Boton("Boton_Reiniciar", c, new Vector3(XB, -0.165f, 0f), ANCHO, ALTO, mSecundario, Texto,
-                                    "REINICIAR JUEGO", "Empezar desde el Cuarto 1");
+        // Abajo, lado a lado: reiniciar y volver al menú de inicio
+        const float MEDIO = (ANCHO - 0.01f) / 2f;
+        menu.botonReiniciar = Boton("Boton_Reiniciar", c, new Vector3(XB - (MEDIO + 0.01f) / 2f, -0.165f, 0f), MEDIO, ALTO, mSecundario, Texto,
+                                    "REINICIAR", "Desde el Cuarto 1");
+        menu.botonMenuPrincipal = Boton("Boton_Menu_Principal", c, new Vector3(XB + (MEDIO + 0.01f) / 2f, -0.165f, 0f), MEDIO, ALTO, mSecundario, Texto,
+                                        "MENÚ PRINCIPAL", "Pantalla de inicio");
 
         Caja("Separador_Abajo", c, new Vector3(0f, -0.24f, -0.007f), new Vector3(0.96f, 0.002f, 0.002f), mTarjeta);
         menu.textoEstado = Rotulo("Estado", c, new Vector3(0f, -0.278f, -0.008f), new Vector2(0.96f, 0.028f),
@@ -275,7 +285,7 @@ public static class ConstructorSistema
     // ------------------------------------------------------------------ tiempo agotado
 
     // 0.94 x 0.6 m, con franja roja. Arriba "00:00" en rojo y "TIEMPO AGOTADO"; en el medio hasta
-    // dónde llegó; abajo los dos botones lado a lado.
+    // dónde llegó; abajo los tres botones lado a lado.
     static PantallaTiempoAgotado ArmarTiempoAgotado(Transform sistema)
     {
         Transform raiz = Grupo("Pantalla_Tiempo_Agotado", sistema, Vector3.zero);
@@ -299,10 +309,12 @@ public static class ConstructorSistema
         pantalla.textoProgreso = Rotulo("Progreso", c, new Vector3(0f, -0.035f, -0.011f), new Vector2(0.8f, 0.03f),
                                         "Llegaste al Cuarto 1 de 4", Texto, TextAlignmentOptions.Center, false);
 
-        pantalla.botonCargar = Boton("Boton_Cargar", c, new Vector3(-0.21f, -0.155f, 0f), 0.4f, 0.1f, mAmbar, Oscuro,
-                                     "CARGAR ÚLTIMA PARTIDA", "No hay partida guardada");
-        pantalla.botonReiniciar = Boton("Boton_Reiniciar", c, new Vector3(0.21f, -0.155f, 0f), 0.4f, 0.1f, mSecundario, Texto,
-                                        "EMPEZAR DE NUEVO", "Desde el Cuarto 1, con 15 minutos");
+        pantalla.botonCargar = Boton("Boton_Cargar", c, new Vector3(-0.285f, -0.155f, 0f), 0.27f, 0.1f, mAmbar, Oscuro,
+                                     "CARGAR PARTIDA", "No hay partida guardada");
+        pantalla.botonReiniciar = Boton("Boton_Reiniciar", c, new Vector3(0f, -0.155f, 0f), 0.27f, 0.1f, mSecundario, Texto,
+                                        "EMPEZAR DE NUEVO", "Desde el Cuarto 1");
+        pantalla.botonMenuPrincipal = Boton("Boton_Menu_Principal", c, new Vector3(0.285f, -0.155f, 0f), 0.27f, 0.1f, mSecundario, Texto,
+                                            "MENÚ PRINCIPAL", "Pantalla de inicio");
         Rotulo("Ayuda", c, new Vector3(0f, -0.255f, -0.008f), new Vector2(0.84f, 0.024f),
                "Apuntá con el rayo del control y apretá el botón de agarre", Suave, TextAlignmentOptions.Center, false);
 

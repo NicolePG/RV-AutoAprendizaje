@@ -7,6 +7,7 @@ using UnityEngine;
 //  - CARGAR ÚLTIMA PARTIDA: vuelve al principio del cuarto guardado, con el tiempo que tenía.
 //    Si no hay partida guardada queda apagado.
 //  - EMPEZAR DE NUEVO: desde el Cuarto 1, con los 15 minutos.
+//  - MENÚ PRINCIPAL: vuelve al menú de inicio.
 // Dice también hasta dónde llegó el jugador (cuarto y acertijos resueltos).
 //
 // En la escena: va en "Sistema/Pantalla_Tiempo_Agotado", junto a su PanelFlotante.
@@ -17,6 +18,7 @@ public class PantallaTiempoAgotado : MonoBehaviour
     public TMP_Text textoProgreso;
     public BotonMenu botonCargar;
     public BotonMenu botonReiniciar;
+    public BotonMenu botonMenuPrincipal;
 
     [Tooltip("Sonido de los menús: un AudioSource 2D que no se pausa con el juego")]
     public AudioSource audioMenu;
@@ -25,6 +27,7 @@ public class PantallaTiempoAgotado : MonoBehaviour
     {
         botonCargar.alPresionar.AddListener(() => GameManager.Instancia.CargarPartida());
         botonReiniciar.alPresionar.AddListener(() => GameManager.Instancia.Reiniciar());
+        botonMenuPrincipal.alPresionar.AddListener(() => GameManager.Instancia.IrAlMenu());
         if (audioMenu != null) audioMenu.ignoreListenerPause = true;
     }
 

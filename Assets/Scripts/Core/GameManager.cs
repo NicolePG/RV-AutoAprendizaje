@@ -7,9 +7,15 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Inputs.Simulation;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
-// El que coordina la partida: en qué cuarto va el jugador, la pausa, el guardado automático,
-// el tiempo agotado y la victoria. Los demás scripts le avisan a él y él decide qué pasa.
+// El que coordina la partida: el menú de inicio, en qué cuarto va el jugador, la pausa, el
+// guardado automático, el tiempo agotado y la victoria. Los demás scripts le avisan a él y él
+// decide qué pasa.
 //
+//  - Al abrir el juego aparece el menú de inicio (MainMenu) sobre el Cuarto 1 a oscuras: el reloj
+//    no corre y las manos solo tocan los botones del menú, como en la pausa. EmpezarPartida() lo
+//    cierra y arranca el reloj. "Menú principal" (pausa, final y tiempo agotado) vuelve a cargar
+//    la escena y lo muestra otra vez (IrAlMenu). Al cargar una partida o al volver a jugar no
+//    aparece: se juega directo.
 //  - Cuando se abre la puerta de salida de un cuarto, LlegarAlCuarto(n) anota que el jugador ya
 //    va por el cuarto n y guarda la partida sola (punto de control), con aviso en el reloj de la esquina.
 //  - Pausar/Reanudar: el reloj se detiene, el sonido del cuarto también, y las manos solo pueden
@@ -22,7 +28,10 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 //    tiempo agotado.
 //  - CargarPartida y Reiniciar vuelven a cargar la escena, así todos los acertijos quedan como
 //    al principio. Si era para cargar, al arrancar la escena nueva lleva al jugador al principio
-//    del cuarto guardado y le pone el tiempo que tenía.
+//    del cuarto guardado y le pone el tiempo que tenía. Si era para reiniciar (también "Volver a
+//    jugar" al ganar), lo lleva SIEMPRE a la entrada del Cuarto 1, a su punto de inicio fijo: no
+//    a donde estaba el jugador al abrir la escena, porque si se probó con "Llevar jugador al
+//    Cuarto 4" la escena arranca ahí y volver a jugar lo dejaba otra vez en el Cuarto 4.
 //    Al recargar, además, se lleva la cabeza del jugador al punto de inicio: en el simulador,
 //    caminar con WASD mueve el visor simulado (no el XR Origin) y ese corrimiento sobrevive a la
 //    recarga; sin esto el jugador aparecería donde estaba antes (por ejemplo, en el patio).
@@ -32,7 +41,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 // ConstructorSistema lo arma y le conecta las puertas.
 public class GameManager : MonoBehaviour
 {
-    public enum Estado { Jugando, Pausado, Ganado, TiempoAgotado }
+    public enum Estado { EnMenu, Jugando, Pausado, Ganado, TiempoAgotado }
 
     public static GameManager Instancia { get; private set; }
 
@@ -49,9 +58,10 @@ public class GameManager : MonoBehaviour
     public SaveManager guardado;
     public HUDReloj hud;
     public PantallaTiempoAgotado pantallaTiempoAgotado;
+    public MainMenu menuInicio;
 
-    [Tooltip("Dónde aparece el jugador al cargar una partida, uno por cuarto. El del Cuarto 1 puede " +
-             "quedar vacío: es donde empieza el juego")]
+    [Tooltip("Dónde aparece el jugador al cargar una partida, uno por cuarto. El del Cuarto 1 es " +
+             "donde empieza el juego: ahí llevan Reiniciar y Volver a jugar")]
     public Transform[] puntosDeInicio = new Transform[TOTAL_CUARTOS];
 
     public Estado EstadoActual { get; private set; } = Estado.Jugando;
@@ -62,14 +72,16 @@ public class GameManager : MonoBehaviour
     public static string NombreCuarto(int cuarto) =>
         cuarto >= 1 && cuarto <= NombresCuartos.Length ? NombresCuartos[cuarto - 1] : "";
 
-    // Sobreviven a la recarga de la escena: "al empezar, cargar la partida guardada" y "esta
-    // escena se volvió a cargar desde el juego" (con Cargar, Reiniciar o Volver a jugar)
+    // Sobreviven a la recarga de la escena: "al empezar, cargar la partida guardada", "esta
+    // escena se volvió a cargar desde el juego" (con Cargar, Reiniciar o Volver a jugar) y "al
+    // empezar, mostrar el menú de inicio" (con Menú principal)
     static bool cargarAlEmpezar;
     static bool escenaRecargada;
+    static bool irAlMenu;
 
     Estado estadoAntesDePausa;
     bool recargando;
-    Pose inicioDelJuego;   // dónde está el jugador al abrir la escena: la entrada del Cuarto 1
+    Pose inicioDelJuego;   // dónde está el jugador al abrir la escena (por si falta el punto del Cuarto 1)
     readonly Dictionary<XRBaseInteractor, InteractionLayerMask> capasOriginales =
         new Dictionary<XRBaseInteractor, InteractionLayerMask>();
 
@@ -79,6 +91,7 @@ public class GameManager : MonoBehaviour
     {
         cargarAlEmpezar = false;
         escenaRecargada = false;
+        irAlMenu = false;
         Instancia = null;
     }
 
@@ -108,15 +121,39 @@ public class GameManager : MonoBehaviour
 
         bool cargar = cargarAlEmpezar && guardado != null && guardado.HayPartida;
         bool recargada = escenaRecargada;
+        bool menu = !cargar && (irAlMenu || (!recargada && ArrancaEnElCuarto1()));
         cargarAlEmpezar = false;
         escenaRecargada = false;
+        irAlMenu = false;
 
         if (cargar) AplicarPartida(guardado.Ultima);
-        else if (guardado != null && guardado.HayPartida) StartCoroutine(AvisarPartidaDisponible());
+        else if (!menu && guardado != null && guardado.HayPartida) StartCoroutine(AvisarPartidaDisponible());
 
-        // Al cargar hay que ir al cuarto guardado; al reiniciar, volver a la entrada del Cuarto 1
+        // Al cargar hay que ir al cuarto guardado; al reiniciar, a la entrada del Cuarto 1
         if (cargar || recargada)
-            StartCoroutine(AcomodarJugador(cargar ? PuntoDeInicio(CuartoActual) : inicioDelJuego, recargada));
+            StartCoroutine(AcomodarJugador(PuntoDeInicio(cargar ? CuartoActual : 1), recargada));
+#if !UNITY_EDITOR
+        // En el Quest la partida empieza siempre en el Cuarto 1, aunque la escena se haya guardado
+        // con el jugador en otro cuarto. En el editor no: ahí se respeta "Llevar jugador al Cuarto N"
+        else
+            StartCoroutine(AcomodarJugador(PuntoDeInicio(1), false));
+#endif
+
+        if (menu) AbrirMenuInicio();
+    }
+
+    // true si el jugador está en la entrada del Cuarto 1 al abrir la escena. En el editor, si se lo
+    // llevó a otro cuarto para probarlo ("Llevar jugador al Cuarto N"), no aparece el menú de
+    // inicio: se juega directo ahí. En el Quest siempre empieza en el Cuarto 1.
+    bool ArrancaEnElCuarto1()
+    {
+#if UNITY_EDITOR
+        Vector3 distancia = inicioDelJuego.position - PuntoDeInicio(1).position;
+        distancia.y = 0f;
+        return distancia.magnitude < 1.5f;
+#else
+        return true;
+#endif
     }
 
     // El Quest pierde el foco cuando el jugador abre el menú del sistema (botón de Meta): ahí se
@@ -160,7 +197,8 @@ public class GameManager : MonoBehaviour
                HUDReloj.Tono.Exito, 0.3f);
     }
 
-    // La entrada del cuarto (el Cuarto 1 no tiene punto: es donde empieza el juego)
+    // La entrada del cuarto. Si falta el punto (una escena armada antes de que existiera el del
+    // Cuarto 1), se usa donde estaba el jugador al abrir la escena
     Pose PuntoDeInicio(int cuarto)
     {
         int i = cuarto - 1;
@@ -216,6 +254,44 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSecondsRealtime(2.5f);
         if (EstadoActual == Estado.Jugando)
             Avisar("HAY UNA PARTIDA GUARDADA\n<size=70%>Abrí el menú para cargarla</size>", HUDReloj.Tono.Info, 0.2f);
+    }
+
+    // ------------------------------------------------------------------ menú de inicio
+
+    // El juego queda quieto (reloj, sonido del cuarto y manos, como en la pausa) y aparece el menú
+    void AbrirMenuInicio()
+    {
+        EstadoActual = Estado.EnMenu;
+        Congelar(true);
+        if (menuInicio != null) menuInicio.Abrir();
+        else EmpezarPartida();   // una escena sin menú: se juega directo
+    }
+
+    // NUEVA PARTIDA en el menú de inicio: se cierra el menú y arranca el reloj de 15 minutos
+    public void EmpezarPartida()
+    {
+        if (EstadoActual != Estado.EnMenu) return;
+        EstadoActual = Estado.Jugando;
+        Congelar(false);
+    }
+
+    // MENÚ PRINCIPAL en la pausa, en el tótem del final o en el tiempo agotado: la escena vuelve a
+    // cargarse (todo queda como al principio) y aparece el menú de inicio en el Cuarto 1
+    public void IrAlMenu()
+    {
+        cargarAlEmpezar = false;
+        irAlMenu = true;
+        RecargarEscena();
+    }
+
+    // SALIR en el menú de inicio: en el Quest cierra la aplicación; en el editor detiene el Play
+    public static void Salir()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 
     // ------------------------------------------------------------------ pausa

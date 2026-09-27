@@ -1,31 +1,39 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
-// El final del juego: el patio de salida del colegio, detrás de la puerta de emergencia del
-// Cuarto 4.
+// El final del juego: el pasillo de salida del colegio, detrás de la puerta de emergencia del
+// Cuarto 4, con la puerta principal de vidrio al fondo.
 //
-// Cuando el jugador sale al patio (la zona de la entrada del patio llama a Ganar()):
-//  - se hace de día: la luz ambiental y la niebla pasan a las del patio (su ClimaCuarto);
-//  - aparece el cartel "¡LOGRASTE SALIR DEL COLEGIO!" con el tiempo que tardó, y el botón para
-//    volver a jugar;
+// Cuando el jugador entra al pasillo (la zona apenas pasando la puerta llama a Ganar()):
+//  - se pone el clima del pasillo: de día, con la luz que entra por la puerta principal;
+//  - se prende la pantalla colgada del techo con "¡GANASTE!" y el tiempo que tardó, y el tótem
+//    con el botón para volver a jugar;
 //  - suena una fanfarria corta y los dos controles vibran;
+//  - avisa "alGanar": las luces del techo se prenden en cascada hacia la salida y, al terminar,
+//    se abre sola la puerta principal (PuertaCorrediza);
 //  - GameManager da la partida por ganada (el reloj de la esquina se pone verde).
-// El botón "VOLVER A JUGAR" llama a VolverAJugar(): carga la escena otra vez, desde el Cuarto 1.
+// El botón verde "VOLVER A JUGAR" llama a VolverAJugar(): carga la escena otra vez, siempre desde
+// el Cuarto 1. El azul "MENÚ PRINCIPAL" llama a IrAlMenu(): vuelve al menú de inicio.
 //
-// En la escena: va en el patio. ConstructorCuarto4 lo arma y lo conecta.
+// En la escena: va en el pasillo de salida. ConstructorCuarto4 lo arma y lo conecta
+// (ConstructorCuarto4Salida.cs).
 public class PantallaVictoria : MonoBehaviour
 {
-    [Tooltip("El clima del patio (de día)")]
+    [Tooltip("El clima del pasillo (de día)")]
     public ClimaCuarto clima;
 
-    [Tooltip("Lo que aparece al ganar: el cartel y el botón. Empiezan ocultos")]
+    [Tooltip("Lo que aparece al ganar: los textos de las pantallas y el botón. Empiezan ocultos")]
     public GameObject[] mostrarAlGanar;
 
-    [Tooltip("La línea del cartel con el tiempo que tardó")]
+    [Tooltip("La línea de la pantalla con el tiempo que tardó")]
     public TMP_Text textoTiempo;
+
+    [Tooltip("Qué más pasa al ganar (por ejemplo, prender las luces del pasillo en cascada)")]
+    public UnityEvent alGanar = new UnityEvent();
 
     public bool Gano { get; private set; }
 
@@ -56,6 +64,7 @@ public class PantallaVictoria : MonoBehaviour
         foreach (var control in FindObjectsByType<XRBaseInputInteractor>())
             control.SendHapticImpulse(0.6f, 0.4f);
         StartCoroutine(Fanfarria());
+        alGanar.Invoke();
     }
 
     // Cuatro notas que suben (do, mi, sol y do agudo), como un "¡lo lograste!"
@@ -69,10 +78,17 @@ public class PantallaVictoria : MonoBehaviour
         }
     }
 
-    // Empieza de nuevo: la escena vuelve a cargarse como al darle Play
+    // Empieza de nuevo: la escena vuelve a cargarse y el jugador aparece en la entrada del Cuarto 1
     public void VolverAJugar()
     {
         if (GameManager.Instancia != null) GameManager.Instancia.Reiniciar();
+        else SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    // El botón azul del tótem: vuelve al menú de inicio
+    public void IrAlMenu()
+    {
+        if (GameManager.Instancia != null) GameManager.Instancia.IrAlMenu();
         else SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

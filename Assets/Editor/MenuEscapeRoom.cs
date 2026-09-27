@@ -9,6 +9,7 @@ using UnityEngine.SceneManagement;
 //  - Construir menús, reloj y guardado: rearma solo eso (está en ConstructorSistema).
 //  - Llevar jugador al Cuarto 1, 2, 3 o 4: pone al jugador en la entrada de ese cuarto, para
 //    dar Play y probarlo sin tener que resolver los anteriores.
+//  - Llevar jugador al pasillo final: lo deja recién salido del Cuarto 4, para probar el final.
 //
 // Cada cuarto se sigue armando con su propio constructor (Cuarto1Builder, ConstructorCuarto2,
 // ConstructorCuarto3 y ConstructorCuarto4): este menú solo los llama en el orden correcto.
@@ -109,6 +110,10 @@ public static class MenuEscapeRoom
 
     [MenuItem("Escape Room/Llevar jugador al Cuarto 4", false, 23)]
     static void LlevarAlCuarto4() => ConstructorCuarto4.LlevarJugador();
+
+    // Para probar el final y el botón de volver a jugar: al dar Play, gana enseguida
+    [MenuItem("Escape Room/Llevar jugador al pasillo final", false, 24)]
+    static void LlevarAlFinal() => ConstructorCuarto4.LlevarJugadorAlFinal();
 
     // El jugador es el objeto de más arriba de todos los que tienen la cámara adentro (el XR Origin)
     static Transform Jugador()

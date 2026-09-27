@@ -13,7 +13,8 @@ using UnityEngine.InputSystem;
 //  - GUARDAR PARTIDA: guarda ahora el cuarto actual y el tiempo que queda.
 //  - CARGAR PARTIDA: vuelve a la partida guardada (al principio de ese cuarto).
 //  - REINICIAR JUEGO: empieza de cero desde el Cuarto 1.
-// Cargar y reiniciar piden confirmación (se pierde lo que no se guardó): el botón se pone rojo y
+//  - MENÚ PRINCIPAL: vuelve al menú de inicio (la partida se deja; lo guardado sigue guardado).
+// Cargar, reiniciar y menú principal piden confirmación (se pierde lo que no se guardó): el botón se pone rojo y
 // pregunta "¿SEGURO?"; hay que tocarlo otra vez antes de 3 segundos.
 //
 // En la escena: va en "Sistema/Menu_Pausa", junto a su PanelFlotante. ConstructorSistema lo arma.
@@ -38,6 +39,7 @@ public class PauseMenu : MonoBehaviour
     public BotonMenu botonGuardar;
     public BotonMenu botonCargar;
     public BotonMenu botonReiniciar;
+    public BotonMenu botonMenuPrincipal;
 
     [Tooltip("Sonido de los menús: un AudioSource 2D que no se pausa con el juego")]
     public AudioSource audioMenu;
@@ -68,6 +70,8 @@ public class PauseMenu : MonoBehaviour
             Confirmar(botonCargar, "Vas a volver al principio del cuarto guardado", () => GameManager.Instancia.CargarPartida()));
         botonReiniciar.alPresionar.AddListener(() =>
             Confirmar(botonReiniciar, "Se pierde todo lo que no guardaste", () => GameManager.Instancia.Reiniciar()));
+        botonMenuPrincipal.alPresionar.AddListener(() =>
+            Confirmar(botonMenuPrincipal, "Se pierde lo que no guardaste", () => GameManager.Instancia.IrAlMenu()));
     }
 
     void OnEnable() => accion.Enable();
@@ -189,6 +193,7 @@ public class PauseMenu : MonoBehaviour
         botonGuardar.Habilitar(!juego.Gano);
         botonGuardar.Textos(null, juego.Gano ? "Ya saliste del colegio" : "Cuarto " + cuarto + " · " + TimerController.Formato(restante));
         botonReiniciar.Textos(null, null);
+        botonMenuPrincipal.Textos(null, null);
     }
 
     string TextoPartidaGuardada()
