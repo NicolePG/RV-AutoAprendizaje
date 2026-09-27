@@ -84,6 +84,7 @@ public static class SonidoSintetico
     public static AudioClip Cojin() => Roce(0.45f, 0.95f);         // almohadón que se corre
     public static AudioClip Tornillo() => Roce(0.18f, 0.6f);       // tornillo girando
     public static AudioClip Cerradura() => Golpe();                // la llave que gira
+    public static AudioClip Susto() => Subida(600f, 55f, 0.8f);    // tono que se desploma
 
     public static void Tocar(AudioClip clip, Vector3 donde, float volumen = 1f)
     {

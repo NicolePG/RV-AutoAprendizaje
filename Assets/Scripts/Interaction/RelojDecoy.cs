@@ -43,6 +43,12 @@ public class RelojDecoy : MonoBehaviour
 
         args.interactorObject.transform.GetComponent<XRBaseInputInteractor>()?.SendHapticImpulse(1f, 0.3f);
         if (sonidoSusto != null) AudioSource.PlayClipAtPoint(sonidoSusto, transform.position);
+        else
+        {
+            // El susto del reloj falso: un golpe seco y encima un tono que se desploma
+            SonidoSintetico.Tocar(SonidoSintetico.Pestillo(), transform.position, 1f);
+            SonidoSintetico.Tocar(SonidoSintetico.Susto(), transform.position, 0.9f);
+        }
         if (vidrio != null && materialResquebrajado != null) vidrio.sharedMaterial = materialResquebrajado;
 
         StartCoroutine(Destello());
