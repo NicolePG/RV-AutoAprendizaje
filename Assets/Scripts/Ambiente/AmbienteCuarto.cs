@@ -53,6 +53,15 @@ public class AmbienteCuarto : MonoBehaviour
     [Tooltip("Hasta dónde llega el sonido de este cuarto, en metros")]
     public float alcance = 14f;
 
+    [Tooltip("La mitad de lo que mide el cuarto, en metros (medido desde el centro). El " +
+             "fondo se apaga cuando el jugador sale de esta caja: así no se mezcla con el " +
+             "del cuarto de al lado")]
+    public Vector3 mitadDelCuarto = new Vector3(6f, 3f, 6f);
+
+    [Tooltip("Cuántos metros más allá del cuarto se sigue oyendo, para que no se corte de " +
+             "golpe justo en el vano de la puerta")]
+    public float margen = 1.5f;
+
     [Header("Crujidos")]
     [Tooltip("Cada cuántos segundos suena uno: mínimo y máximo")]
     public Vector2 cadaCuanto = new Vector2(16f, 38f);
@@ -100,6 +109,11 @@ public class AmbienteCuarto : MonoBehaviour
 
         float luz = Mathf.InverseLerp(0.02f, 0.25f, RenderSettings.ambientLight.grayscale);
         float objetivo = Mathf.Lerp(volumenSinLuz, volumenConLuz, luz);
+
+        // Y si el jugador no está en ESTE cuarto, el fondo se apaga. Sin esto se oían dos
+        // o tres cuartos a la vez (los cuartos están pegados y el sonido atraviesa las
+        // paredes), y entonces parecía que todos tuvieran el mismo ambiente.
+        if (!JugadorAdentro()) objetivo = 0f;
         fuente.volume = Mathf.MoveTowards(fuente.volume, objetivo, Time.deltaTime * 0.3f);
 
         if (Time.time < proximoCrujido) return;
@@ -131,10 +145,20 @@ public class AmbienteCuarto : MonoBehaviour
     void ProbarEntrada()
     {
         if (yaEntro || entrada == null || camara == null) return;
-        if (Vector3.Distance(camara.position, transform.position) > alcance) return;
+        if (!JugadorAdentro()) return;
 
         yaEntro = true;
         entrada.Play();
+    }
+
+    // true si la cabeza del jugador está adentro de este cuarto (con un poco de margen)
+    bool JugadorAdentro()
+    {
+        if (camara == null) return true;   // todavía no hay vista: no se apaga nada
+
+        Vector3 d = camara.position - transform.position;
+        return Mathf.Abs(d.x) <= mitadDelCuarto.x + margen
+            && Mathf.Abs(d.z) <= mitadDelCuarto.z + margen;
     }
 
     void ProgramarCrujido() => proximoCrujido = Time.time + Random.Range(cadaCuanto.x, cadaCuanto.y);
@@ -147,7 +171,7 @@ public class AmbienteCuarto : MonoBehaviour
             if (Camera.main == null) return;
             camara = Camera.main.transform;
         }
-        if (Vector3.Distance(camara.position, transform.position) > alcance) return;
+        if (!JugadorAdentro()) return;
 
         // En un punto al azar alrededor del centro del cuarto, nunca siempre en el mismo lado
         Vector3 donde = transform.position + new Vector3(

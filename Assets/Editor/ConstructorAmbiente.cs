@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
 
 // Pone el ruido de fondo de cada cuarto (ver AmbienteCuarto).
 //
@@ -67,7 +68,7 @@ public static class ConstructorAmbiente
                 continue;
             }
 
-            if (!Medir(cuarto.transform, out Vector3 centro, out float radio)) continue;
+            if (!Medir(cuarto.transform, out Vector3 centro, out Vector3 mitad)) continue;
 
             var go = new GameObject("Ambiente_" + ajuste.cuarto);
             go.transform.SetParent(raiz.transform, false);
@@ -75,15 +76,16 @@ public static class ConstructorAmbiente
             go.transform.position = new Vector3(centro.x, 1.6f, centro.z);
 
             var ambiente = go.AddComponent<AmbienteCuarto>();
+            ambiente.mitadDelCuarto = mitad;
             ambiente.nombreDelFondo = ajuste.fondo;
             ambiente.nombreDeLaEntrada = ajuste.entrada;
             ambiente.gravedad = ajuste.gravedad;
             ambiente.volumenSinLuz = ajuste.volumenSinLuz;
             ambiente.volumenConLuz = ajuste.volumenConLuz;
             ambiente.cadaCuanto = ajuste.cadaCuanto;
-            // Un poco más que el cuarto, para que no se corte de golpe al cruzar la puerta
-            ambiente.alcance = radio + 3f;
-            ambiente.dispersion = radio * 0.6f;
+            // Justo el cuarto y nada más: si el alcance se pasa, se oye el de al lado
+            ambiente.alcance = Mathf.Max(mitad.x, mitad.z) + 1f;
+            ambiente.dispersion = Mathf.Min(mitad.x, mitad.z) * 0.7f;
             EditorUtility.SetDirty(ambiente);
             puestos++;
         }
@@ -93,21 +95,42 @@ public static class ConstructorAmbiente
                   "por cuarto (más fuerte a oscuras) y crujidos sueltos cada tanto.");
     }
 
-    // El lugar que ocupa un cuarto, medido por lo que se dibuja adentro
-    static bool Medir(Transform cuarto, out Vector3 centro, out float radio)
+    // El lugar que ocupa un cuarto. Se mide por su PISO, no por todo lo que se dibuja
+    // adentro: el piso es exactamente la planta del cuarto, mientras que "todo lo que se
+    // dibuja" incluye cosas que se salen (un pasillo, una puerta abierta, el cielo de la
+    // ventana). Midiendo así, el ambiente del Cuarto 3 quedaba 6 metros corrido y se metía
+    // adentro del Cuarto 2: se oían los dos mezclados y parecía que tuvieran el mismo sonido.
+    //
+    // El piso es el objeto que lleva la zona de teletransporte, que es justo por donde el
+    // jugador puede caminar. Si no lo encuentra, vuelve a medir por lo que se dibuja.
+    static bool Medir(Transform cuarto, out Vector3 centro, out Vector3 mitad)
     {
         centro = cuarto.position;
-        radio = 6f;
+        mitad = new Vector3(6f, 3f, 6f);
 
-        var renderers = cuarto.GetComponentsInChildren<Renderer>();
-        if (renderers.Length == 0) return false;
+        Bounds caja = default;
+        bool hay = false;
 
-        Bounds caja = renderers[0].bounds;
-        foreach (Renderer r in renderers) caja.Encapsulate(r.bounds);
+        foreach (var piso in cuarto.GetComponentsInChildren<TeleportationArea>())
+        {
+            var r = piso.GetComponent<Renderer>();
+            if (r == null) continue;
+            if (!hay) { caja = r.bounds; hay = true; }
+            else caja.Encapsulate(r.bounds);
+        }
+
+        if (!hay)
+        {
+            var renderers = cuarto.GetComponentsInChildren<Renderer>();
+            if (renderers.Length == 0) return false;
+            caja = renderers[0].bounds;
+            foreach (Renderer r in renderers) caja.Encapsulate(r.bounds);
+            Debug.LogWarning("Ambiente: " + cuarto.name + " no tiene piso con zona de " +
+                             "teletransporte, se mide por lo que se dibuja (menos exacto).");
+        }
 
         centro = caja.center;
-        // El radio sale del lado más largo en el piso: lo que tiene que cubrir el sonido
-        radio = Mathf.Max(caja.size.x, caja.size.z) * 0.5f;
+        mitad = new Vector3(caja.size.x * 0.5f, Mathf.Max(caja.size.y * 0.5f, 2f), caja.size.z * 0.5f);
         return true;
     }
 }
