@@ -1,10 +1,15 @@
+using System.Collections.Generic;
 using TMPro;
+using Unity.XR.CoreUtils;
 using UnityEditor;
 using UnityEditor.Events;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Rendering;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using UnityEngine.XR.Interaction.Toolkit.Locomotion.Comfort;
+using UnityEngine.XR.Interaction.Toolkit.Locomotion.Movement;
+using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 
 // Arma lo que no es de ningún cuarto: el reloj de la partida, el guardado, el reloj de la muñeca,
 // el menú de inicio, el menú de pausa y la pantalla de tiempo agotado. Queda todo dentro de un objeto "Sistema" en la
@@ -34,19 +39,8 @@ public static partial class ConstructorSistema
     static Material mOscurecer, mBorde, mFondo, mHUD, mTarjeta, mGris, mAmbar, mSecundario, mPeligro;
     static AudioSource audioUI;
 
-    [MenuItem("Escape Room/Construir menús, reloj y guardado", false, 1)]
-    static void ConstruirDesdeMenu()
-    {
-        if (EditorApplication.isPlaying)
-        {
-            Debug.LogWarning("Detén el modo Play antes de construir.");
-            return;
-        }
-        Construir();
-        UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
-        Debug.Log("Menús, reloj y guardado armados. Guarda la escena (Ctrl+S).");
-    }
-
+    // Lo llama el menú Escape Room > Construir los 4 cuartos (MenuEscapeRoom), después de los
+    // cuartos: no tiene menú propio, todo se construye junto
     public static void Construir()
     {
         var viejo = GameObject.Find("Sistema");
@@ -76,8 +70,53 @@ public static partial class ConstructorSistema
         ArmarMenuPausa(sistema.transform);
         juego.pantallaTiempoAgotado = ArmarTiempoAgotado(sistema.transform);
         ConectarPuertas(juego);
+        PrepararMovimiento();
 
         EditorUtility.SetDirty(juego);
+    }
+
+    // ------------------------------------------------------------------ movimiento del jugador
+
+    const string RUTA_VINETA = "Assets/Samples/XR Interaction Toolkit/3.5.1/Starter Assets/TunnelingVignette/TunnelingVignette.prefab";
+
+    // Le pone al XR Origin el ModoDeMovimiento (por defecto solo teletransporte; caminar con el
+    // joystick izquierdo se activa en Opciones) y, debajo de la cámara, la viñeta de confort del XR
+    // Interaction Toolkit: oscurece los bordes de la vista solo mientras se camina con el joystick.
+    static void PrepararMovimiento()
+    {
+        var origen = Object.FindAnyObjectByType<XROrigin>();
+        if (origen == null || origen.Camera == null)
+        {
+            Debug.LogWarning("ConstructorSistema: no está el XR Origin: no se configuró el movimiento.");
+            return;
+        }
+
+        var modo = origen.GetComponent<ModoDeMovimiento>();
+        if (modo == null) modo = Undo.AddComponent<ModoDeMovimiento>(origen.gameObject);
+        foreach (var mano in origen.GetComponentsInChildren<ControllerInputActionManager>(true))
+            if (mano.name.Contains("Left")) modo.manoIzquierda = mano;
+        if (modo.manoIzquierda == null) Debug.LogWarning("ConstructorSistema: no encontré el control izquierdo del XR Origin.");
+        EditorUtility.SetDirty(modo);
+
+        var caminar = origen.GetComponentInChildren<ContinuousMoveProvider>(true);
+        var vineta = origen.Camera.GetComponentInChildren<TunnelingVignetteController>(true);
+        if (vineta == null)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(RUTA_VINETA);
+            if (prefab == null)
+            {
+                Debug.LogWarning("ConstructorSistema: falta " + RUTA_VINETA + ": caminar funciona, pero sin la viñeta de confort.");
+                return;
+            }
+            var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, origen.Camera.transform);
+            Undo.RegisterCreatedObjectUndo(go, "Viñeta de confort");
+            vineta = go.GetComponent<TunnelingVignetteController>();
+        }
+        vineta.locomotionVignetteProviders = new List<LocomotionVignetteProvider>
+        {
+            new LocomotionVignetteProvider { locomotionProvider = caminar, enabled = caminar != null }
+        };
+        EditorUtility.SetDirty(vineta);
     }
 
     // ------------------------------------------------------------------ puertas y puntos de inicio

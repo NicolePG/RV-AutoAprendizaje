@@ -6,7 +6,7 @@ using UnityEngine.TextCore.LowLevel;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 // Segunda parte de ConstructorSistema: el MENÚ DE INICIO (MainMenu y EfectosMenuInicio). Se arma
-// con el mismo menú: Escape Room > Construir los 4 cuartos (o "Construir menús, reloj y guardado").
+// con el mismo menú: Escape Room > Construir los 4 cuartos (arma todo junto).
 //
 // Es una pantalla grande de terror (casi 2 x 1.1 m, a 1.35 m del jugador), bien distinta del menú
 // de pausa:
@@ -103,23 +103,27 @@ public static partial class ConstructorSistema
         menu.botonSalir = BotonEmergencia("Boton_Salir", p, new Vector3(XD, -0.18f, 0f), ANCHO_OPCION, ALTO_OPCION, "05",
                                           "SALIR", "Cerrar el juego", false);
 
-        // --- Opciones: el volumen, con "-", "+" y una barra de 10 rayitas
+        // --- Opciones: el volumen (con "-", "+" y una barra de 10 rayitas) y caminar con el joystick
         Transform o = Grupo("Pagina_Opciones", g, Vector3.zero);
         Velo(o);
         TituloDeSeccion(o, "CONFIGURACIÓN  //  SE GUARDA EN EL VISOR", "OPCIONES");
-        Caja("Tarjeta", o, new Vector3(0f, -0.005f, -0.004f), new Vector3(0.9f, 0.2f, 0.003f), mPlaca);
-        Caja("Tarjeta_Barra", o, new Vector3(0f, 0.0935f, -0.0058f), new Vector3(0.9f, 0.003f, 0.001f), mRojoPlaca);
-        TextoMenu("Etiqueta", o, new Vector3(0f, 0.065f, -0.006f), new Vector2(0.5f, 0.022f), "VOLUMEN GENERAL", RojoTexto, fSistema,
+        const float YV = 0.045f;   // centro de la tarjeta del volumen
+        Caja("Tarjeta", o, new Vector3(0f, YV, -0.004f), new Vector3(0.9f, 0.18f, 0.003f), mPlaca);
+        Caja("Tarjeta_Barra", o, new Vector3(0f, YV + 0.0885f, -0.0058f), new Vector3(0.9f, 0.003f, 0.001f), mRojoPlaca);
+        TextoMenu("Etiqueta", o, new Vector3(0f, YV + 0.065f, -0.006f), new Vector2(0.5f, 0.022f), "VOLUMEN GENERAL", RojoTexto, fSistema,
                   TextAlignmentOptions.Center, 3f);
-        menu.botonMenosVolumen = BotonSimbolo("Boton_Menos", o, new Vector3(-0.37f, -0.02f, 0f), "-");
-        menu.botonMasVolumen = BotonSimbolo("Boton_Mas", o, new Vector3(0.37f, -0.02f, 0f), "+");
+        menu.botonMenosVolumen = BotonSimbolo("Boton_Menos", o, new Vector3(-0.37f, YV - 0.01f, 0f), "-");
+        menu.botonMasVolumen = BotonSimbolo("Boton_Mas", o, new Vector3(0.37f, YV - 0.01f, 0f), "+");
         menu.barraVolumen = new Renderer[10];
         for (int i = 0; i < 10; i++)
-            menu.barraVolumen[i] = Caja("Rayita_" + (i + 1), o, new Vector3(-0.2475f + i * 0.055f, -0.02f, -0.0065f),
+            menu.barraVolumen[i] = Caja("Rayita_" + (i + 1), o, new Vector3(-0.2475f + i * 0.055f, YV - 0.01f, -0.0065f),
                                         new Vector3(0.045f, 0.06f, 0.001f), mRojoOscuro).GetComponent<Renderer>();
-        menu.textoVolumen = TextoMenu("Valor", o, new Vector3(0f, -0.078f, -0.006f), new Vector2(0.3f, 0.042f), "100%", Hueso, fTitulo,
+        menu.textoVolumen = TextoMenu("Valor", o, new Vector3(0f, YV - 0.066f, -0.006f), new Vector2(0.3f, 0.036f), "100%", Hueso, fTitulo,
                                       TextAlignmentOptions.Center, 4f);
-        menu.botonVolverOpciones = BotonEmergencia("Boton_Volver", o, new Vector3(0f, -0.2f, 0f), 0.42f, 0.075f, null,
+        // Los textos de este botón los pone MainMenu según lo que esté elegido
+        menu.botonCaminar = BotonEmergencia("Boton_Caminar", o, new Vector3(0f, -0.1f, 0f), 0.9f, 0.075f, null,
+                                            "CAMINAR CON JOYSTICK:  NO", "Solo teletransporte (no marea). Tocá para caminar con el izquierdo", false);
+        menu.botonVolverOpciones = BotonEmergencia("Boton_Volver", o, new Vector3(0f, -0.205f, 0f), 0.42f, 0.07f, null,
                                                    "VOLVER", "Al menú principal", false);
 
         // --- Cómo jugar: los controles del visor (lo que pide el GDD: teletransporte y manos) y los
@@ -131,11 +135,11 @@ public static partial class ConstructorSistema
                   "Las pistas de cada acertijo están en el cuarto: mirá bien a tu alrededor.", HuesoTenue, fTexto, TextAlignmentOptions.Left);
         const string R = "<color=#E8453C>", F = "</color>   ";
         TarjetaDeControles(k, -0.2975f, "VISOR  //  META QUEST",
-            R + "MOVERTE" + F + "joystick derecho adelante y soltá\n" +
+            R + "MOVERTE" + F + "joystick adelante, apuntá y soltá\n" +
+            R + "CAMINAR" + F + "joystick izquierdo (activalo en Opciones)\n" +
             R + "GIRAR" + F + "joystick derecho a los costados\n" +
             R + "AGARRAR" + F + "mantené el botón de agarre\n" +
             R + "BOTONES" + F + "tocalos, o apuntá y apretá agarre\n" +
-            R + "AGACHARTE" + F + "agachate de verdad\n" +
             R + "PAUSA" + F + "menú del control izquierdo");
         TarjetaDeControles(k, 0.2975f, "PC  //  SIMULADOR XR",
             R + "MOVERTE" + F + "W A S D\n" +
@@ -158,12 +162,7 @@ public static partial class ConstructorSistema
         luz.shadows = LightShadows.None;
         luz.lightmapBakeType = LightmapBakeType.Realtime;
 
-        // El zumbido grave de fondo (2D, en loop; el sonido lo arma EfectosMenuInicio al empezar)
-        var zumbido = raiz.gameObject.AddComponent<AudioSource>();
-        zumbido.playOnAwake = false;
-        zumbido.spatialBlend = 0f;
-        zumbido.volume = 0.2f;
-
+        // Sin zumbido propio: el fondo del menú es la música de terror de MainMenu (de Nicole)
         menu.panel = panel;
         menu.audioMenu = audioUI;
         menu.paginaPrincipal = p.gameObject;
@@ -172,7 +171,6 @@ public static partial class ConstructorSistema
         efectos.panel = panel;
         efectos.tituloParpadeante = backroom;
         efectos.luzAlarma = luz;
-        efectos.zumbido = zumbido;
         efectos.audioMenu = audioUI;
 
         o.gameObject.SetActive(false);

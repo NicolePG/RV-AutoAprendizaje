@@ -184,7 +184,7 @@ se meterían en el panel, `PanelFlotante` lo acerca y lo achica (se sigue viendo
 Usa tipografías de Google Fonts con licencia OFL (Bebas Neue, Barlow Condensed y Share Tech Mono, en
 `Assets/Fuentes` junto a sus licencias). Mientras está abierto, el reloj no corre y las manos solo tocan los botones (estado
 `EnMenu` de `GameManager`). Botones: **Nueva partida**, **Continuar** (carga la partida guardada),
-**Opciones** (volumen, guardado en `PlayerPrefs`), **Cómo jugar** (controles del visor y del PC, sin
+**Opciones** (volumen y caminar con joystick, guardados en `PlayerPrefs`), **Cómo jugar** (controles del visor y del PC, sin
 pistas) y **Salir** (pide confirmación). "Volver a jugar" y "Reiniciar" empiezan directo en el
 Cuarto 1; **Menú principal** (en la pausa, el tótem del final y tiempo agotado) vuelve a este menú.
 En el editor, si se llevó al jugador a otro cuarto para probarlo, el menú no aparece.
@@ -215,6 +215,18 @@ otro clic las suelta, y quedan derechas mirando al frente. Todo lo demás (cajon
 palanca, botones, notas) se agarra como siempre: mantener apretado y soltar.
 En el Quest nada de esto se activa: ahí el jugador se agacha de verdad, agarra
 manteniendo el grip y se mueve con teletransporte, como pide el GDD.
+
+**Movimiento con los joysticks** (`ModoDeMovimiento`, en el XR Origin; lo agrega
+`ConstructorSistema`): por defecto **solo teletransporte** (cualquier joystick adelante, apuntar al
+piso y soltar; a los costados gira de a 45°). En Opciones del menú de inicio se puede activar
+**Caminar con joystick**: el izquierdo camina de forma continua y la viñeta de confort del XRI
+(`TunnelingVignette`, debajo de la cámara) oscurece los bordes mientras se camina. Queda guardado en
+el visor. Con un menú abierto no se camina. Sin salto (decisión del equipo, 28/09).
+
+**Probar con el Quest por Link:** el simulador de PC está apagado (menú **Escape Room › Simulador de
+PC**, de Nicole): si queda prendido, crea un casco y mandos falsos que le ganan al visor. En la PC, la
+app Meta Horizon Link tiene que ser el runtime de OpenXR activo, y en el visor hay que entrar a Link
+(no al "Escritorio"). La API mínima de Android es 32, para que el APK se instale en el Quest 2.
 
 Cada cuarto mide **4 × 4 m con techo a 2.6 m**. La pared de entrada es la norte y
 la salida está en el muro sur. Lo que se agarra o presiona va entre **0.9 y 1.3 m**

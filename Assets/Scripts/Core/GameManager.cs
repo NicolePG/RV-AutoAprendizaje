@@ -319,6 +319,8 @@ public class GameManager : MonoBehaviour
     {
         if (reloj != null) reloj.Pausado = congelar;
         AudioListener.pause = congelar;
+        // Si el jugador activó caminar con el joystick, con un menú abierto no camina
+        if (ModoDeMovimiento.Instancia != null) ModoDeMovimiento.Instancia.Bloquear(congelar);
 
         if (congelar)
         {

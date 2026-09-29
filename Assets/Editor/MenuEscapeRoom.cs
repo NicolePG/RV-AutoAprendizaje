@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 // El menú Escape Room de Unity, todo en un lugar:
 //  - Construir los 4 cuartos: arma la escena completa, en orden (con el reloj, los menús y el
 //    guardado de ConstructorSistema), y al final hornea la luz.
-//  - Construir menús, reloj y guardado: rearma solo eso (está en ConstructorSistema).
+//    Todo junto: los 4 cuartos, el reloj, los menús, el guardado y el movimiento.
 //  - Llevar jugador al Cuarto 1, 2, 3 o 4: pone al jugador en la entrada de ese cuarto, para
 //    dar Play y probarlo sin tener que resolver los anteriores.
 //  - Llevar jugador al pasillo final: lo deja recién salido del Cuarto 4, para probar el final.

@@ -14,8 +14,9 @@ using UnityEngine;
 //     · OPCIONES: abre la página de opciones.
 //     · CÓMO JUGAR: abre la página con los controles.
 //     · SALIR: cierra el juego. Pide confirmación: hay que tocarlo otra vez antes de 3 segundos.
-//  - OPCIONES: el volumen general, con "-" y "+" (de a 10 %). Se guarda en el visor
-//    (PlayerPrefs) y se aplica cada vez que arranca el juego.
+//  - OPCIONES: el volumen general, con "-" y "+" (de a 10 %), y "Caminar con joystick" (sí/no,
+//    ver ModoDeMovimiento). Los dos se guardan en el visor (PlayerPrefs) y se aplican cada vez que
+//    arranca el juego.
 //  - CÓMO JUGAR: los controles del visor y del PC. No da pistas de los acertijos: el GDD dice
 //    que las pistas están en los cuartos.
 //
@@ -51,6 +52,8 @@ public class MainMenu : MonoBehaviour
     public TMP_Text textoVolumen;
     public Color colorBarraLlena = new Color(0.86f, 0.1f, 0.12f);
     public Color colorBarraVacia = new Color(0.16f, 0.13f, 0.14f);
+    [Tooltip("Prende y apaga caminar con el joystick izquierdo (ModoDeMovimiento)")]
+    public BotonMenu botonCaminar;
     public BotonMenu botonVolverOpciones;
 
     [Header("Cómo jugar")]
@@ -75,6 +78,7 @@ public class MainMenu : MonoBehaviour
         botonSalir.alPresionar.AddListener(Salir);
         botonMenosVolumen.alPresionar.AddListener(() => CambiarVolumen(-0.1f));
         botonMasVolumen.alPresionar.AddListener(() => CambiarVolumen(0.1f));
+        botonCaminar.alPresionar.AddListener(AlternarCaminar);
         botonVolverOpciones.alPresionar.AddListener(() => MostrarPagina(paginaPrincipal));
         botonVolverControles.alPresionar.AddListener(() => MostrarPagina(paginaPrincipal));
     }
@@ -164,6 +168,18 @@ public class MainMenu : MonoBehaviour
         }
         botonMenosVolumen.Habilitar(pasos > 0);
         botonMasVolumen.Habilitar(pasos < 10);
+
+        bool caminar = ModoDeMovimiento.CaminarConJoystick;
+        botonCaminar.Habilitar(ModoDeMovimiento.Instancia != null);
+        botonCaminar.Textos(caminar ? "CAMINAR CON JOYSTICK:  SÍ" : "CAMINAR CON JOYSTICK:  NO",
+                            caminar ? "El izquierdo camina (los bordes se oscurecen). El derecho teletransporta"
+                                    : "Solo teletransporte (no marea). Tocá para caminar con el izquierdo");
+    }
+
+    void AlternarCaminar()
+    {
+        if (ModoDeMovimiento.Instancia != null) ModoDeMovimiento.Instancia.Alternar();
+        Refrescar();
     }
 
     void CambiarVolumen(float cambio)
