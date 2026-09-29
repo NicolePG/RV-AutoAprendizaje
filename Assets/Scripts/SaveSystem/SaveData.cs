@@ -17,7 +17,7 @@ public class SaveData
     // Segundos que le quedaban en el reloj
     public float tiempoRestante;
 
-    // Los acertijos que ya resolvió (el "id" de su PuzzleData)
+    // Los acertijos que ya resolvió en los cuartos anteriores (el "id" de su PuzzleData)
     public List<string> acertijosResueltos = new List<string>();
 
     // Cuándo se guardó, para mostrarlo en los menús ("24/09 11:40")
