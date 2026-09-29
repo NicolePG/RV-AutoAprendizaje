@@ -45,7 +45,7 @@ public static class ConstructorAmbiente
                      volumenConLuz = 0.18f, cadaCuanto = new Vector2(12f, 30f) },
     };
 
-    [MenuItem("Escape Room/Armar ambiente sonoro", false, 30)]
+    // Lo llama "Escape Room > Construir los 4 cuartos" (MenuEscapeRoom): no tiene menú propio
     public static void Construir()
     {
         var raiz = GameObject.Find("Ambiente");

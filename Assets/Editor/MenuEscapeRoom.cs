@@ -6,7 +6,9 @@ using UnityEngine.SceneManagement;
 // El menú Escape Room de Unity, todo en un lugar:
 //  - Construir los 4 cuartos: arma la escena completa, en orden (con el reloj, los menús y el
 //    guardado de ConstructorSistema), y al final hornea la luz.
-//    Todo junto: los 4 cuartos, el reloj, los menús, el guardado y el movimiento.
+//    Todo junto: los 4 cuartos, los sonidos (y que no queden apagados), el reloj, los menús, el
+//    guardado y el movimiento. No hay que construir nada por separado.
+//  - Simulador de PC: prenderlo para probar en la PC con teclado y mouse; apagarlo para el Quest.
 //  - Llevar jugador al Cuarto 1, 2, 3 o 4: pone al jugador en la entrada de ese cuarto, para
 //    dar Play y probarlo sin tener que resolver los anteriores.
 //  - Llevar jugador al pasillo final: lo deja recién salido del Cuarto 4, para probar el final.
@@ -56,6 +58,8 @@ public static class MenuEscapeRoom
 
             // El ruido de fondo de cada cuarto y sus crujidos (ver AmbienteCuarto)
             ConstructorAmbiente.Construir();
+            // Y que el sonido no quede apagado: saca el silencio del editor y el volumen en 0 %
+            RevisarSonido.Revisar();
         }
         finally
         {
