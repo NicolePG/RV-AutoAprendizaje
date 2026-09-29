@@ -87,7 +87,9 @@ public class Screw : MonoBehaviour
     {
         if (quitado) return;
 
-        bool tocando = Time.time - ultimoContacto < 0.15f;
+        // Con un poco de margen: al girar la muñeca de verdad la punta se despega un instante del
+        // tornillo, y con menos margen el tornillo dejaba de avanzar a cada rato
+        bool tocando = Time.time - ultimoContacto < 0.35f;
         Resaltar(tocando);
         if (!tocando || herramienta == null) return;
 

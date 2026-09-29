@@ -3,7 +3,8 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 // El menú de pausa. Se abre y se cierra con el botón de menú del control izquierdo (en el Quest,
-// el de las tres rayitas; en el simulador, la tecla M) o con Esc en el teclado.
+// el de las tres rayitas, debajo del joystick; en el simulador, la tecla M), con el botón Y del
+// mismo control, o con Esc en el teclado.
 // Mientras está abierto el juego queda en pausa (GameManager.Pausar): el reloj no corre, el sonido
 // del cuarto se detiene y con las manos solo se pueden tocar los botones del menú.
 //
@@ -62,6 +63,8 @@ public class PauseMenu : MonoBehaviour
         accion = new InputAction("Pausa", InputActionType.Button);
         accion.AddBinding("<XRController>{LeftHand}/{MenuButton}");
         accion.AddBinding("<XRController>{RightHand}/{MenuButton}");   // en el Quest no existe: sirve para el simulador
+        // El Y del control izquierdo, por si el de menú no se encuentra fácil (el juego no lo usa para otra cosa)
+        accion.AddBinding("<XRController>{LeftHand}/{SecondaryButton}");
         accion.AddBinding("<Keyboard>/escape");
         accion.performed += _ => Alternar();
 

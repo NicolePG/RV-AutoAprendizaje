@@ -152,8 +152,12 @@ public static partial class ConstructorSistema
         var modo = origen.GetComponent<ModoDeMovimiento>();
         if (modo == null) modo = Undo.AddComponent<ModoDeMovimiento>(origen.gameObject);
         foreach (var mano in origen.GetComponentsInChildren<ControllerInputActionManager>(true))
+        {
             if (mano.name.Contains("Left")) modo.manoIzquierda = mano;
-        if (modo.manoIzquierda == null) Debug.LogWarning("ConstructorSistema: no encontré el control izquierdo del XR Origin.");
+            if (mano.name.Contains("Right")) modo.manoDerecha = mano;   // para el giro fluido
+        }
+        if (modo.manoIzquierda == null || modo.manoDerecha == null)
+            Debug.LogWarning("ConstructorSistema: no encontré los dos controles del XR Origin (se buscan solos al dar Play).");
         EditorUtility.SetDirty(modo);
 
         var caminar = origen.GetComponentInChildren<ContinuousMoveProvider>(true);
@@ -327,7 +331,7 @@ public static partial class ConstructorSistema
                                  "ESCAPE ROOM  ·  EL COLEGIO", Suave, TextAlignmentOptions.Left, false);
         sub.characterSpacing = 6f;
         Rotulo("Ayuda", c, new Vector3(0.26f, 0.25f, -0.008f), new Vector2(0.44f, 0.024f),
-               "Para volver: botón de menú  ·  Esc", Suave, TextAlignmentOptions.Right, false);
+               "Para volver: botón de menú o Y  ·  Esc", Suave, TextAlignmentOptions.Right, false);
         Caja("Separador", c, new Vector3(0f, 0.19f, -0.007f), new Vector3(0.96f, 0.002f, 0.002f), mTarjeta);
 
         // La tarjeta de la partida

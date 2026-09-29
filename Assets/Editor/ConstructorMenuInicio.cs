@@ -137,10 +137,10 @@ public static partial class ConstructorSistema
         TarjetaDeControles(k, -0.2975f, "VISOR  //  META QUEST",
             R + "MOVERTE" + F + "joystick adelante, apuntá y soltá\n" +
             R + "CAMINAR" + F + "joystick izquierdo (activalo en Opciones)\n" +
-            R + "GIRAR" + F + "joystick derecho a los costados\n" +
+            R + "GIRAR" + F + "joystick a los costados (giro suave)\n" +
             R + "AGARRAR" + F + "mantené el botón de agarre\n" +
             R + "BOTONES" + F + "tocalos, o apuntá y apretá agarre\n" +
-            R + "PAUSA" + F + "menú del control izquierdo");
+            R + "PAUSA" + F + "botón de menú o Y (control izquierdo)");
         TarjetaDeControles(k, 0.2975f, "PC  //  SIMULADOR XR",
             R + "MOVERTE" + F + "W A S D\n" +
             R + "MIRAR" + F + "clic derecho y mové el mouse\n" +

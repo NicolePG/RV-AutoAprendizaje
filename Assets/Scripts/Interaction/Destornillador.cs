@@ -3,7 +3,9 @@ using UnityEngine.InputSystem;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 // Mide cuánto "gira" el jugador el destornillador mientras lo tiene en la mano, como con uno real:
-//  - En el Quest: girando la muñeca (el destornillador rota sobre su propio eje).
+//  - En el Quest: girando la muñeca (el destornillador rota sobre su propio eje). La muñeca gira
+//    poco (unos 150° por vez) y el tornillo pide dos vueltas: por eso el giro de la muñeca cuenta
+//    "multiplicadorMuneca" veces. Con 2.5, un par de giros de muñeca (ida y vuelta) sacan el tornillo.
 //  - En el PC: moviendo el mouse en círculos (sin el botón derecho, que en el simulador gira la vista).
 // Los tornillos (Screw) usan ese giro mientras la punta los toca, y le piden al destornillador que gire
 // su modelo para que se vea el movimiento.
@@ -15,6 +17,9 @@ public class Destornillador : MonoBehaviour
 {
     [Tooltip("La pieza visible que gira al desatornillar (el modelo)")]
     public Transform visual;
+
+    [Tooltip("Cuántas veces cuenta el giro de la muñeca en el visor (1 = lo mismo que se gira la mano)")]
+    public float multiplicadorMuneca = 2.5f;
 
     [Tooltip("Movimientos del mouse más chicos que esto (en píxeles) no cuentan: evita contar temblores")]
     public float movimientoMinimoMouse = 2f;
@@ -50,7 +55,7 @@ public class Destornillador : MonoBehaviour
         Vector3 antes = Vector3.ProjectOnPlane(arribaAnterior, eje);
         Vector3 ahora = Vector3.ProjectOnPlane(transform.up, eje);
         if (antes.sqrMagnitude > 0.001f && ahora.sqrMagnitude > 0.001f)
-            GiroEsteCuadro += Mathf.Abs(Vector3.SignedAngle(antes, ahora, eje));
+            GiroEsteCuadro += Mathf.Abs(Vector3.SignedAngle(antes, ahora, eje)) * multiplicadorMuneca;
         arribaAnterior = transform.up;
 
         // 2. Mouse en círculos (PC): cuánto cambia la dirección del movimiento del mouse de un cuadro al otro.
