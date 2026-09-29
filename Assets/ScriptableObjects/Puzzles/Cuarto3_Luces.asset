@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea4e99b6da7ebba4b892c11559be756d, type: 3}
+  m_Name: Cuarto3_Luces
+  m_EditorClassIdentifier: Assembly-CSharp::PuzzleData
+  id: cuarto3_luces
+  nombreCuarto: "Sala de Computaci\xF3n"
+  pista: "El registro de mantenimiento (escritorio del profesor) dice que el interruptor 2 est\xE1 cruzado."
+  tipo: 4
+  solucion: 1+3+4
+  mensajeAcierto: LUZ
+  mensajeError: 

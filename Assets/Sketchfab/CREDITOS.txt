@@ -1,0 +1,50 @@
+MODELOS 3D DE SKETCHFAB USADOS EN EL JUEGO
+
+Todos tienen licencia Creative Commons Attribution 4.0 (CC BY 4.0):
+se pueden usar gratis, también en proyectos comerciales, siempre que se nombre al autor.
+Licencia: https://creativecommons.org/licenses/by/4.0/
+
+CUARTO 3 - SALA DE COMPUTACIÓN
+Archivo                  Modelo                  Autor                      Enlace
+desktop_pc.glb           "Desktop PC"            R-LAB (@rakshaan)          https://sketchfab.com/3d-models/desktop-pc-7030da42a907455ea98fabedca0a5192
+server_rack.glb          "Server Rack"           Spellkaze                  https://sketchfab.com/3d-models/server-rack-62f6779cb7e448b19aaf58544c3c7218
+office_chair_modern.glb  "Office Chair Modern"   thethieme                  https://sketchfab.com/3d-models/office-chair-modern-675f34f7304e4d92812a41e9750539aa
+projector.glb            "Projector"             bimadwiananto              https://sketchfab.com/3d-models/projector-ed5e83bc3bf543f599db1ecb4c26cba0
+printer_low_poly.glb     "Printer- Low Poly"     CG Buzz (@Tapan_S)         https://sketchfab.com/3d-models/printer-low-poly-8a3a68f84f4d4a34973b527875a7314b
+whiteboard.glb           "Whiteboard"            tboiston                   https://sketchfab.com/3d-models/whiteboard-d0b05bd140734a799666f0a29e1fe1bb
+
+CUARTO 2 - DIRECCIÓN
+Carpeta                  Modelo                       Autor                Enlace
+cuadro_oleo/             "Victorian Framed Painting"  Matthew Collings     https://sketchfab.com/3d-models/victorian-framed-painting-pbr-game-ready-b2895c1c3b42401a949deac049e0051d
+globo_terraqueo/         "Prop Globe"                 Rosbergen Designs    https://sketchfab.com/3d-models/prop-globe-acbc64addc98410582d1f631dd9b6d5f
+
+La silla del director y la impresora del Cuarto 2 son las mismas del Cuarto 3
+(office_chair_modern.glb y printer_low_poly.glb), ya acreditadas arriba.
+
+CUARTO 4 - LABORATORIO DE CIENCIAS
+Archivo                  Modelo                                  Autor                                        Enlace
+mesada_quimica.glb       "Chemistry Lab Table"                   Jawahar Yokesh (@Jawahar_Yokesh)             https://sketchfab.com/3d-models/fc5951d8af674da4bf55aef0693ff1d0
+mesa_laboratorio.glb     "Laboratory Table"                      yuitop                                       https://sketchfab.com/3d-models/d2eb1e1321eb486f8862d52bcacc2b36
+mueble_laboratorio.glb   "Science lab cabinet"                   tboiston                                     https://sketchfab.com/3d-models/121829e2dbef45128ba5c9b04d0f03ce
+vitrina_laboratorio.glb  "Laboratory Cabinet Storage"            Naked Singularity Studio (@nakedsingularity) https://sketchfab.com/3d-models/6c5d3bde09dd4f55ad973d8429441190
+cristaleria.glb          "Chemistry Glassware"                   maxdragonn (@maxdragon)                      https://sketchfab.com/3d-models/b8594f7dc7e8442dbaaae7a11da4a962
+tabla_periodica.glb      "Periodic_Table"                        rubysloth32                                  https://sketchfab.com/3d-models/c9d421cf508e48a393d7b20835794f55
+mesa_diseccion.glb       "Dissection Table"                      Shining Salt (@shiningsalt)                  https://sketchfab.com/3d-models/fb73798b95b84dabb5eef1b74f36b15c
+tablero_fusibles.glb     "Game Art: Vintage Fuse Box"            Alex Filip (@filip.alecsandru)               https://sketchfab.com/3d-models/4109ae3e180d4ed8b3427fe6a97d58b6
+valvula_gas.glb          "Wedge gate valve"                      Kozlov Maksim (@kozlovchik)                  https://sketchfab.com/3d-models/dd989566c71b43a6a7ba44d2ab54146c
+palanca_corriente.glb    "Lever Power Switch"                    Sam Feng (@fengyuan20000303)                 https://sketchfab.com/3d-models/374608f75c114b8a9bf41dbc02c51c50
+cuerpo_cubierto.glb      "Low Poly Dead Body Covered Game Ready" -Arthur- (@.arthur)                          https://sketchfab.com/3d-models/1e6ae13f6c2e46429eaca4d22d8bdbaa
+ducha_emergencia.glb     "Emergency Shower with Eye Wash"        cesar.seidel                                 https://sketchfab.com/3d-models/61a536cf4e1f4995a8128863f8994e3e
+microscopio.glb          "Microscope"                            VeeRuby Technologies (@veerubyinc)           https://sketchfab.com/3d-models/2435e338bf7541a4b919e53df50eeeea
+Estos se bajaron en GLB con las texturas ya reducidas a 1k (opción de Sketchfab).
+
+FORMATOS
+Los del Cuarto 3 se bajaron en GLB: un solo archivo con las texturas adentro.
+Los del Cuarto 2 se bajaron en glTF: una carpeta con scene.gltf, scene.bin y las texturas
+sueltas. El constructor acepta los dos formatos (ver ModeloSketchfab en ConstructorCuarto2.cs).
+
+Las texturas de Sketchfab vienen en 4K y pesan demasiado para el Quest (el cuadro traía
+40 MB). Assets/Editor/TexturasLivianas.cs las importa a 1k automáticamente, igual que las
+de Poly Haven. Los archivos originales quedan intactos.
+
+Los modelos y texturas de Poly Haven (Assets/PolyHaven) son CC0: no necesitan crédito.

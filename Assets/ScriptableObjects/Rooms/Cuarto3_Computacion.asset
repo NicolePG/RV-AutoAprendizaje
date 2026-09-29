@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c1bbf44c313a81419107e822c190532, type: 3}
+  m_Name: Cuarto3_Computacion
+  m_EditorClassIdentifier: Assembly-CSharp::RoomData
+  numeroCuarto: 3
+  nombre: "Sala de Computaci\xF3n"
+  descripcion: 'De noche: luces, red, computadoras y la clave de la consola.'
+  acertijos:
+  - {fileID: 11400000, guid: 659ed82f2de658f4c87f8c3b42d343fa, type: 2}
+  - {fileID: 11400000, guid: c914ab1ed9ce5e348b6c428612d9aa10, type: 2}
+  - {fileID: 11400000, guid: b4fb854c3f7b7ff4babe1168ccb07fd1, type: 2}
+  - {fileID: 11400000, guid: a50c4e076b522cf49a069241d19020a4, type: 2}
+  tiempoSugerido: 4

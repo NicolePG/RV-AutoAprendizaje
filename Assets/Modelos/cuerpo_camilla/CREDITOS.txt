@@ -1,0 +1,11 @@
+cuerpo_camilla.fbx / Zombie.png
+-------------------------------
+Modelo "Mobile Ready Zombie", bajado de OpenGameArt.org
+https://opengameart.org/content/mobile-ready-zombie
+
+Licencia: CC0 (dominio publico). No exige atribucion, pero lo dejamos
+anotado para la presentacion.
+
+El archivo se renombro a "cuerpo_camilla.fbx" porque el constructor del
+Cuarto 4 busca el modelo por ese nombre: si esta, lo usa para el cuerpo
+de la camilla, y si no esta, arma el cuerpo con cubos.

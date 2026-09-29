@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c1bbf44c313a81419107e822c190532, type: 3}
+  m_Name: Cuarto4_Laboratorio
+  m_EditorClassIdentifier: Assembly-CSharp::RoomData
+  numeroCuarto: 4
+  nombre: Laboratorio
+  descripcion: Fusibles, campana, gas, ensayo a la llama y la tarjeta del docente
+    para salir.
+  acertijos:
+  - {fileID: 11400000, guid: ad539a11f4858a043b5c148a018afe86, type: 2}
+  - {fileID: 11400000, guid: ffbd458fe37591b45ab26db201522281, type: 2}
+  - {fileID: 11400000, guid: 50c1e5c8d35859846b1d2dbd875018bd, type: 2}
+  - {fileID: 11400000, guid: 37d9a3b15de99424d85247e0ede3b75f, type: 2}
+  - {fileID: 11400000, guid: 20498ebeb5bb9e14eaaa1ba8f1effbfa, type: 2}
+  tiempoSugerido: 4

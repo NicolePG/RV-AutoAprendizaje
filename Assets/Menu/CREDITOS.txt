@@ -1,0 +1,14 @@
+IMAGEN DEL MENÚ DE INICIO
+
+aula_abandonada.jpg        La foto original, a 1920 px de ancho.
+aula_abandonada_menu.jpg   La versión del menú: recortada a 16:9, casi sin color, más oscura,
+                           con tinte rojo, viñeta negra y grano de película.
+
+Foto: "Aula abandonada con escritorios y escombros", de Yiquan Zhang (@yiquanzhang).
+Enlace: https://unsplash.com/es/fotos/aula-abandonada-con-escritorios-y-escombros-Hk39En8thqg
+Licencia: Licencia de Unsplash (https://unsplash.com/license). Se puede usar gratis, también
+en proyectos comerciales, sin pedir permiso. El crédito no es obligatorio, pero se da igual.
+
+TIPOGRAFÍAS (Assets/Fuentes)
+Bebas Neue, Barlow Condensed y Share Tech Mono, de Google Fonts, con licencia SIL Open Font
+License 1.1 (los textos de cada licencia están en Assets/Fuentes).
