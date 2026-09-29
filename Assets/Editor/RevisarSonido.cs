@@ -66,7 +66,7 @@ public static class RevisarSonido
         }
 
         // 3. El oído del jugador
-        var oidos = Object.FindObjectsByType<AudioListener>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var oidos = Object.FindObjectsByType<AudioListener>(FindObjectsInactive.Include);
         if (oidos.Length == 0)
         {
             informe.AppendLine("PROBLEMA   No hay ningún AudioListener en la escena: el jugador no tiene oídos.");
