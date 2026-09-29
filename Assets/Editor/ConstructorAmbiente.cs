@@ -83,8 +83,6 @@ public static class ConstructorAmbiente
             ambiente.volumenSinLuz = ajuste.volumenSinLuz;
             ambiente.volumenConLuz = ajuste.volumenConLuz;
             ambiente.cadaCuanto = ajuste.cadaCuanto;
-            // Justo el cuarto y nada más: si el alcance se pasa, se oye el de al lado
-            ambiente.alcance = Mathf.Max(mitad.x, mitad.z) + 1f;
             ambiente.dispersion = Mathf.Min(mitad.x, mitad.z) * 0.7f;
             EditorUtility.SetDirty(ambiente);
             puestos++;

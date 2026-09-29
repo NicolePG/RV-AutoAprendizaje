@@ -1,10 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Guarda qué objetos (ItemData) tiene el jugador. Sin interfaz visual todavía:
-// solo responde "¿el jugador tiene tal objeto?", que es lo único que necesita
-// el Cuarto 2 (para guardar el objeto especial) y lo que va a preguntar el
-// Cuarto 4 más adelante (para habilitar la ranura).
+// Guarda qué objetos (ItemData) agarró el jugador. No tiene interfaz visual: responde
+// "¿el jugador tiene tal objeto?" y el aviso de que algo se guardó es la vibración del
+// control (la dispara PickableItem).
+//
+// Lo llenan los cinco objetos que tienen PickableItem: la llave y el destornillador del
+// Cuarto 1, la linterna del Cuarto 3 y las dos tarjetas del Cuarto 4 (la del docente y la
+// del alumno). Cada uno trae su asset ItemData en Assets/ScriptableObjects/Items.
 //
 // En la escena: un solo objeto vacío llamado "Inventory" en la raíz, con este script.
 public class Inventory : MonoBehaviour

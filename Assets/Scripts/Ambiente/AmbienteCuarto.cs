@@ -50,9 +50,6 @@ public class AmbienteCuarto : MonoBehaviour
     [Tooltip("Volumen del fondo con la luz prendida")]
     public float volumenConLuz = 0.16f;
 
-    [Tooltip("Hasta dónde llega el sonido de este cuarto, en metros")]
-    public float alcance = 14f;
-
     [Tooltip("La mitad de lo que mide el cuarto, en metros (medido desde el centro). El " +
              "fondo se apaga cuando el jugador sale de esta caja: así no se mezcla con el " +
              "del cuarto de al lado")]
@@ -89,10 +86,11 @@ public class AmbienteCuarto : MonoBehaviour
         fuente.clip = clip;
         fuente.loop = true;
         fuente.playOnAwake = false;
-        fuente.spatialBlend = 1f;                       // 3D: se oye el de cada cuarto
-        fuente.rolloffMode = AudioRolloffMode.Linear;
-        fuente.minDistance = 1f;
-        fuente.maxDistance = alcance;
+        // 2D: el fondo de un cuarto se oye PAREJO en todo el cuarto, no sale de un punto.
+        // Antes era 3D y se apagaba con la distancia al centro: en el Cuarto 1 (4 x 4 m) ya
+        // a 3 metros no se oía, o sea que junto a las paredes y en las esquinas quedaba mudo.
+        // Qué cuarto suena lo decide JugadorAdentro(), no la distancia.
+        fuente.spatialBlend = 0f;
         fuente.volume = volumenSinLuz;
         fuente.Play();
 
