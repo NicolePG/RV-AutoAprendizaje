@@ -77,16 +77,36 @@ public class SaveManager : MonoBehaviour
     public void Restaurar(SaveData datos)
     {
         foreach (string id in datos.acertijosResueltos)
-            if (!string.IsNullOrEmpty(id)) resueltos.Add(id);
+            if (!string.IsNullOrEmpty(id) && !EsDelCuartoOPosterior(id, datos.cuartoActual)) resueltos.Add(id);
+    }
+
+    // Se guarda por punto de control: al cargar, el cuarto guardado arranca de cero. Por eso solo
+    // cuentan los acertijos de los cuartos anteriores: si se guarda a mitad de un cuarto, lo que ya
+    // se resolvió en él no se anota (al cargar hay que volver a resolverlo). Qué acertijos tiene
+    // cada cuarto sale de sus RoomData.
+    static bool EsDelCuartoOPosterior(string id, int cuarto)
+    {
+        for (int n = cuarto; n <= GameManager.TOTAL_CUARTOS; n++)
+        {
+            RoomData datos = GameManager.DatosCuarto(n);
+            if (datos == null) continue;
+            foreach (PuzzleData acertijo in datos.acertijos)
+                if (acertijo != null && acertijo.id == id) return true;
+        }
+        return false;
     }
 
     public bool Guardar(int cuarto, float tiempoRestante)
     {
+        var anotados = new List<string>();
+        foreach (string id in resueltos)
+            if (!EsDelCuartoOPosterior(id, cuarto)) anotados.Add(id);
+
         var datos = new SaveData
         {
             cuartoActual = cuarto,
             tiempoRestante = tiempoRestante,
-            acertijosResueltos = new List<string>(resueltos),
+            acertijosResueltos = anotados,
             fecha = DateTime.Now.ToString("dd/MM HH:mm")
         };
 
