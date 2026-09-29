@@ -18,7 +18,8 @@ using UnityEngine;
 //  4. Que estén los archivos de sonido en Resources/Audio.
 //  5. Cómo abrió Unity la placa de sonido.
 //
-// Menú: Escape Room > Revisar el sonido.
+// Se corre solo al final de "Escape Room > Construir los 4 cuartos" (MenuEscapeRoom): no tiene
+// menú propio. El informe queda en la Consola.
 public static class RevisarSonido
 {
     static readonly string[] ESPERADOS =
@@ -29,7 +30,6 @@ public static class RevisarSonido
         "papel", "vidrio",
     };
 
-    [MenuItem("Escape Room/Revisar el sonido", false, 31)]
     public static void Revisar()
     {
         var informe = new StringBuilder("REVISIÓN DEL SONIDO\n\n");
