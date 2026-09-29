@@ -65,6 +65,7 @@ public static partial class ConstructorSistema
         audioUI.spatialBlend = 0f;
 
         juego.puntosDeInicio = ArmarPuntosDeInicio(sistema.transform);
+        juego.cuartos = ArmarDatosDeCuartos();
         juego.hud = ArmarHUD(sistema.transform, reloj);
         juego.menuInicio = ArmarMenuInicio(sistema.transform);
         ArmarMenuPausa(sistema.transform);
@@ -73,6 +74,63 @@ public static partial class ConstructorSistema
         PrepararMovimiento();
 
         EditorUtility.SetDirty(juego);
+    }
+
+    // ------------------------------------------------------------------ datos de los cuartos
+
+    // Los cuatro assets RoomData (Assets/ScriptableObjects/Rooms), en el orden del recorrido. Si un
+    // asset no existe se crea con su nombre, su descripción y su tiempo sugerido (entre los cuatro
+    // suman los 15 minutos); si ya existe, se respeta lo que se haya cambiado en el Inspector. Los
+    // acertijos se cargan siempre de nuevo: son los PuzzleData de los acertijos de cada cuarto.
+    static RoomData[] ArmarDatosDeCuartos()
+    {
+        const string CARPETA_CUARTOS = "Assets/ScriptableObjects/Rooms";
+        if (!AssetDatabase.IsValidFolder("Assets/ScriptableObjects")) AssetDatabase.CreateFolder("Assets", "ScriptableObjects");
+        if (!AssetDatabase.IsValidFolder(CARPETA_CUARTOS)) AssetDatabase.CreateFolder("Assets/ScriptableObjects", "Rooms");
+
+        var cuartos = new[]
+        {
+            DatosDeCuarto(CARPETA_CUARTOS, 1, "Cuarto1_Recepcion", "Recepción", 3f,
+                "Portería del colegio y tutorial: palanca de la luz, computadora, cajones, destornillador y llave."),
+            DatosDeCuarto(CARPETA_CUARTOS, 2, "Cuarto2_Oficina", "Dirección", 4f,
+                "Oficina del director: el reloj real entre cinco, el libro y el cuadro dan el código del teclado."),
+            DatosDeCuarto(CARPETA_CUARTOS, 3, "Cuarto3_Computacion", "Sala de Computación", 4f,
+                "De noche: luces, red, computadoras y la clave de la consola."),
+            DatosDeCuarto(CARPETA_CUARTOS, 4, "Cuarto4_Laboratorio", "Laboratorio", 4f,
+                "Fusibles, campana, gas, ensayo a la llama y la tarjeta del docente para salir.")
+        };
+        AssetDatabase.SaveAssets();
+        return cuartos;
+    }
+
+    static RoomData DatosDeCuarto(string carpeta, int numero, string raiz, string nombre, float minutos, string descripcion)
+    {
+        string ruta = carpeta + "/" + raiz + ".asset";
+        var datos = AssetDatabase.LoadAssetAtPath<RoomData>(ruta);
+        if (datos == null)
+        {
+            datos = ScriptableObject.CreateInstance<RoomData>();
+            datos.numeroCuarto = numero;
+            datos.nombre = nombre;
+            datos.tiempoSugerido = minutos;
+            datos.descripcion = descripcion;
+            AssetDatabase.CreateAsset(datos, ruta);
+        }
+
+        // Los acertijos que están armados en ese cuarto, en el orden de la escena
+        datos.acertijos.Clear();
+        var cuarto = GameObject.Find(raiz);
+        if (cuarto == null)
+        {
+            Debug.LogWarning("ConstructorSistema: no está " + raiz + ": el RoomData del Cuarto " + numero + " queda sin acertijos.");
+        }
+        else
+        {
+            foreach (PuzzleBase acertijo in cuarto.GetComponentsInChildren<PuzzleBase>(true))
+                if (acertijo.datos != null && !datos.acertijos.Contains(acertijo.datos)) datos.acertijos.Add(acertijo.datos);
+        }
+        EditorUtility.SetDirty(datos);
+        return datos;
     }
 
     // ------------------------------------------------------------------ movimiento del jugador

@@ -55,6 +55,19 @@ public class SaveManager : MonoBehaviour
 
     static bool TieneId(PuzzleBase acertijo) => acertijo.datos != null && !string.IsNullOrEmpty(acertijo.datos.id);
 
+    // true si ese acertijo ya se resolvió en esta partida (lo usa la pausa para el progreso del cuarto)
+    public bool Resuelto(PuzzleData datos) => datos != null && resueltos.Contains(datos.id);
+
+    // Cuántos acertijos de un cuarto (sus RoomData.acertijos) ya se resolvieron
+    public int ResueltosDe(RoomData cuarto)
+    {
+        int n = 0;
+        if (cuarto != null)
+            foreach (PuzzleData datos in cuarto.acertijos)
+                if (Resuelto(datos)) n++;
+        return n;
+    }
+
     void Anotar(PuzzleBase acertijo)
     {
         if (TieneId(acertijo)) resueltos.Add(acertijo.datos.id);

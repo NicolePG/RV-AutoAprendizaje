@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c1bbf44c313a81419107e822c190532, type: 3}
+  m_Name: Cuarto2_Oficina
+  m_EditorClassIdentifier: Assembly-CSharp::RoomData
+  numeroCuarto: 2
+  nombre: "Direcci\xF3n"
+  descripcion: "Oficina del director: el reloj real entre cinco, el libro y el cuadro
+    dan el c\xF3digo del teclado."
+  acertijos:
+  - {fileID: 11400000, guid: c0b00d970b8761445ad8f1dcc06cdc97, type: 2}
+  tiempoSugerido: 4

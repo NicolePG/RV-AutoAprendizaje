@@ -325,6 +325,19 @@ Assets/
 Cada acertijo del juego es un asset. Agregar un quinto acertijo no debería
 requerir tocar `PuzzleBase`.
 
+**Cómo están hoy (para defenderlos en la presentación):**
+- `PuzzleData` (11 assets en `ScriptableObjects/Puzzles`, uno por acertijo): el guardado recuerda los
+  acertijos resueltos por su `id`, el teclado del Cuarto 2 y la consola del Cuarto 3 comparan contra
+  su `solucion`, y la cerradura y la consola muestran sus mensajes.
+- `ItemData` (5 assets en `ScriptableObjects/Items`: llave, destornillador, linterna y las dos
+  tarjetas): el lector de la salida compara el asset de la tarjeta (docente abre, alumno no) y
+  `PickableItem` une cada objeto con su asset: al agarrarlo por primera vez queda en el inventario y
+  vibra el control.
+- `RoomData` (4 assets en `ScriptableObjects/Rooms`): número, nombre, acertijos y tiempo sugerido de
+  cada cuarto. `GameManager` no tiene los cuartos en el código: el reloj y los menús sacan el nombre de
+  ahí, y la pausa muestra "Este cuarto: 2 de 4 acertijos · sugerido 4 min". Los tiempos sugeridos
+  suman los 15 minutos de la partida. `ConstructorSistema` los crea y les carga los acertijos.
+
 ### Sistema de guardado
 
 `SaveData` serializable a JSON en `Application.persistentDataPath`:

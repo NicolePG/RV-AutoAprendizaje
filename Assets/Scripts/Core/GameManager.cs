@@ -46,7 +46,9 @@ public class GameManager : MonoBehaviour
     public static GameManager Instancia { get; private set; }
 
     public const int TOTAL_CUARTOS = 4;
-    public static readonly string[] NombresCuartos = { "Recepción", "Dirección", "Sala de Computación", "Laboratorio" };
+
+    // Solo por si falta algún asset RoomData: los nombres de verdad salen de "cuartos"
+    static readonly string[] NombresPorDefecto = { "Recepción", "Dirección", "Sala de Computación", "Laboratorio" };
 
     // La capa de interacción de los botones de los menús. Con el juego en pausa, las manos
     // solo interactúan con esta capa.
@@ -60,6 +62,10 @@ public class GameManager : MonoBehaviour
     public PantallaTiempoAgotado pantallaTiempoAgotado;
     public MainMenu menuInicio;
 
+    [Tooltip("Los datos de cada cuarto (assets RoomData), en el orden del recorrido: nombre, acertijos " +
+             "y tiempo sugerido. De acá los sacan el reloj y los menús")]
+    public RoomData[] cuartos = new RoomData[TOTAL_CUARTOS];
+
     [Tooltip("Dónde aparece el jugador al cargar una partida, uno por cuarto. El del Cuarto 1 es " +
              "donde empieza el juego: ahí llevan Reiniciar y Volver a jugar")]
     public Transform[] puntosDeInicio = new Transform[TOTAL_CUARTOS];
@@ -69,8 +75,20 @@ public class GameManager : MonoBehaviour
     public bool Gano => EstadoActual == Estado.Ganado || (EstadoActual == Estado.Pausado && estadoAntesDePausa == Estado.Ganado);
     public bool PuedePausar => EstadoActual == Estado.Jugando || EstadoActual == Estado.Ganado;
 
-    public static string NombreCuarto(int cuarto) =>
-        cuarto >= 1 && cuarto <= NombresCuartos.Length ? NombresCuartos[cuarto - 1] : "";
+    // Los datos (RoomData) del cuarto número "cuarto" (1 a 4), o null si no están
+    public static RoomData DatosCuarto(int cuarto)
+    {
+        var juego = Instancia;
+        if (juego == null || juego.cuartos == null || cuarto < 1 || cuarto > juego.cuartos.Length) return null;
+        return juego.cuartos[cuarto - 1];
+    }
+
+    public static string NombreCuarto(int cuarto)
+    {
+        RoomData datos = DatosCuarto(cuarto);
+        if (datos != null && !string.IsNullOrEmpty(datos.nombre)) return datos.nombre;
+        return cuarto >= 1 && cuarto <= NombresPorDefecto.Length ? NombresPorDefecto[cuarto - 1] : "";
+    }
 
     // Sobreviven a la recarga de la escena: "al empezar, cargar la partida guardada", "esta
     // escena se volvió a cargar desde el juego" (con Cargar, Reiniciar o Volver a jugar) y "al

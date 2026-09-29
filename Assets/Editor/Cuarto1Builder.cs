@@ -380,6 +380,9 @@ public static class Cuarto1Builder
         llaveCuarto1.attachEaseInTime = 0.3f;
         // En el PC: se agarra con un clic y queda derecha, mirando al frente, lista para entrar en la cerradura
         llave.AddComponent<HerramientaEnMano>();
+        // Su asset ItemData: al agarrarla la primera vez queda en el inventario y vibra el control
+        DatosDeObjetos.Guardable(llave, DatosDeObjetos.Obtener("ItemData_Llave", "llave_recepcion", "Llave de la recepción",
+            "Estaba en el cajón del rombo (el escudo del colegio). Abre la puerta hacia la Dirección.", TipoItem.Llave));
         llave.GetComponent<BoxCollider>().center = new Vector3(0.005f, 0, 0);
         SinCollider(Caja("Cabeza", llave.transform, new Vector3(-0.05f, 0, 0), new Vector3(0.05f, 0.015f, 0.05f), matLaton));
         SinCollider(Caja("Vastago", llave.transform, new Vector3(0.03f, 0, 0), new Vector3(0.11f, 0.012f, 0.015f), matLaton));
@@ -448,6 +451,8 @@ public static class Cuarto1Builder
         d.AddComponent<Destornillador>().visual = modelo.transform;
         // En el PC: se agarra con un clic y queda derecho, con la punta al frente, apuntando a los tornillos
         d.AddComponent<HerramientaEnMano>();
+        DatosDeObjetos.Guardable(d, DatosDeObjetos.Obtener("ItemData_Destornillador", "destornillador", "Destornillador",
+            "Estaba en el cajón del cuadrado. Saca los dos tornillos de la tapa de la cerradura.", TipoItem.Herramienta));
 
         GameObject punta = new GameObject("Punta");
         punta.transform.SetParent(d.transform, false);

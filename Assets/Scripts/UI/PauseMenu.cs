@@ -8,7 +8,8 @@ using UnityEngine.InputSystem;
 // del cuarto se detiene y con las manos solo se pueden tocar los botones del menú.
 //
 // A la izquierda muestra la partida: el tiempo que queda, el cuarto (con una ficha por cuarto:
-// verde los pasados, ámbar el actual) y cuántos acertijos lleva. A la derecha, los botones:
+// verde los pasados, ámbar el actual) y, con los datos del cuarto (RoomData), cuántos de sus
+// acertijos lleva y el tiempo sugerido. A la derecha, los botones:
 //  - REANUDAR: cierra el menú y sigue el juego.
 //  - GUARDAR PARTIDA: guarda ahora el cuarto actual y el tiempo que queda.
 //  - CARGAR PARTIDA: vuelve a la partida guardada (al principio de ese cuarto).
@@ -181,7 +182,12 @@ public class PauseMenu : MonoBehaviour
 
         if (guardado != null)
         {
-            textoAcertijos.text = guardado.AcertijosResueltos + " de " + guardado.TotalAcertijos + " acertijos resueltos";
+            // Con los datos del cuarto (RoomData): cuántos acertijos de ESTE cuarto lleva y su tiempo sugerido
+            RoomData datosCuarto = GameManager.DatosCuarto(cuarto);
+            textoAcertijos.text = datosCuarto != null && datosCuarto.acertijos.Count > 0
+                ? "Este cuarto: " + guardado.ResueltosDe(datosCuarto) + " de " + datosCuarto.acertijos.Count +
+                  " acertijos  ·  sugerido " + datosCuarto.tiempoSugerido.ToString("0.#") + " min"
+                : guardado.AcertijosResueltos + " de " + guardado.TotalAcertijos + " acertijos resueltos";
 
             botonCargar.Habilitar(guardado.HayPartida);
             botonCargar.Textos(null, guardado.HayPartida

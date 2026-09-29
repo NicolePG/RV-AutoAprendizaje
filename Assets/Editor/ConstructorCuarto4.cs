@@ -1527,6 +1527,8 @@ public static partial class ConstructorCuarto4
         Transform punto = PuntoDeAgarre(t, new Vector3(0f, 0f, -0.02f), Vector3.down, Vector3.forward);
         HacerAgarrable(t.gameObject, punto, pos + Vector3.up * 0.1f, false);
         t.gameObject.AddComponent<TarjetaAcceso>().datos = datos;
+        // Al agarrarla por primera vez queda en el inventario (su ItemData) y vibra el control
+        DatosDeObjetos.Guardable(t.gameObject, datos);
         t.gameObject.SetActive(visible);
         return t.gameObject;
     }

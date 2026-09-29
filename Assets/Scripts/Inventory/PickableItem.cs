@@ -4,7 +4,8 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 // Objeto que se guarda en el inventario la primera vez que el jugador lo agarra.
-// Al agarrarlo: se avisa al Inventory y la mano vibra (haptics).
+// Al agarrarlo esa primera vez: se avisa al Inventory, suena un clic y la mano vibra (haptics).
+// Las veces siguientes no hace nada (una herramienta se agarra muchas veces).
 //
 // Sirve con las dos formas de agarrar que usa el juego: el XRGrabInteractable de toda
 // la vida, o el XRSimpleInteractable de un toque que usan los objetos llevables.
@@ -13,7 +14,8 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 // escena (ya quedó guardado), y si es false se queda a la vista, que es lo que conviene
 // cuando el jugador lo lleva en la mano y tiene que verlo.
 //
-// En la escena: va en el objeto especial (el del cajón del escritorio).
+// En la escena: va en los objetos que tienen su ItemData (la llave, el destornillador, la linterna y
+// las tarjetas). Lo agregan los constructores de cada cuarto (ver DatosDeObjetos).
 public class PickableItem : MonoBehaviour
 {
     [Tooltip("El asset de datos de este objeto")]
@@ -23,6 +25,7 @@ public class PickableItem : MonoBehaviour
     public bool ocultarAlAgarrar = true;
 
     XRBaseInteractable interactable;
+    bool guardado;
 
     void Awake() => interactable = GetComponent<XRBaseInteractable>();
 
@@ -38,6 +41,9 @@ public class PickableItem : MonoBehaviour
 
     void AlAgarrar(SelectEnterEventArgs args)
     {
+        if (guardado) return;
+        guardado = true;
+
         // Aviso de que quedó guardado, igual que la vibración del control
         SonidoSintetico.Tocar(SonidoSintetico.Encajar(), transform.position, 0.8f);
         if (Inventory.Instancia != null) Inventory.Instancia.Agregar(datos);

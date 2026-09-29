@@ -257,6 +257,9 @@ public static partial class ConstructorCuarto3
         // la mano la sostiene como una linterna de verdad y el haz sale hacia donde apunta
         Transform punto = PuntoDeAgarre(linterna.transform, new Vector3(0f, lente.y - 0.006f, -0.05f), Vector3.forward, Vector3.up);
         HacerAgarrable(linterna, punto, new Vector3(5.9f, 1f, 3.4f), true);
+        // Su asset ItemData: al agarrarla la primera vez queda en el inventario y vibra el control
+        DatosDeObjetos.Guardable(linterna, DatosDeObjetos.Obtener("ItemData_Linterna", "linterna", "Linterna",
+            "Quedó prendida sobre las cajas de la entrada. Alumbra hacia donde se apunta.", TipoItem.Herramienta));
 
         // El haz sale de la lente, apenas hacia arriba (apoyada en las cajas, así llega al tablero)
         Transform haz = Grupo("Haz", linterna.transform);
